@@ -1,27 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Platform } from 'react-native';
+import { View, Text, FlatList, Platform , Pressable , StyleSheet, Alert } from 'react-native';
 import Zeroconf from 'react-native-zeroconf';
+import Button from './Button';
 
 const MDNSDeviceScanner = () => {
   const [services, setServices] = useState([]);
   const [error, setError] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  useEffect(() => {
-    console.log("isScanning", isScanning);
-    
-    if (Platform.OS === 'web') {
-      setError('MDNS scanning is not supported on web platform');
-    
-    }
 
-    // Create instance outside of async function
-    const zeroconf = new Zeroconf();
-    console.log('zeroconf', zeroconf);
-    if (!zeroconf) {
-      console.error('Zeroconf initialization failed');
-      return;
-    }
+  const zeroconf = new Zeroconf();
+
+  const deviceScan = () => {
     try {
       // Set up event listeners
       zeroconf.on('start', () => {
@@ -42,6 +33,9 @@ const MDNSDeviceScanner = () => {
       zeroconf.on('resolved', service => {
         console.log('Resolved service:', service);
         setServices(prev => [...prev, service]);
+        console.log("search completed");
+        setIsScanning(false)
+        
       });
 
       zeroconf.on('error', err => {
@@ -60,13 +54,37 @@ const MDNSDeviceScanner = () => {
           console.error('Scan error:', err);
           setError('Failed to start scanning');
         }
-      }, 1000);
+      }, 500);
+
+      setIsRefreshing(false)
 
     } catch (err) {
       console.error('Initialization error:', err);
       setError('Failed to initialize service discovery');
     }
+   }
 
+
+
+
+
+  useEffect(() => {
+    console.log("isScanning", isScanning);
+    
+    if (Platform.OS === 'web') {
+      setError('MDNS scanning is not supported on web platform');
+    
+    }
+
+    // Create instance outside of async function
+   
+    console.log('zeroconf', zeroconf);
+    if (!zeroconf) {
+      console.error('Zeroconf initialization failed');
+      return;
+    }
+
+   deviceScan()
     // Cleanup
     return () => {
       try {
@@ -78,14 +96,55 @@ const MDNSDeviceScanner = () => {
     };
   }, []);
 
+  
+
+  const handleConnect = (item) => {
+    console.log('Connecting to:', item);
+    Alert.alert(
+      'Device Connected',
+      `Successfully connected to ${item.name || 'Unknown Device'}`,
+      [
+        { text: 'OK', onPress: () => console.log('OK Pressed') }
+      ]
+    );
+  };
   // Mock data for testing
   const mockServices = [
     { name: 'Test Service 1', type: 'http', host: 'localhost', port: 8080 },
     { name: 'Test Service 2', type: 'http', host: '192.168.1.1', port: 3000 }
   ];
 
+  const uniqueServices = services.filter((service, index, self) =>
+    index === self.findIndex((s) => (
+      s.name === service.name &&
+      s.host === service.host &&
+      s.port === service.port
+    ))
+  );
+
+  const reFresh = () => {
+    setTimeout(() => {
+      deviceScan()
+    }, 1000);
+    console.log("refreshing");
+    setIsRefreshing(true)
+    
+   
+    
+   
+  }
+
   return (
     <View style={{ flex: 1, padding: 20 }}>
+  <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10 }}>
+  <Button
+   title="Start Scan"
+   onPress={()=>reFresh()}
+   // Custom button style
+   // Custom text style
+/>
+</View>
+    
       {error ? (
         <View style={{ padding: 20, backgroundColor: '#ffebee', borderRadius: 5 }}>
           <Text style={{ color: '#c62828' }}>{error}</Text>
@@ -97,36 +156,77 @@ const MDNSDeviceScanner = () => {
         </View>
       ) : (
         <>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
-            {isScanning ? 'Scanning for Services...' : 'Discovered Services'}
-          </Text>
-          <FlatList
-            data={Platform.OS === 'web' ? mockServices : services}
-            keyExtractor={(item, index) => item.name || `service-${index}`}
-            renderItem={({ item }) => (
-              <View style={{
-                padding: 15,
-                marginVertical: 5,
-                backgroundColor: '#f5f5f5',
-                borderRadius: 8,
-                elevation: 1,
-              }}>
-                <Text style={{ fontWeight: 'bold' }}>Name: {item.name || 'Unknown'}</Text>
-                <Text>Type: {item.type || 'N/A'}</Text>
-                <Text>Host: {item.host || 'N/A'}</Text>
-                <Text>Port: {item.port || 'N/A'}</Text>
-              </View>
-            )}
-            ListEmptyComponent={() => (
-              <Text style={{ textAlign: 'center', marginTop: 20, color: '#666' }}>
-                {isScanning ? 'Searching for services...' : 'No services found'}
+          {isRefreshing ? (
+            <View style={styles.refreshingContainer}>
+              <Text style={styles.refreshingText}>Scanning for new Devices...</Text>
+            </View>
+          ) : (
+            <>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
+                {isScanning ? 'Scanning for Services...' : 'Discovered Services'}
               </Text>
-            )}
-          />
+              <FlatList
+                data={Platform.OS === 'web' ? mockServices : uniqueServices}
+                keyExtractor={(item, index) => `${item.name || 'Unknown'}-${index}`}
+                renderItem={({ item }) => (
+                  <View style={{
+                    padding: 15,
+                    marginVertical: 5,
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: 8,
+                    elevation: 1,
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
+                    <View>
+                      <Text style={{ fontWeight: 'bold' }}>{item.name || 'Unknown'}</Text>
+                      <Text>Type: {item.type || 'N/A'}</Text>
+                      <Text>Host: {item.host || 'N/A'}</Text>
+                      <Text>Port: {item.port || 'N/A'}</Text>
+                    </View>
+                    <View style={styles.buttonContainer}>
+                      <Button
+                        title="Connect"
+                        onPress={() => handleConnect(item)}
+                      />
+                    </View>
+                  </View>
+                )}
+                ListEmptyComponent={() => (
+                  <Text style={{ textAlign: 'center', marginTop: 20, color: '#666' }}>
+                    {isScanning ? 'Searching for services...' : 'No services found'}
+                  </Text>
+                )}
+              />
+            </>
+          )}
         </>
       )}
+
+     
     </View>
   );
 };
 
 export default MDNSDeviceScanner;
+
+const styles = StyleSheet.create({
+  buttonContainer: {
+    marginTop: 10,
+  },
+  refreshingText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#000000'
+  },
+  refreshingContainer: {
+    
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  }
+});
