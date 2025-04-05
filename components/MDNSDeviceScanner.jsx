@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Platform , Pressable , StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import Zeroconf from 'react-native-zeroconf';
 import Button from './Button';
+import { useNavigation } from '@react-navigation/native';
+
 
 // Add these helper functions outside the component
 const stopScan = (zeroconfInstance, interval) => {
@@ -32,6 +34,8 @@ const MDNSDeviceScanner = () => {
   const [buttonText, setButtonText] = useState("Start Scan");
   const [scanInterval, setScanInterval] = useState(null);
 
+  const navigation = useNavigation();
+
   // Create zeroconf instance ONCE
   const zeroconfRef = React.useRef(new Zeroconf());
 
@@ -54,6 +58,7 @@ const MDNSDeviceScanner = () => {
 
       zeroconfRef.current.on('found', service => {
         console.log('Found service:', service);
+      
       });
 
       zeroconfRef.current.on('resolved', service => {
@@ -94,7 +99,6 @@ const MDNSDeviceScanner = () => {
   // Updated refresh function
   const reFresh = () => {
     console.log("REFRESH called, current isRefreshing:", isRefreshing);
-    
     if (isRefreshing) {
       // Stop scanning
       console.log("Stopping scan");
@@ -117,7 +121,8 @@ const MDNSDeviceScanner = () => {
       const interval = setInterval(() => {
         console.log("Interval triggered, running deviceScan()");
         deviceScan();
-      }, 2000);
+      }, 4000);
+      console.log("Interval " , interval);
       
       setScanInterval(interval);
       console.log("Set scan interval:", interval);
@@ -133,6 +138,7 @@ const MDNSDeviceScanner = () => {
         { text: 'OK', onPress: () => console.log('OK Pressed') }
       ]
     );
+    navigation.navigate('(tabs)', { screen: 'index'  })
   };
   // Mock data for testing
   const mockServices = [
@@ -200,11 +206,12 @@ const MDNSDeviceScanner = () => {
               keyExtractor={(item, index) => `${item.name || 'Unknown'}-${index}`}
               renderItem={({ item }) => (
                 <View style={{
-                  padding: 15,
+                  padding: 14,
                   marginVertical: 5,
                   backgroundColor: '#f5f5f5',
-                  borderRadius: 8,
-                  elevation: 1,
+                  borderRadius: 12,
+                  borderWidth: 1, // Add 1px border
+                 borderColor: '#BDC5D1', // Set border col
                   flexDirection: 'row',
                   justifyContent: 'space-between',
                   alignItems: 'center',

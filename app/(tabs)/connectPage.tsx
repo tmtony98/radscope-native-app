@@ -42,10 +42,12 @@ export default function connect() {
     fontWeight: 'bold',
     marginBottom: 5,
     marginTop: 20,
+    color: '#0E1725',
   },
   subtitle: {
     fontSize: 16,
-    marginBottom: 20,
+    marginBottom: 15,
+    color: '#0E1725',
   },
   connectTabContainer: {
     flex: 5,
