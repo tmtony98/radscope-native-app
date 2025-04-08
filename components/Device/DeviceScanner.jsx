@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Platform , Pressable , StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import Zeroconf from 'react-native-zeroconf';
-import Button from './Button';
+import Button from '../Button';
 import { useNavigation } from '@react-navigation/native';
 
 
@@ -26,7 +26,7 @@ const stopScan = (zeroconfInstance, interval) => {
   }
 };
 
-const MDNSDeviceScanner = () => {
+const DeviceScanner = () => {
   const [services, setServices] = useState([]);
   const [error, setError] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -243,7 +243,7 @@ const MDNSDeviceScanner = () => {
   );
 };
 
-export default MDNSDeviceScanner;
+export default DeviceScanner;
 
 const styles = StyleSheet.create({
   buttonContainer: {

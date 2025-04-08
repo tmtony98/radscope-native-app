@@ -1,7 +1,7 @@
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import React from 'react';
-import MDNSDeviceScanner from '@/components/MDNSDeviceScanner';
-import AddDevice from '@/components/AddDevice';
+import DeviceScanner from '@/components/Device/DeviceScanner'; 
+import AddDevice from '@/components/Device/AddDevice';
 import { MaterialIcons } from '@expo/vector-icons';
 
 const Tab = createMaterialTopTabNavigator();
@@ -35,7 +35,7 @@ export default function ConnectTab() {
       }}>
       <Tab.Screen
         name="Scan Devices"
-        component={MDNSDeviceScanner}
+        component={DeviceScanner}
         options={{
           tabBarIcon: ({ focused, color }) => (
             <MaterialIcons

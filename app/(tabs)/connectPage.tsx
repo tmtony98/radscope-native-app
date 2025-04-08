@@ -1,21 +1,15 @@
 import { View, Text , StyleSheet } from 'react-native'
 import React from 'react'
-import MDNSDeviceScanner from '@/components/MDNSDeviceScanner'
+import DeviceScanner from '@/components/Device/DeviceScanner'
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs'
 
-import AddDevice from '@/components/AddDevice';
-import ConnectTab from '@/components/ConnectTab';
+import AddDevice from '@/components/Device/AddDevice';
+import ConnectTab from '@/components/Device/ConnectTab';
 
 export default function connect() {
   return (
 
-  // <View style={styles.container}> 
-  // {/* <Text style={styles.title} >Add Device </Text>
-  // <Text style={styles.subtitle} >Scan and connect devices on your network </Text> */}
-  // <View style={styles.connectTabContainer}>
-  // <ConnectTab />
-  // </View>
-  // </View>
+
   
 <>   
   <View style={styles.container}>
