@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import React from 'react';
-import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../../Themes/theme';
+import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY ,BUTTON_STYLE } from '../../Themes/theme';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -51,10 +51,12 @@ export default function DoseRateGraph({
       <View style={styles.chartPlaceholder}>
         <Text style={TYPOGRAPHY.bodyTextMedium}>Chart will be integrated here</Text>
       </View>
-      <TouchableOpacity style={styles.button} onPress={handleGetHistory}>
+      <View style={styles.buttonContainer}> 
+        <TouchableOpacity style={BUTTON_STYLE.mediumButtonWithIconLeft} onPress={handleGetHistory}>
         <MaterialIcons name="history" size={24} color={COLORS.white} />
         <Text style={styles.buttonText}>Get History Data</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> </View>
+      
     </View>
   );
 }
@@ -91,11 +93,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: SPACING.md,
     borderRadius: 8,
+    width:205
   },
   buttonText: {
     color: COLORS.white,
     fontFamily: 'Poppins-Medium',
     fontSize: 16,
     marginLeft: SPACING.sm,
+  },
+  buttonContainer: {
+    alignItems: 'center',
   },
 });
