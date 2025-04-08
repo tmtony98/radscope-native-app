@@ -18,7 +18,7 @@ const useMqtt = () => {
   const [status, setStatus] = useState<ConnectionStatus>({
     connected: false,
   });
-  const [doseRate, setDoseRate] =  useState<number>(0);
+  const [doseRate, setDoseRate] = useState<number>(0);
   console.log("status", status);
   console.log("messages", messages);
   const clientRef = useRef<mqtt.MqttClient | null>(null);
@@ -52,13 +52,21 @@ const useMqtt = () => {
       });
 
       client.on('message', (topic, payload) => {
-        const message: Message = {
-          id: Math.random().toString(36).substr(2, 9),
-          topic,
-          payload: payload.toString(),
-          timestamp: new Date(),
-        };
-        setMessages((prev) => [message, ...prev]);
+        try {
+          const payloadString = payload.toString();
+          
+          // Create message with validated payload
+          const message: Message = {
+            id: Math.random().toString(36).substr(2, 9),
+            topic,
+            payload: payloadString,
+            timestamp: new Date(),
+          };
+          
+          setMessages((prev) => [message, ...prev]);
+        } catch (error) {
+          console.error('Error processing MQTT message:', error);
+        }
       });
 
       client.on('error', (err) => {
@@ -97,30 +105,66 @@ const useMqtt = () => {
     }
   }, []);
 
-  function getDoserate(data: Message[]) {
+  function getDoserateWithTimestamp(data: Message[]) {
+    console.log("getDoserate function called");
+    
     try {
-      if (!data || !data.length) return 0;
-      // Get the most recent message (first in the array)
-      const latestMessage = data[0];
-      // Parse the payload string to JSON
-      const parsedData = JSON.parse(latestMessage.payload);
-      // Extract the doserate value from the parsed JSON
-      if (parsedData?.data?.Sensor?.doserate?.value !== undefined) {
-        return parsedData.data.Sensor.doserate.value;
-      }
+      if (!data || !data.length) return [];
       
-      return 0;
+      return data.map(message => {
+        try {
+          // Check if payload is valid before parsing
+          if (!message.payload || typeof message.payload !== 'string' || message.payload.trim() === '') {
+            console.warn("Empty or invalid payload:", message.payload);
+            return {
+              doseRate: 0,
+              timestamp: message.timestamp
+            };
+          }
+          
+          const parsedData = JSON.parse(message.payload);
+          
+          // Try to get timestamp from the message data, fallback to message timestamp
+          let timestamp;
+          if (parsedData.timestamp) {
+            timestamp = parsedData.timestamp;
+          } else {
+            // If timestamp is missing, use the message timestamp
+            timestamp = message.timestamp;
+          }
+          
+          // Ensure the timestamp is properly formatted
+          if (!(timestamp instanceof Date) && typeof timestamp === 'string') {
+            // Keep it as string for now, Chart component will handle formatting
+          }
+          
+          const value = parsedData?.data?.Sensor?.doserate?.value !== undefined 
+            ? parsedData.data.Sensor.doserate.value 
+            : 0;
+          
+          return {
+            doseRate: value,
+            timestamp: timestamp
+          };
+        } catch (error) {
+          console.error("Error parsing message:", error, "Payload:", message.payload);
+          return {
+            doseRate: 0,
+            timestamp: message.timestamp
+          };
+        }
+      });
     } catch (error) {
-      console.error("Error extracting doserate value:", error);
-      return 0;
+      console.error("Error extracting doserate values:", error);
+      return [];
     }
   }
 
   useEffect(() => { 
     if (messages) {
-      const newDoseRate = getDoserate(messages);
-      console.log("newDoseRate", newDoseRate);
-      setDoseRate(newDoseRate);
+      const doseRateData = getDoserateWithTimestamp(messages);
+      console.log("doseRateData", doseRateData);
+      setDoseRate(doseRateData.length > 0 ? doseRateData[0].doseRate : 0);
     }
   }, [messages]);
 
@@ -136,7 +180,7 @@ const useMqtt = () => {
     };
   }, [connect]);
 
-  return { messages, status  , doseRate };
+  return { messages, status, doseRate, doseRateData: getDoserateWithTimestamp(messages) };
 };
 
 export default useMqtt;

@@ -3,35 +3,23 @@ import MDNSDeviceScanner from '../../components/MDNSDeviceScanner';
 import App from "@/App";
 import useMqtt from "@/Hooks/useMqtt";
 import { useEffect, useState } from "react";
+import Chart from "@/components/Chart";
 
 export default function Index( route: any  | null) {
   const { status, messages , doseRate } = useMqtt();
 
   console.log("doseRate", doseRate);
+
+  const chartData = [
+    {
+      timestamp: "2023-01-01",
+      value: doseRate
+    }
+  ]
   
   
  
-  function getDoserate(data: any) {
-    try {
-      if (!data || !data.length) return 0;
-      
-      // Get the most recent message (first in the array)
-      const latestMessage = data[0];
-      
-      // Parse the payload string to JSON
-      const parsedData = JSON.parse(latestMessage.payload);
-      
-      // Extract the doserate value from the parsed JSON
-      if (parsedData?.data?.Sensor?.doserate?.value !== undefined) {
-        return parsedData.data.Sensor.doserate.value;
-      }
-      
-      return 0;
-    } catch (error) {
-      console.error("Error extracting doserate value:", error);
-      return 0;
-    }
-  }
+
 
  
 
@@ -39,6 +27,7 @@ export default function Index( route: any  | null) {
     <View style={styles.container}>
      <Text>Status: {status.connected ? 'Connected' : 'Disconnected'}</Text>
      <Text>Dose Rate: {doseRate}</Text>
+     <Chart data={chartData} />
     </View>
   );
 }
