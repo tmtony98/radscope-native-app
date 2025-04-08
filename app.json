@@ -10,14 +10,16 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tmtony98.myapp"
+      "bundleIdentifier": "com.tmtony98.myapp",
+      "jsEngine": "hermes"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.tmtony98.myapp"
+      "package": "com.tmtony98.myapp",
+      "jsEngine": "hermes"
     },
     "web": {
       "bundler": "metro",
