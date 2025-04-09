@@ -9,6 +9,7 @@ import {
   Poppins_700Bold
 } from '@expo-google-fonts/poppins';
 import { SplashScreen } from 'expo-router';
+import { MqttProvider } from '../Provider/MqttContext';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -31,19 +32,19 @@ export default function RootLayout() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
-     
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Radscope App</Text>
+    <MqttProvider>
+      <View style={{ flex: 1 }}>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Radscope App</Text>
+        </View>
+        
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="spectrum-settings" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+        </Stack>
       </View>
-
-     
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="spectrum-settings" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-    </View>
+    </MqttProvider>
   );
 }
 

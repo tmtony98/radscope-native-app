@@ -1,11 +1,11 @@
 import { View, StyleSheet, Text , FlatList } from "react-native";
 import App from "@/App";
-import useMqtt from "@/Hooks/useMqtt";
+import { useMqttContext } from "@/Provider/MqttContext";
 import { useEffect, useState } from "react";
 import Dashboard from "../../components/Dashboard/Dashboard";
 
 export default function Index( route: any  | null) {
-  const { status, messages , doseRate } = useMqtt();
+  const { doseRate } = useMqttContext();
 
   console.log("doseRate", doseRate);
   
