@@ -1,31 +1,49 @@
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions } from 'react-native';
 import React from 'react';
 import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY ,BUTTON_STYLE } from '../../Themes/theme';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { useMqttContext } from '@/Provider/MqttContext';
+import { LineChart } from 'react-native-chart-kit';
 
-type ChartCardProps = {
-  title?: string;
-  timestamp?: string;
-  onFullscreen?: () => void;
-  onGetHistory?: () => void;
-};
 
-export default function DoseRateGraph({
-  title = 'Dose Rate',
-  timestamp = '11:15:25 AM',
-  onFullscreen = () => {},
-  onGetHistory = () => {},
-}: ChartCardProps) {
+
+
+// type ChartCardProps = {
+//   title?: string;
+//   timestamp?: string;
+//   onFullscreen?: () => void;
+//   onGetHistory?: () => void;
+// };
+
+const timestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+export default function DoseRateGraph() {
+
+  
+  const { doseRateArray, timestampArray , timestamp } = useMqttContext();
+
+  console.log("doseRateArray", doseRateArray);
+  console.log("timestampArray", timestampArray);
   const router = useRouter();
 
-  const handleFullscreen = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    onFullscreen();
-  };
+
+const TimeLabels = timestampArray.slice(-5).map((timestamp) => {
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+});
+
+
+const DoseRateLabels = doseRateArray.slice(-6)
+console.log("DoseRateLabels", DoseRateLabels);
+
+
+  // const handleFullscreen = () => {
+  //   if (Platform.OS !== 'web') {
+  //     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  //   }
+  //   onFullscreen();
+  // };
 
   const handleGetHistory = () => {
     if (Platform.OS !== 'web') {
@@ -34,24 +52,66 @@ export default function DoseRateGraph({
     // Navigate to the dose history page
     router.push('/dose-history');
     // Also call the provided callback if needed
-    onGetHistory();
+    // onGetHistory();
   };
 
   return (
     <View style={CARD_STYLE.container}>
       <View style={styles.headerWithActions}>
-        <Text style={TYPOGRAPHY.headLineSmall}>{title}</Text>
+        <Text style={TYPOGRAPHY.headLineSmall}>Dose Rate</Text>
         <View style={styles.headerActions}>
           <Text style={TYPOGRAPHY.smallText}>{timestamp}</Text>
-          <TouchableOpacity style={styles.iconButton} onPress={handleFullscreen}>
+          {/* <TouchableOpacity style={styles.iconButton} onPress={handleFullscreen}>
             <MaterialIcons name="fullscreen" size={24} color={COLORS.primary} />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
       </View>
       <View style={styles.chartPlaceholder}>
-        <Text style={TYPOGRAPHY.bodyTextMedium}>Chart will be integrated here</Text>
+        {doseRateArray.length === 0 || timestampArray.length === 0 ? (
+          <Text>No data available</Text>
+        ) : (
+          <View>
+           
+            <LineChart
+              data={{
+                labels: TimeLabels,
+                datasets: [
+                  {
+                    data: DoseRateLabels
+                  }
+                ]
+              }}
+              width={Dimensions.get("window").width - 60}
+              height={220}
+              yAxisLabel=""
+              yAxisSuffix=""
+              yAxisInterval={1}
+              chartConfig={{
+                backgroundColor: "#ffffff",
+                backgroundGradientFrom: "#ffffff",
+                backgroundGradientTo: "#ffffff",
+                decimalPlaces: 2,
+                color: (opacity = 1) => `rgba(14, 23, 37, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                style: {
+                  borderRadius: 16
+                },
+                propsForDots: {
+                  r: "6",
+                  strokeWidth: "2",
+                  stroke: "#ffa726"
+                }
+              }}
+              bezier
+              style={{
+                marginVertical: 0,
+                borderRadius: 10,
+              }}
+            />
+          </View>
+        )}
       </View>
-      <View style={styles.buttonContainer}> 
+      <View style={styles.buttonContainer}>
         <TouchableOpacity style={BUTTON_STYLE.mediumButtonWithIconLeft} onPress={handleGetHistory}>
           <MaterialIcons name="history" size={24} color={COLORS.white} />
           <Text style={styles.buttonText}>Get History Data</Text>
@@ -76,15 +136,15 @@ const styles = StyleSheet.create({
     padding: SPACING.xs,
   },
   chartPlaceholder: {
-    height: 200,
-    backgroundColor: COLORS.background,
+    height: 250,
+    backgroundColor: COLORS.white,
     borderRadius: 8,
     marginVertical: SPACING.md,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderStyle: 'solid',
+    // borderWidth: 1,
+    // borderColor: COLORS.border,
+    // borderStyle: 'solid',
   },
   button: {
     backgroundColor: COLORS.primary,

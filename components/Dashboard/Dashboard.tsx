@@ -47,11 +47,7 @@ export default function Dashboard() {
       
       <DeviceDetailsCard />
 
-      <DoseRateCard 
-        doseRate={0.589} 
-        unit="μSv/h" 
-        mqttStatus={true} 
-      />
+      <DoseRateCard/>
 
       <DoseRateGraph 
         title="Dose Rate"
@@ -66,9 +62,7 @@ export default function Dashboard() {
       />
 
       <GPSCard 
-        latitude="18.6545556"
-        longitude="18.6545556"
-        onGetLocation={handleGetLocation}
+       
       />
 
       <SessionLoggingCard 

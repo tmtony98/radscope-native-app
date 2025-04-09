@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import React from 'react';
-import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../../Themes/theme';
+import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY  ,BUTTON_STYLE } from '../../Themes/theme';
 import { MaterialIcons } from '@expo/vector-icons';
 
 type SessionLoggingCardProps = {
@@ -40,7 +40,7 @@ export default function SessionLoggingCard({
           <MaterialIcons name="download" size={24} color={COLORS.primary} />
           <Text style={styles.downloadButtonText}>Download Files</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.startButton} onPress={onStart}>
+        <TouchableOpacity style={BUTTON_STYLE.mediumButtonWithIconLeft} onPress={onStart}>
           <MaterialIcons name="play-arrow" size={24} color={COLORS.white} />
           <Text style={styles.startButtonText}>Start</Text>
         </TouchableOpacity>
@@ -78,15 +78,16 @@ const styles = StyleSheet.create({
   },
   loggingButtons: {
     flexDirection: 'row',
-    gap: SPACING.md,
+    // gap: SPACING.md,
+    justifyContent: 'space-between',
     marginTop: SPACING.md,
   },
   downloadButton: {
-    flex: 1,
+    
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: SPACING.md,
+    paddingHorizontal: SPACING.md,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: COLORS.primary,
@@ -96,17 +97,17 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontFamily: 'Poppins-Medium',
     fontSize: 16,
-    marginLeft: SPACING.sm,
+    // marginLeft: SPACING.sm,
   },
-  startButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: SPACING.md,
-    borderRadius: 8,
-    backgroundColor: COLORS.primary,
-  },
+  // startButton: {
+  //   flex: 1,
+  //   flexDirection: 'row',
+  //   alignItems: 'center',
+  //   justifyContent: 'center',
+  //   padding: SPACING.md,
+  //   borderRadius: 8,
+  //   backgroundColor: COLORS.primary,
+  // },
   startButtonText: {
     color: COLORS.white,
     fontFamily: 'Poppins-Medium',

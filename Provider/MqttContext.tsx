@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import mqtt from 'precompiled-mqtt';
-import { Message, ConnectionStatus } from '../Types';
+import { Message, ConnectionStatus , GpsData, BatteryData } from '../Types';
 import 'react-native-url-polyfill/auto';
 
 // MQTT Configuration
@@ -13,12 +13,26 @@ type MqttContextType = {
   messages: Message[];
   status: ConnectionStatus;
   doseRate: number;
+  cps: number;
+  gps: GpsData | null;
+  batteryInfo: BatteryData | null;
+  doseRateArray: number[];
+  timestampArray: number[];
+  timestamp: number;
 };
+
+
 
 const MqttContext = createContext<MqttContextType>({
   messages: [],
   status: { connected: false },
   doseRate: 0,
+  cps: 0,
+  timestamp: 0,
+  doseRateArray: [],
+  timestampArray: [],
+  gps: null,
+  batteryInfo: null,
 });
 
 export const useMqttContext = () => useContext(MqttContext);
@@ -27,28 +41,93 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<ConnectionStatus>({ connected: false });
   const [doseRate, setDoseRate] = useState<number>(0);
+  const [doseRateArray, setDoseRateArray] = useState<number[]>([]);
+  const [cps, setCps] = useState<number>(0);
   const clientRef = useRef<mqtt.MqttClient | null>(null);
+  const [timestampArray, setTimestampArray] = useState<number[]>([]);
+  const [timestamp, setTimestamp] = useState<number>(0);
+  const [gps, setGps] = useState< GpsData | null>(null);
+  const [batteryInfo, setBatteryInfo] = useState <BatteryData | null>(null);
 
   // Function to extract dose rate from messages
-  const getDoserate = (data: Message[]) => {
-    try {
-      if (!data || !data.length) return 0;
+  // const getDoserate = (data: Message[]) => {
+  //   try {
+  //     if (!data || !data.length) return 0;
+  //     const latestMessage = data[0];
+  //     const parsedData = JSON.parse(typeof latestMessage.payload === 'string' ? latestMessage.payload : latestMessage.payload.toString());
+  //     if (parsedData?.data?.Sensor?.doserate?.value !== undefined) {
+  //       setDoseRateArray((prevArray) => [...prevArray, parsedData.data.Sensor.doserate.value]);
+  //       return parsedData.data.Sensor.doserate.value;
+  //     }
       
-      const latestMessage = data[0];
-      const parsedData = JSON.parse(typeof latestMessage.payload === 'string' ? latestMessage.payload : latestMessage.payload.toString());
-      
-      if (parsedData?.data?.Sensor?.doserate?.value !== undefined) {
-        return parsedData.data.Sensor.doserate.value;
-      }
-      
-      return 0;
-    } catch (error) {
-      console.error("Error extracting doserate value:", error);
-      return 0;
-    }
-  };
+  //     return 0;
+  //   } catch (error) {
+  //     console.error("Error extracting doserate value:", error);
+  //     return 0;
+  //   }
+  // };
 
-  // Connect to MQTT broker
+ 
+
+  // const getCps = (data: Message[]) => {
+  //   try {
+  //     if (!data || !data.length) return 0;
+  //     const latestMessage = data[0];
+  //     const parsedData = JSON.parse(typeof latestMessage.payload === 'string' ? latestMessage.payload : latestMessage.payload.toString());
+  //     if (parsedData?.data?.Sensor?.doserate?.cps !== undefined) {
+  //       return parsedData.data.Sensor.doserate.cps;
+  //     }
+      
+  //     return 0;
+  //   } catch (error) {
+  //     console.error("Error extracting cps value:", error);  
+  //     return 0;
+  //   }
+  // };
+
+  // const getTimestamp = (data: Message[]) => {
+  //   try {
+  //     if (!data || !data.length) return 0;
+  //     const latestMessage = data[0];
+  //     const parsedData = JSON.parse(typeof latestMessage.payload === 'string' ? latestMessage.payload : latestMessage.payload.toString());
+  //     if (parsedData?.data?.Sensor?.timestamp !== undefined) {
+  //       return parsedData.data.Sensor.timestamp;
+  //     }
+      
+  //     return 0;
+  //   } catch (error) {
+  //     console.error("Error extracting timestamp value:", error);
+  //     return 0;
+  //   }
+  // } 
+
+  const extractSensorData = (messages: Message[]) => {
+    try {
+      if (!messages || !messages.length) return { doseRate: 0, cps: 0, timestamp: 0 };
+      const latestMessage = messages[0];
+      console.log("latestMessage", latestMessage);
+      const parsedData = JSON.parse(typeof latestMessage.payload === 'string' 
+        ? latestMessage.payload 
+        : latestMessage.payload.toString());
+      
+      const doseRate = parsedData?.data?.Sensor?.doserate?.value ?? 0;
+      const cps = parsedData?.data?.Sensor?.doserate?.cps ?? 0;
+      const timestamp = parsedData?.timestamp ?? 0;
+      const gps = parsedData?.data?.GPS ?? null;
+      const batteryInfo = parsedData?.data?.Attributes ?? null;
+      console.log("batteryInfo", batteryInfo);
+      
+      console.log("gps", gps);
+      
+      return { doseRate, cps, timestamp , gps };
+    } catch (error) {
+      console.error("Error extracting sensor data:", error);
+      return { doseRate: 0, cps: 0, timestamp: 0 };
+    }
+  }
+
+
+  //Connect to MQTT broker
   useEffect(() => {
     const connectMqtt = async () => {
       try {
@@ -117,9 +196,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       }
     };
-
     connectMqtt();
-
     // Cleanup function
     return () => {
       if (clientRef.current) {
@@ -133,9 +210,15 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Update dose rate when messages change
   useEffect(() => {
     if (messages.length > 0) {
-      const newDoseRate = getDoserate(messages);
-      console.log("Updated dose rate:", newDoseRate);
-      setDoseRate(newDoseRate);
+      const { doseRate, cps, timestamp ,   gps } = extractSensorData(messages);
+     
+      setDoseRate(doseRate);
+      setCps(cps);
+      setTimestamp(timestamp);
+      setGps(gps);
+      setBatteryInfo(batteryInfo);
+      setDoseRateArray(prev => [...prev, doseRate]);
+      setTimestampArray(prev => [...prev, timestamp]);
     }
   }, [messages]);
 
@@ -143,9 +226,19 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     messages,
     status,
-    doseRate
+    doseRate,
+    cps,
+    timestamp,
+    doseRateArray,
+    timestampArray,
+    gps,
+    batteryInfo
   };
 
+  console.log("doseRate", doseRate);
+  console.log("cps", cps);
+  console.log("doseRateArray", doseRateArray);
+  
   return (
     <MqttContext.Provider value={value}>
       {children}

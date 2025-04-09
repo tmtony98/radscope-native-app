@@ -4,7 +4,7 @@ import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../../Themes/theme';
 import { useMqttContext } from '../../Provider/MqttContext';
 
 export default function DoseRateCard() {
-  const { doseRate, status } = useMqttContext();
+  const { doseRate, status, cps } = useMqttContext();
   console.log("doseRate", doseRate);
   
   return (
@@ -17,7 +17,7 @@ export default function DoseRateCard() {
         </View>
         <View style={styles.cpsContainer}>
           <Text > cps value</Text>
-          <Text > 100</Text>
+          <Text > {cps}</Text>
         </View>
       </View>
       <View style={styles.mqttStatus}>
@@ -34,12 +34,13 @@ const styles = StyleSheet.create({
   doseRate: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginVertical: SPACING.md,
+    marginVertical: SPACING.sm,
   },
   doseRateContainer: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
+    
   },
   cpsContainer: {
     flexDirection: 'column',
@@ -49,7 +50,7 @@ const styles = StyleSheet.create({
   doseValue: {
     fontFamily: 'Poppins-Bold',
     fontSize: 32,
-    lineHeight: 51,
+    lineHeight: 48,
     color: COLORS.primary,
   },
   doseUnit: {
@@ -60,6 +61,7 @@ const styles = StyleSheet.create({
   mqttStatus: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: -5,
   },
   statusIndicator: {
     marginLeft: SPACING.xs,
