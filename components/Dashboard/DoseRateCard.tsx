@@ -1,36 +1,29 @@
 import { View, Text, StyleSheet } from 'react-native';
 import React from 'react';
- import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../../Themes/theme';
+import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../../Themes/theme';
+import { useMqttContext } from '../../Provider/MqttContext';
 
-type DoseRateCardProps = {
-  doseRate?: number;
-  unit?: string;
-  mqttStatus?: boolean;
-};
-
-
-
-
-export default function DoseRateCard({ doseRate = 0.589, unit = 'μSv/h', mqttStatus = true }: DoseRateCardProps) {
+export default function DoseRateCard() {
+  const { doseRate, status } = useMqttContext();
+  console.log("doseRate", doseRate);
   
- 
   return (
     <View style={CARD_STYLE.container}>
       <Text style={TYPOGRAPHY.headLineSmall}>Dose Rate</Text>
       <View style={styles.doseRateContainer}>
-      <View style={styles.doseRate}>
-        <Text style={styles.doseValue}>{doseRate}</Text>
-        <Text style={styles.doseUnit}>{unit}</Text>
-      </View>
-      <View style={styles.cpsContainer}>
-        <Text > cps value</Text>
-        <Text > 100</Text>
-      </View>
+        <View style={styles.doseRate}>
+          <Text style={styles.doseValue}>{doseRate}</Text>
+          <Text style={styles.doseUnit}>uSv/h</Text>
+        </View>
+        <View style={styles.cpsContainer}>
+          <Text > cps value</Text>
+          <Text > 100</Text>
+        </View>
       </View>
       <View style={styles.mqttStatus}>
         <Text style={TYPOGRAPHY.bodyTextMedium}>MQTT Connection</Text>
-        <View style={[styles.statusIndicator, { backgroundColor: mqttStatus ? COLORS.success : COLORS.error }]}>
-          <Text style={styles.statusText}>{mqttStatus ? 'ON' : 'OFF'}</Text>
+        <View style={[styles.statusIndicator, { backgroundColor: status.connected ? COLORS.success : COLORS.error }]}>
+          <Text style={styles.statusText}>{status.connected ? 'ON' : 'OFF'}</Text>
         </View>
       </View>
     </View>

@@ -138,7 +138,7 @@ const useMqtt = () => {
     };
   }, [connect]);
 
-  return { messages, status , doseRate };
+  return { messages, status  , doseRate };
 };
 
 export default useMqtt;
