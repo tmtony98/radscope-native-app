@@ -1,7 +1,7 @@
 export interface Message {
     id: string;
     topic: string;
-    payload: string;
+    payload: String;
     timestamp: Date;
   }
   

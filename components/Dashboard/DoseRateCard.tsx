@@ -8,13 +8,24 @@ type DoseRateCardProps = {
   mqttStatus?: boolean;
 };
 
+
+
+
 export default function DoseRateCard({ doseRate = 0.589, unit = 'μSv/h', mqttStatus = true }: DoseRateCardProps) {
+  
+ 
   return (
     <View style={CARD_STYLE.container}>
       <Text style={TYPOGRAPHY.headLineSmall}>Dose Rate</Text>
+      <View style={styles.doseRateContainer}>
       <View style={styles.doseRate}>
         <Text style={styles.doseValue}>{doseRate}</Text>
         <Text style={styles.doseUnit}>{unit}</Text>
+      </View>
+      <View style={styles.cpsContainer}>
+        <Text > cps value</Text>
+        <Text > 100</Text>
+      </View>
       </View>
       <View style={styles.mqttStatus}>
         <Text style={TYPOGRAPHY.bodyTextMedium}>MQTT Connection</Text>
@@ -32,6 +43,16 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     marginVertical: SPACING.md,
   },
+  doseRateContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  cpsContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginVertical: SPACING.md,
+  },
   doseValue: {
     fontFamily: 'Poppins-Bold',
     fontSize: 32,
@@ -45,10 +66,10 @@ const styles = StyleSheet.create({
   },
   mqttStatus: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
   },
   statusIndicator: {
+    marginLeft: SPACING.xs,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
     borderRadius: 12,

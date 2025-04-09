@@ -117,7 +117,7 @@ export const BUTTON_STYLE = StyleSheet.create({
   mediumButtonText: {
     fontFamily: 'Poppins-Medium',
     fontSize: 16, // 16px font size as per style guide
-    lineHeight: 18,
+    lineHeight: 24,
     textAlign: 'center',
     color: COLORS.secondary,
   },

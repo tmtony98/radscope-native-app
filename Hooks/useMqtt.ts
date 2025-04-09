@@ -59,6 +59,8 @@ const useMqtt = () => {
           timestamp: new Date(),
         };
         setMessages((prev) => [message, ...prev]);
+        console.log("payload", message);
+        
       });
 
       client.on('error', (err) => {
@@ -136,7 +138,7 @@ const useMqtt = () => {
     };
   }, [connect]);
 
-  return { messages, status  , doseRate };
+  return { messages, status , doseRate };
 };
 
 export default useMqtt;

@@ -16,7 +16,7 @@ export default function SessionLoggingCard({
     <View style={CARD_STYLE.container}>
       <Text style={TYPOGRAPHY.headLineSmall}>Session Logging</Text>
       <View style={styles.sliderContainer}>
-        <Text style={TYPOGRAPHY.smallText}>Logging Time Limit (hrs)</Text>
+        <Text style={[TYPOGRAPHY.smallText, { textAlign: 'left'}]}>Logging Time Limit (hrs)</Text>
         <View style={styles.slider}>
           <Text style={TYPOGRAPHY.smallText}>0</Text>
           <View style={styles.sliderTrack}>
@@ -26,7 +26,7 @@ export default function SessionLoggingCard({
         </View>
       </View>
       <View style={styles.sliderContainer}>
-        <Text style={TYPOGRAPHY.smallText}>Logging Time Interval (s)</Text>
+        <Text style={[TYPOGRAPHY.smallText, { textAlign: 'left'}]}>Logging Time Interval (s)</Text>
         <View style={styles.slider}>
           <Text style={TYPOGRAPHY.smallText}>0</Text>
           <View style={styles.sliderTrack}>

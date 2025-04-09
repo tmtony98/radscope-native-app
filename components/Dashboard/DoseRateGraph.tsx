@@ -31,8 +31,8 @@ export default function DoseRateGraph({
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    // Navigate to the dose graph history page
-    router.push('/dose-graph-history');
+    // Navigate to the dose history page
+    router.push('/dose-history');
     // Also call the provided callback if needed
     onGetHistory();
   };
@@ -53,10 +53,10 @@ export default function DoseRateGraph({
       </View>
       <View style={styles.buttonContainer}> 
         <TouchableOpacity style={BUTTON_STYLE.mediumButtonWithIconLeft} onPress={handleGetHistory}>
-        <MaterialIcons name="history" size={24} color={COLORS.white} />
-        <Text style={styles.buttonText}>Get History Data</Text>
-      </TouchableOpacity> </View>
-      
+          <MaterialIcons name="history" size={24} color={COLORS.white} />
+          <Text style={styles.buttonText}>Get History Data</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }

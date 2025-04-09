@@ -13,6 +13,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     width: '100%',
+    paddingHorizontal: 16,
   },
 });
 const handleFullscreen = () => {
@@ -41,7 +42,7 @@ const handleFullscreen = () => {
 
 export default function Dashboard() {
   return (
-    <View style={{ flex: 1, width: '100%' }}>
+    <View style={{ flex: 1, width: '100%' ,  }}>
       <ScrollView style={styles.container}>
       
       <DeviceDetailsCard />
