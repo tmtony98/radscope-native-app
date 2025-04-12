@@ -10,6 +10,7 @@ import {
 } from '@expo-google-fonts/poppins';
 import { SplashScreen } from 'expo-router';
 import { MqttProvider } from '../Provider/MqttContext';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -33,33 +34,17 @@ export default function RootLayout() {
 
   return (
     <MqttProvider>
-      <View style={{ flex: 1 }}>
-        <View style={styles.header}>
-          <Text style={styles.headerText}>Radscope App</Text>
-        </View>
-        
+      <GestureHandlerRootView style={{ flex: 1 }}> 
+         <View style={{ flex: 1 }}>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="spectrum-settings" options={{ headerShown: false }} />
           <Stack.Screen name="+not-found" />
         </Stack>
-      </View>
+      </View>  </GestureHandlerRootView>
+     
     </MqttProvider>
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    backgroundColor: "#F8FAFC",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-  },
-  headerText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#1F2937",
-  },
-});
+

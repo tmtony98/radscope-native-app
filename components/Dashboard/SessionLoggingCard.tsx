@@ -1,7 +1,10 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY  ,BUTTON_STYLE } from '../../Themes/theme';
 import { MaterialIcons } from '@expo/vector-icons';
+import Slider from '@react-native-community/slider';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 
 type SessionLoggingCardProps = {
   onDownload?: () => void;
@@ -12,40 +15,88 @@ export default function SessionLoggingCard({
   onDownload = () => {},
   onStart = () => {},
 }: SessionLoggingCardProps) {
+
+  const bottomSheetRef = useRef<BottomSheet>(null);
+
+  // callbacks
+  const handleSheetChanges = useCallback((index: number) => {
+    console.log('handleSheetChanges', index);
+  }, []);
+
+  const openBottomSheet = useCallback(() => {
+    bottomSheetRef.current?.expand();
+  }, []);
+
+  const closeBottomSheet = useCallback(() => {
+    bottomSheetRef.current?.close();
+  }, []);
+
+  const handleStart = useCallback(() => {
+    onStart();
+    closeBottomSheet();
+  }, [onStart, closeBottomSheet]);
+
   return (
-    <View style={CARD_STYLE.container}>
-      <Text style={TYPOGRAPHY.headLineSmall}>Session Logging</Text>
-      <View style={styles.sliderContainer}>
-        <Text style={[TYPOGRAPHY.smallText, { textAlign: 'left'}]}>Logging Time Limit (hrs)</Text>
-        <View style={styles.slider}>
-          <Text style={TYPOGRAPHY.smallText}>0</Text>
-          <View style={styles.sliderTrack}>
-            <View style={styles.sliderThumb} />
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <View style={CARD_STYLE.container}>
+        <Text style={TYPOGRAPHY.headLineSmall}>Session Logging</Text>
+        <View style={styles.sliderContainer}>
+          <Text style={[TYPOGRAPHY.smallText, { textAlign: 'left' }]}>Logging Time Limit (hrs)</Text>
+          <View style={styles.slider}>
+            <Text style={TYPOGRAPHY.smallText}>0</Text>
+            <Slider
+              style={{ width: '85%', height: 40 }}
+              minimumValue={0}
+              maximumValue={100}
+              minimumTrackTintColor="#000000"
+              maximumTrackTintColor="#000000"
+            />
+            <Text style={TYPOGRAPHY.smallText}>100</Text>
           </View>
-          <Text style={TYPOGRAPHY.smallText}>100</Text>
+        </View>
+        <View style={styles.sliderContainer}>
+          <Text style={[TYPOGRAPHY.smallText, { textAlign: 'left' }]}>Logging Time Interval (s)</Text>
+          <View style={styles.slider}>
+            <Text style={TYPOGRAPHY.smallText}>0</Text>
+            <Slider
+              style={{ width: '85%', height: 40 }}
+              minimumValue={0}
+              maximumValue={100}
+              minimumTrackTintColor="#000000"
+              maximumTrackTintColor="#000000"
+            />
+            <Text style={TYPOGRAPHY.smallText}>100</Text>
+          </View>
+        </View>
+        <View style={styles.loggingButtons}>
+          <TouchableOpacity style={styles.downloadButton} onPress={onDownload}>
+            <MaterialIcons name="download" size={24} color={COLORS.primary} />
+            <Text style={styles.downloadButtonText}>Download Files</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={BUTTON_STYLE.mediumButtonWithIconLeft} onPress={openBottomSheet}>
+            <MaterialIcons name="play-arrow" size={24} color={COLORS.white} />
+            <Text style={styles.startButtonText}>Start</Text>
+          </TouchableOpacity>
         </View>
       </View>
-      <View style={styles.sliderContainer}>
-        <Text style={[TYPOGRAPHY.smallText, { textAlign: 'left'}]}>Logging Time Interval (s)</Text>
-        <View style={styles.slider}>
-          <Text style={TYPOGRAPHY.smallText}>0</Text>
-          <View style={styles.sliderTrack}>
-            <View style={styles.sliderThumb} />
+
+      {/* <BottomSheet
+        ref={bottomSheetRef}
+        index={2}
+        snapPoints={['25%', '50%']}
+        onChange={handleSheetChanges}
+      >
+        <BottomSheetView>
+          <View style={{ padding: SPACING.md }}>
+            <Text style={TYPOGRAPHY.headLineSmall}>Start Session</Text>
+            <TouchableOpacity style={BUTTON_STYLE.mediumButtonWithIconLeft} onPress={handleStart}>
+              <MaterialIcons name="play-arrow" size={24} color={COLORS.white} />
+              <Text style={styles.startButtonText}>Confirm Start</Text>
+            </TouchableOpacity>
           </View>
-          <Text style={TYPOGRAPHY.smallText}>100</Text>
-        </View>
-      </View>
-      <View style={styles.loggingButtons}>
-        <TouchableOpacity style={styles.downloadButton} onPress={onDownload}>
-          <MaterialIcons name="download" size={24} color={COLORS.primary} />
-          <Text style={styles.downloadButtonText}>Download Files</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={BUTTON_STYLE.mediumButtonWithIconLeft} onPress={onStart}>
-          <MaterialIcons name="play-arrow" size={24} color={COLORS.white} />
-          <Text style={styles.startButtonText}>Start</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+        </BottomSheetView>
+      </BottomSheet> */}
+    </GestureHandlerRootView>
   );
 }
 

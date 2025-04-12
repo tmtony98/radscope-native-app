@@ -102,9 +102,9 @@ export default function SpectrumSettings() {
             style={styles.slider}
             minimumValue={0}
             maximumValue={100}
-            value={smoothingPoints}
-            onValueChange={setSmoothingPoints}
             step={1}
+            // value={smoothingPoints}
+            onValueChange={setSmoothingPoints}
             minimumTrackTintColor={COLORS.primary}
             maximumTrackTintColor={COLORS.border}
             thumbTintColor={COLORS.primary}
