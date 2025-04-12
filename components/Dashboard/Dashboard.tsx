@@ -50,9 +50,8 @@ export default function Dashboard() {
       <DoseRateCard/>
 
       <DoseRateGraph 
-        title="Dose Rate"
-        timestamp="11:15:25 AM"
-        onFullscreen={handleFullscreen}
+       
+        // onFullscreen={handleFullscreen}
         onGetHistory={handleGetHistory}
       />
 
@@ -71,9 +70,7 @@ export default function Dashboard() {
       />
 
       <BatteryCard 
-        chargeRemaining="50%"
-        batteryVoltage="3.514 V"
-        chargingStatus="Not Charging"
+       
         isLastCard={true}
       />
     </ScrollView>

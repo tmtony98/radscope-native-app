@@ -115,11 +115,10 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const timestamp = parsedData?.timestamp ?? 0;
       const gps = parsedData?.data?.GPS ?? null;
       const batteryInfo = parsedData?.data?.Attributes ?? null;
-      console.log("batteryInfo", batteryInfo);
-      
+     
       console.log("gps", gps);
       
-      return { doseRate, cps, timestamp , gps };
+      return { doseRate, cps, timestamp , gps , batteryInfo};
     } catch (error) {
       console.error("Error extracting sensor data:", error);
       return { doseRate: 0, cps: 0, timestamp: 0 };
@@ -210,8 +209,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Update dose rate when messages change
   useEffect(() => {
     if (messages.length > 0) {
-      const { doseRate, cps, timestamp ,   gps } = extractSensorData(messages);
-     
+      const { doseRate, cps, timestamp , gps , batteryInfo } = extractSensorData(messages);
       setDoseRate(doseRate);
       setCps(cps);
       setTimestamp(timestamp);

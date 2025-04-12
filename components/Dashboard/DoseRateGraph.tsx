@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions } from 'react-native';
 import React from 'react';
-import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY ,BUTTON_STYLE } from '../../Themes/theme';
+import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY, BUTTON_STYLE } from '../../Themes/theme';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -8,35 +8,24 @@ import { useMqttContext } from '@/Provider/MqttContext';
 import { LineChart } from 'react-native-chart-kit';
 
 
-
-
-// type ChartCardProps = {
-//   title?: string;
-//   timestamp?: string;
-//   onFullscreen?: () => void;
-//   onGetHistory?: () => void;
-// };
+type ChartCardProps = {
+  // onFullscreen?: () => void;
+  onGetHistory?: () => void;
+};
 
 const timestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-export default function DoseRateGraph() {
+export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
 
-  
-  const { doseRateArray, timestampArray , timestamp } = useMqttContext();
-
-  console.log("doseRateArray", doseRateArray);
-  console.log("timestampArray", timestampArray);
+  const { doseRateArray, timestampArray, timestamp } = useMqttContext();
   const router = useRouter();
 
+  const TimeLabels = timestampArray.slice(-5).map((timestamp) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  });
 
-const TimeLabels = timestampArray.slice(-5).map((timestamp) => {
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-});
-
-
-const DoseRateLabels = doseRateArray.slice(-6)
-console.log("DoseRateLabels", DoseRateLabels);
-
+  const DoseRateLabels = doseRateArray.slice(-6)
+  console.log("DoseRateLabels", DoseRateLabels);
 
   // const handleFullscreen = () => {
   //   if (Platform.OS !== 'web') {
@@ -71,7 +60,7 @@ console.log("DoseRateLabels", DoseRateLabels);
           <Text>No data available</Text>
         ) : (
           <View>
-           
+
             <LineChart
               data={{
                 labels: TimeLabels,
@@ -153,7 +142,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: SPACING.md,
     borderRadius: 8,
-    width:205
+    width: 205
   },
   buttonText: {
     color: COLORS.white,

@@ -1,34 +1,48 @@
 import { View, Text, StyleSheet } from 'react-native';
 import React from 'react';
 import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../../Themes/theme';
+import { useMqttContext } from '@/Provider/MqttContext';
+
 
 type BatteryCardProps = {
-  chargeRemaining?: string;
-  batteryVoltage?: string;
-  chargingStatus?: string;
+
   isLastCard?: boolean;
 };
 
 export default function BatteryCard({
-  chargeRemaining = '50%',
-  batteryVoltage = '3.514 V',
-  chargingStatus = 'Not Charging',
+ 
   isLastCard = false,
 }: BatteryCardProps) {
+
+  const { batteryInfo } = useMqttContext();
+  console.log("batteryInfo", batteryInfo);
+  
   return (
     <View style={[CARD_STYLE.container, isLastCard && styles.lastCard]}>
       <Text style={TYPOGRAPHY.headLineSmall}>Battery</Text>
       <View style={styles.row}>
         <Text style={TYPOGRAPHY.bodyTextLarge}>Charge Remaining</Text>
-        <Text style={TYPOGRAPHY.bodyTextMedium}>{chargeRemaining}</Text>
+        <Text style={TYPOGRAPHY.bodyTextMedium}>{batteryInfo?.SOC} %</Text>
       </View>
       <View style={styles.row}>
         <Text style={TYPOGRAPHY.bodyTextLarge}>Battery Voltage</Text>
-        <Text style={TYPOGRAPHY.bodyTextMedium}>{batteryVoltage}</Text>
+        <Text style={TYPOGRAPHY.bodyTextMedium}>{batteryInfo?.Voltage}V</Text>
       </View>
       <View style={styles.row}>
         <Text style={TYPOGRAPHY.bodyTextLarge}>Charging Status</Text>
-        <Text style={TYPOGRAPHY.bodyTextMedium}>{chargingStatus}</Text>
+        <Text style={TYPOGRAPHY.bodyTextMedium}>{batteryInfo?.StatusCharging ? "Charging" : "Not Charging"}</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={TYPOGRAPHY.bodyTextLarge}>Charging  Voltage</Text>
+        <Text style={TYPOGRAPHY.bodyTextMedium}>{batteryInfo?.VoltageBUS} mV</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={TYPOGRAPHY.bodyTextLarge}>Charging Current</Text>
+        <Text style={TYPOGRAPHY.bodyTextMedium}>{batteryInfo?.ChargingCurrent}mA</Text>
+      </View>
+      <View style={styles.row}>
+        <Text style={TYPOGRAPHY.bodyTextLarge}>Battery Temperature</Text>
+        <Text style={TYPOGRAPHY.bodyTextMedium}>{batteryInfo?.Temperature} c</Text>
       </View>
     </View>
   );
