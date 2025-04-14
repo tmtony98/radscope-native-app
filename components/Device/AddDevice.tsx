@@ -2,13 +2,12 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native'
 import React, { useState } from 'react'
 import { COLORS, SPACING, TYPOGRAPHY, BUTTON_STYLE } from '../../Themes/theme'
 import StyledTextInput from '../common/StyledTextInput'
-import { useDeviceContext } from '../../Provider/DeviceContext'
 import { useRouter } from 'expo-router'
+import { AddDeviceProps } from './ConnectTab'
 
-const AddDevice = () => {
+const AddDevice: React.FC<AddDeviceProps> = ({ connectDevice, isConnecting }) => {
   const [deviceName, setDeviceName] = useState('')
   const [ipAddress, setIpAddress] = useState('')
-  const { connectDevice } = useDeviceContext()
   const router = useRouter()
 
   const handleConnect = async () => {
@@ -26,14 +25,14 @@ const AddDevice = () => {
     }
     
     try {
-      // Format the device to match our Device type in the context
+      // Format the device to match our Device type
       const device = {
         name: deviceName,
         host: ipAddress,
         isConnected: true
       }
       
-      // Connect the device using our context
+      // Connect the device using props
       await connectDevice(device)
       
       Alert.alert(
@@ -94,11 +93,21 @@ const AddDevice = () => {
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={[BUTTON_STYLE.mediumButton, {backgroundColor: COLORS.error}, {marginRight: SPACING.sm}]} onPress={handleCancel}>
+        <TouchableOpacity 
+          style={[BUTTON_STYLE.mediumButton, {backgroundColor: COLORS.error}, {marginRight: SPACING.sm}]} 
+          onPress={handleCancel}
+          disabled={isConnecting}
+        >
           <Text style={styles.cancelButtonText}>Cancel</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={BUTTON_STYLE.mediumButton} onPress={handleConnect}>
-          <Text style={styles.connectButtonText}>Connect</Text>
+        <TouchableOpacity 
+          style={BUTTON_STYLE.mediumButton} 
+          onPress={handleConnect}
+          disabled={isConnecting}
+        >
+          <Text style={styles.connectButtonText}>
+            {isConnecting ? 'Connecting...' : 'Connect'}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>

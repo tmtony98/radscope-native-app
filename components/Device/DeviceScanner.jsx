@@ -3,8 +3,6 @@ import { View, Text, FlatList, Platform , Pressable , StyleSheet, Alert, Activit
 import Zeroconf from 'react-native-zeroconf';
 import Button from '../Button';
 import { useRouter } from 'expo-router';
-import { useDeviceContext } from '../../Provider/DeviceContext';
-
 
 // Add these helper functions outside the component
 const stopScan = (zeroconfInstance, interval) => {
@@ -27,7 +25,7 @@ const stopScan = (zeroconfInstance, interval) => {
   }
 };
 
-const DeviceScanner = () => {
+const DeviceScanner = ({ connectDevice, isConnecting }) => {
   const [services, setServices] = useState([]);
   const [error, setError] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -36,7 +34,6 @@ const DeviceScanner = () => {
   const [scanInterval, setScanInterval] = useState(null);
 
   const router = useRouter();
-  const { connectDevice } = useDeviceContext();
 
   // Create zeroconf instance ONCE
   const zeroconfRef = React.useRef(new Zeroconf());
@@ -143,14 +140,14 @@ const DeviceScanner = () => {
         isConnected: true
       };
       
-      // Connect the device using our context
+      // Connect the device using our props
       await connectDevice(device);
       
       Alert.alert(
         'Device Connected',
         `Successfully connected to ${item.name || 'Unknown Device'}`,
         [
-          { text: 'OK' }
+          { text: 'OK', onPress: () => router.push('/') }
         ]
       );
     } catch (error) {

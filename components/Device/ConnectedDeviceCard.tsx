@@ -2,11 +2,18 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY, BUTTON_STYLE } from '../../Themes/theme';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useDeviceContext } from '../../Provider/DeviceContext';
 import { useRouter } from 'expo-router';
+import { Device } from './ConnectTab';
 
-const ConnectedDeviceCard = () => {
-  const { connectedDevice, disconnectDevice } = useDeviceContext();
+interface ConnectedDeviceCardProps {
+  connectedDevice: Device;
+  disconnectDevice: () => Promise<void>;
+}
+
+const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({ 
+  connectedDevice, 
+  disconnectDevice 
+}) => {
   const router = useRouter();
 
   if (!connectedDevice) return null;
@@ -22,7 +29,7 @@ const ConnectedDeviceCard = () => {
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <Text style={TYPOGRAPHY.headLineSmall}>Connected Devices</Text>
+        <Text style={[TYPOGRAPHY.headLineSmall, styles.headerText]}>Connected Devices</Text>
         <View style={styles.connectedBadge}>
           <Text style={styles.connectedText}>1 Connected</Text>
         </View>
@@ -34,7 +41,7 @@ const ConnectedDeviceCard = () => {
             <MaterialIcons name="devices" size={24} color={COLORS.primary} />
           </View>
           <View style={styles.deviceDetails}>
-            <Text style={TYPOGRAPHY.TitleMedium}>
+            <Text style={[TYPOGRAPHY.TitleMedium, styles.deviceName]}>
               {connectedDevice.name || 'Device Name'}
             </Text>
             <Text style={styles.deviceIp}>{connectedDevice.host}</Text>
@@ -48,7 +55,7 @@ const ConnectedDeviceCard = () => {
         </View>
 
         <TouchableOpacity 
-          style={BUTTON_STYLE.mediumButtonWithIconRight}
+          style={styles.viewDashboardButton}
           onPress={handleViewDashboard}
         >
           <Text style={styles.viewDashboardText}>View Dashboard</Text>
@@ -61,9 +68,9 @@ const ConnectedDeviceCard = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: SPACING.lg,
+    marginHorizontal: SPACING.md,
     marginTop: SPACING.md,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
   },
   headerContainer: {
     flexDirection: 'row',
@@ -71,7 +78,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: SPACING.xs,
   },
-
+  headerText: {
+    color: COLORS.text,
+  },
   connectedBadge: {
     backgroundColor: '#166907',
     paddingHorizontal: SPACING.sm,
@@ -106,7 +115,10 @@ const styles = StyleSheet.create({
   deviceDetails: {
     flex: 1,
   },
-
+  deviceName: {
+    color: COLORS.text,
+    fontSize: 16,
+  },
   deviceIp: {
     color: COLORS.textSecondary,
     fontSize: 14,
