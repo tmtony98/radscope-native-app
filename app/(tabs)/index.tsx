@@ -7,7 +7,6 @@ import Dashboard from "../../components/Dashboard/Dashboard";
 export default function Index( route: any  | null) {
   const { doseRate } = useMqttContext();
 
-  console.log("doseRate", doseRate);
   
   return (
     <View style={styles.container}>

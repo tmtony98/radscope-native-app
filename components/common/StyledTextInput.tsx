@@ -17,7 +17,7 @@ export const StyledTextInput = (props: StyledTextInputProps) => {
       onChangeText={props.onChangeText}
       placeholder={props.placeholder}
       activeOutlineColor={COLORS.primary} // Default active color
-      outlineColor={COLORS.text}      // Default inactive color
+      outlineColor={COLORS.border}      // Default inactive color
       style={[styles.input, props.style]} // Combine default styles with passed styles
       textColor={COLORS.text} // Default text color
       placeholderTextColor={COLORS.placeholder} // Use theme color for placeholder text
@@ -29,7 +29,9 @@ export const StyledTextInput = (props: StyledTextInputProps) => {
 
 const styles = StyleSheet.create({
   input: {
-    backgroundColor: COLORS.white
+    backgroundColor: COLORS.white,
+    borderRadius: 20, // Adjust this value to your desired border radius
+   
      // Default background
  // Default margin
     // Add other default base styles here if needed, e.g., height

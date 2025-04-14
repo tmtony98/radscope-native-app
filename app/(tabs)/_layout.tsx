@@ -35,7 +35,7 @@ export default function TabLayout() {
       options={{
         title: 'Home',
         tabBarIcon: ({ size, color }) => (
-          <Home size={30} color={color} />
+          <Home size={28} color={color} />
         ),
         
           
@@ -70,7 +70,7 @@ export default function TabLayout() {
       options={{
         title: 'Settings',
         tabBarIcon: ({ size, color }) => (
-          <Settings size={30} color={color} />
+          <Settings size={28} color={color} />
         ),
       }}
       />

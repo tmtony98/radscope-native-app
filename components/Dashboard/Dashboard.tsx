@@ -12,6 +12,7 @@ import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { BUTTON_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../../Themes/theme'; // Removed unused CARD_STYLE
 import StyledTextInput from '../common/StyledTextInput'; // Import the new component
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -27,7 +28,7 @@ const styles = StyleSheet.create({
   },
   bottomSheetContentContainer: {
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.lg,
+    paddingVertical: SPACING.sm,
     flex: 1,
   },
   bottomSheetTitle: {
@@ -41,7 +42,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     marginTop: SPACING.xl,
     marginBottom: SPACING.sm,
-    paddingBottom: SPACING.sm
+    paddingBottom: SPACING.sm,
+    // flex: 1,
+    
 
   },
   cancelButton: {
@@ -60,6 +63,7 @@ const styles = StyleSheet.create({
      ...BUTTON_STYLE.mediumButtonText,
     
    },
+  
 });
 
 export default function Dashboard() {
@@ -135,6 +139,7 @@ export default function Dashboard() {
             placeholder="Enter File Name"
             value={sessionName}
             onChangeText={setSessionName}
+           
           />
           <View style={styles.bottomSheetButtons}>
             <TouchableOpacity style={styles.cancelButton} onPress={closeBottomSheet}>
@@ -149,3 +154,4 @@ export default function Dashboard() {
     </GestureHandlerRootView>
   );
 }
+

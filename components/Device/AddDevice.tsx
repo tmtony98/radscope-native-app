@@ -1,17 +1,116 @@
-import { View, Text, StyleSheet } from 'react-native'
-import React from 'react'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import React, { useState } from 'react'
+import { COLORS, SPACING, TYPOGRAPHY, BUTTON_STYLE } from '../../Themes/theme'
+import StyledTextInput from '../common/StyledTextInput'
 
-export default function AddDevice() {
+const AddDevice = () => {
+  const [deviceName, setDeviceName] = useState('')
+  const [ipAddress, setIpAddress] = useState('')
+
+const handleConnect = async () => {
+    console.log('Connecting to device:', deviceName, 'IP:', ipAddress)
+    // Implement connection logic here
+  }
+
+  const handleCancel = () => {
+    setDeviceName('')
+    setIpAddress('')
+  }
+
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>AddDevice</Text>
+    <View style={styles.container}>
+      <Text style={[TYPOGRAPHY.headLineSmall, {textAlign: 'center' ,paddingVertical: SPACING.sm}]}>Connect Device</Text>
+      <Text style={styles.instructions}>
+        Find the IP address of the device to be connected by heading over to settings {'>'} network {'>'} Device Ip adress
+      </Text>
+
+      <View style={styles.inputContainer}>
+        {/* <Text style={styles.inputLabel}>Enter device name</Text> */}
+        <StyledTextInput
+          label="Enter Device Name"
+          placeholder="Enter Device name"
+          value={deviceName}
+          onChangeText={setDeviceName}
+          style={styles.input}
+        /> 
+      </View>
+      <View style={styles.inputContainer}>
+        {/* <Text style={styles.inputLabel}>Enter IP address</Text> */}
+        <StyledTextInput
+          label="Enter IP Address"
+          placeholder="Enter IP Address"
+          value={ipAddress}
+          onChangeText={setIpAddress}
+          style={styles.input}
+          keyboardType="numeric"
+        />
+      </View>
+
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity style={[BUTTON_STYLE.mediumButton, {backgroundColor: COLORS.error}, {marginRight: SPACING.sm}]} onPress={handleCancel}>
+          <Text style={styles.cancelButtonText}>Cancel</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={BUTTON_STYLE.mediumButton} onPress={handleConnect}>
+          <Text style={styles.connectButtonText}>Connect</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   )
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    padding: SPACING.md,
+    backgroundColor: COLORS.background,
+  },
+  title: {
+    ...TYPOGRAPHY.headLineMedium,
+    marginBottom: SPACING.md,
+    color: COLORS.text,
+    textAlign: 'center',
+  },
+  instructions: {
+    ...TYPOGRAPHY.bodyTextMedium,
+    marginBottom: SPACING.md,
+    textAlign: 'left',
+    color: COLORS.text,
+  },
+  inputContainer: {
+    marginBottom: SPACING.md,
+  },
+  inputLabel: {
+    ...TYPOGRAPHY.smallText,
+    marginBottom: SPACING.xs,
+    textAlign: 'left',
+    color: COLORS.text,
+  },
+  input: {
+    backgroundColor: COLORS.white,
+    height: 50,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: SPACING.md,
+  },
+  cancelButton: {
+    ...BUTTON_STYLE.mediumButton,
+    flex: 1,
+    marginRight: SPACING.md,
+    backgroundColor: COLORS.error,
+  },
+  cancelButtonText: {
+    ...BUTTON_STYLE.mediumButtonText,
+    color: COLORS.white,
+  },
+  connectButton: {
+    ...BUTTON_STYLE.mediumButton,
+    flex: 1,
+  },
+  connectButtonText: {
+    ...BUTTON_STYLE.mediumButtonText,
   },
 });
+
+export default AddDevice
