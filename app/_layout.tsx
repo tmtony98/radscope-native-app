@@ -10,6 +10,7 @@ import {
 } from '@expo-google-fonts/poppins';
 import { SplashScreen } from 'expo-router';
 import { MqttProvider } from '../Provider/MqttContext';
+import { DeviceProvider } from '../Provider/DeviceContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 export default function RootLayout() {
@@ -34,15 +35,16 @@ export default function RootLayout() {
 
   return (
     <MqttProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}> 
-         <View style={{ flex: 1 }}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="spectrum-settings" options={{ headerShown: false }} />
-          <Stack.Screen name="+not-found" />
-        </Stack>
-      </View>  </GestureHandlerRootView>
-     
+      <DeviceProvider>
+        <GestureHandlerRootView style={{ flex: 1 }}> 
+           <View style={{ flex: 1 }}>
+          <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="spectrum-settings" options={{ headerShown: false }} />
+            <Stack.Screen name="+not-found" />
+          </Stack>
+        </View>  </GestureHandlerRootView>
+      </DeviceProvider>
     </MqttProvider>
   );
 }

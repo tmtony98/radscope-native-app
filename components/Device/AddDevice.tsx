@@ -1,15 +1,62 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native'
 import React, { useState } from 'react'
 import { COLORS, SPACING, TYPOGRAPHY, BUTTON_STYLE } from '../../Themes/theme'
 import StyledTextInput from '../common/StyledTextInput'
+import { useDeviceContext } from '../../Provider/DeviceContext'
+import { useRouter } from 'expo-router'
 
 const AddDevice = () => {
   const [deviceName, setDeviceName] = useState('')
   const [ipAddress, setIpAddress] = useState('')
+  const { connectDevice } = useDeviceContext()
+  const router = useRouter()
 
-const handleConnect = async () => {
+  const handleConnect = async () => {
     console.log('Connecting to device:', deviceName, 'IP:', ipAddress)
-    // Implement connection logic here
+    
+    // Validate inputs
+    if (!deviceName.trim()) {
+      Alert.alert('Error', 'Please enter a device name')
+      return
+    }
+
+    if (!ipAddress.trim()) {
+      Alert.alert('Error', 'Please enter an IP address')
+      return
+    }
+    
+    try {
+      // Format the device to match our Device type in the context
+      const device = {
+        name: deviceName,
+        host: ipAddress,
+        isConnected: true
+      }
+      
+      // Connect the device using our context
+      await connectDevice(device)
+      
+      Alert.alert(
+        'Device Connected',
+        `Successfully connected to ${deviceName}`,
+        [
+          { 
+            text: 'OK', 
+            onPress: () => router.push('/') // Navigate to the index page
+          }
+        ]
+      )
+      
+      // Clear inputs
+      handleCancel()
+    } catch (error) {
+      console.error('Failed to connect device:', error)
+      Alert.alert(
+        'Connection Failed',
+        'There was an error connecting to the device. Please try again.',
+        [{ text: 'OK' }]
+      )
+    }
   }
 
   const handleCancel = () => {

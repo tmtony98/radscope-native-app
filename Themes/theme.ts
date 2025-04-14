@@ -107,11 +107,11 @@ export const BUTTON_STYLE = StyleSheet.create({
   },
   mediumButtonWithIconRight: {
     backgroundColor: COLORS.buttonPrimary,
-    paddingVertical: 18,
+    paddingVertical: 10,
     paddingLeft: 25, // 25px padding left
     paddingRight: 25, // 25px padding right
     borderRadius: 12,
-    height: 49,
+    // height: 49,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',

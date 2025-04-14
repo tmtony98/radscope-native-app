@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Platform , Pressable , StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import Zeroconf from 'react-native-zeroconf';
 import Button from '../Button';
-import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
+import { useDeviceContext } from '../../Provider/DeviceContext';
 
 
 // Add these helper functions outside the component
@@ -34,7 +35,8 @@ const DeviceScanner = () => {
   const [buttonText, setButtonText] = useState("Start Scan");
   const [scanInterval, setScanInterval] = useState(null);
 
-  const navigation = useNavigation();
+  const router = useRouter();
+  const { connectDevice } = useDeviceContext();
 
   // Create zeroconf instance ONCE
   const zeroconfRef = React.useRef(new Zeroconf());
@@ -129,17 +131,38 @@ const DeviceScanner = () => {
     }
   };
 
-  const handleConnect = (item) => {
+  const handleConnect = async (item) => {
     console.log('Connecting to:', item);
-    Alert.alert(
-      'Device Connected',
-      `Successfully connected to ${item.name || 'Unknown Device'}`,
-      [
-        { text: 'OK', onPress: () => console.log('OK Pressed') }
-      ]
-    );
-    navigation.navigate('(tabs)', { screen: 'index'  })
+    try {
+      // Format the device to match our Device type in the context
+      const device = {
+        name: item.name || 'Unknown Device',
+        host: item.host || '',
+        port: item.port || '',
+        type: item.type || '',
+        isConnected: true
+      };
+      
+      // Connect the device using our context
+      await connectDevice(device);
+      
+      Alert.alert(
+        'Device Connected',
+        `Successfully connected to ${item.name || 'Unknown Device'}`,
+        [
+          { text: 'OK' }
+        ]
+      );
+    } catch (error) {
+      console.error('Failed to connect device:', error);
+      Alert.alert(
+        'Connection Failed',
+        'There was an error connecting to the device. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
   };
+
   // Mock data for testing
   const mockServices = [
     { name: 'Test Service 1', type: 'http', host: 'localhost', port: 8080 },
@@ -197,7 +220,7 @@ const DeviceScanner = () => {
                   <ActivityIndicator size="small" color="#007AFF" />
                 </View>
               ) : (
-                'Discovered Devices'
+                'Available Devices'
               )}
             </Text>
             
@@ -210,14 +233,18 @@ const DeviceScanner = () => {
                   marginVertical: 5,
                   backgroundColor: '#f5f5f5',
                   borderRadius: 12,
-                  borderWidth: 1, // Add 1px border
-                 borderColor: '#BDC5D1', // Set border col
+                  borderWidth: 1,
+                  borderColor: '#BDC5D1',
                   flexDirection: 'row',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                 }}>
-                  <View>
-                    <Text style={{ fontWeight: 'bold' }}>{item.name || 'Unknown'}</Text>
+                  <View style={{ flex: 0.7 }}>
+                    <Text style={{ 
+                      fontWeight: 'bold',
+                      flexWrap: 'wrap',
+                      width: '100%'
+                    }}>{item.name || 'Unknown'}</Text>
                     <Text>Type: {item.type || 'N/A'}</Text>
                     <Text>Host: {item.host || 'N/A'}</Text>
                     <Text>Port: {item.port || 'N/A'}</Text>
