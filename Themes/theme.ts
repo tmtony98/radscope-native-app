@@ -11,7 +11,8 @@ export const COLORS = {
   error: '#E62B2B',
   card: '#ffffff',
   border: '#BDC5D1',
-  buttonPrimary: '#31435E'
+  buttonPrimary: '#31435E',
+  placeholder: '#727272'
 };
 
 export const SPACING = {
@@ -19,7 +20,8 @@ export const SPACING = {
   sm: 8,
   md: 16,
   lg: 20,
-  xl: 32
+  xl: 32,
+  xxl: 40
 };
 
 export const CARD_STYLE = StyleSheet.create({
@@ -84,10 +86,10 @@ export const BUTTON_STYLE = StyleSheet.create({
   // Medium Button Styles
   mediumButton: {
     backgroundColor: COLORS.buttonPrimary,
-    paddingVertical: 18, // 18px padding top/bottom as per style guide
+    paddingVertical: 12, // 18px padding top/bottom as per style guide
     paddingHorizontal: 25, // 25px padding left/right as per style guide
     borderRadius: 12, // 12px border radius as per style guide
-    height: 49, // 49px height as per style guide
+    // height: 50, // 49px height as per style guide
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -116,10 +118,11 @@ export const BUTTON_STYLE = StyleSheet.create({
   },
   mediumButtonText: {
     fontFamily: 'Poppins-Medium',
-    fontSize: 16, // 16px font size as per style guide
+    fontSize: 18, // 16px font size as per style guide
     lineHeight: 24,
     textAlign: 'center',
     color: COLORS.secondary,
+    maxHeight:24
   },
   mediumButtonIconLeft: {
     marginRight: 6, // 6px spacing between icon and text

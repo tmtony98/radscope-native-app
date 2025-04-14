@@ -103,7 +103,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const extractSensorData = (messages: Message[]) => {
     try {
-      if (!messages || !messages.length) return { doseRate: 0, cps: 0, timestamp: 0 };
+      if (!messages || !messages.length) return { doseRate: 0, cps: 0, timestamp: 0 , gps: null , batteryInfo: null};
       const latestMessage = messages[0];
       console.log("latestMessage", latestMessage);
       const parsedData = JSON.parse(typeof latestMessage.payload === 'string' 
