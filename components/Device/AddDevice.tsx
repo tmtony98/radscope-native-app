@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import { COLORS, SPACING, TYPOGRAPHY, BUTTON_STYLE } from '../../Themes/theme'
 import StyledTextInput from '../common/StyledTextInput'
 import { useRouter } from 'expo-router'
-import { AddDeviceProps } from './ConnectTab'
+import { AddDeviceProps } from './TopbarConnectTab'
 
 const AddDevice: React.FC<AddDeviceProps> = ({ connectDevice, isConnecting }) => {
   const [deviceName, setDeviceName] = useState('')
