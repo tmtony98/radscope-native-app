@@ -4,6 +4,7 @@ import { COLORS, TYPOGRAPHY, SPACING } from '../Themes/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
+
 type props = {
   title: string;
   showBackButton?: boolean;
@@ -28,8 +29,8 @@ export default function Header({ title, showBackButton = false }: props) {
             <Ionicons name="chevron-back" size={24} color={COLORS.primary} />
           </TouchableOpacity>
         )}
-        <Text style={[TYPOGRAPHY.headLineMedium, { color: COLORS.text }]}>{title}</Text>
-        {showBackButton && <View style={styles.placeholderRight} />}
+        <Text style={TYPOGRAPHY.headLineMedium}>{title}</Text>
+        {/* {showBackButton && <View style={styles.placeholderRight} />} */}
       </View>
     </SafeAreaView>
   )
@@ -38,12 +39,9 @@ export default function Header({ title, showBackButton = false }: props) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.white,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    borderStyle: 'solid',
   },
   header: {
-    height: 75,  // Adjust height as needed
+    height: 60,  // Adjust height as needed
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
@@ -54,9 +52,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: SPACING.md,
     zIndex: 10,
-    padding: SPACING.xs,
+    // padding: SPACING.xs,
   },
-  placeholderRight: {
-    width: 40,  // Same width as back button for balance
-  },
+  // placeholderRight: {
+  //   width: 40,  // Same width as back button for balance
+  // },
 });

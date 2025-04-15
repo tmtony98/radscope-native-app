@@ -2,6 +2,9 @@ import React, { createContext, useContext, useEffect, useRef, useState } from 'r
 import mqtt from 'precompiled-mqtt';
 import { Message, ConnectionStatus , GpsData, BatteryData } from '../Types';
 import 'react-native-url-polyfill/auto';
+import database from '../index.native';
+import Doserate from '../model/Doserate';
+
 
 // MQTT Configuration
 const BROKER_URL = 'ws://192.168.29.39:8083';
@@ -49,57 +52,11 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [gps, setGps] = useState< GpsData | null>(null);
   const [batteryInfo, setBatteryInfo] = useState <BatteryData | null>(null);
 
-  // Function to extract dose rate from messages
-  // const getDoserate = (data: Message[]) => {
-  //   try {
-  //     if (!data || !data.length) return 0;
-  //     const latestMessage = data[0];
-  //     const parsedData = JSON.parse(typeof latestMessage.payload === 'string' ? latestMessage.payload : latestMessage.payload.toString());
-  //     if (parsedData?.data?.Sensor?.doserate?.value !== undefined) {
-  //       setDoseRateArray((prevArray) => [...prevArray, parsedData.data.Sensor.doserate.value]);
-  //       return parsedData.data.Sensor.doserate.value;
-  //     }
-      
-  //     return 0;
-  //   } catch (error) {
-  //     console.error("Error extracting doserate value:", error);
-  //     return 0;
-  //   }
-  // };
+ 
 
  
 
-  // const getCps = (data: Message[]) => {
-  //   try {
-  //     if (!data || !data.length) return 0;
-  //     const latestMessage = data[0];
-  //     const parsedData = JSON.parse(typeof latestMessage.payload === 'string' ? latestMessage.payload : latestMessage.payload.toString());
-  //     if (parsedData?.data?.Sensor?.doserate?.cps !== undefined) {
-  //       return parsedData.data.Sensor.doserate.cps;
-  //     }
-      
-  //     return 0;
-  //   } catch (error) {
-  //     console.error("Error extracting cps value:", error);  
-  //     return 0;
-  //   }
-  // };
 
-  // const getTimestamp = (data: Message[]) => {
-  //   try {
-  //     if (!data || !data.length) return 0;
-  //     const latestMessage = data[0];
-  //     const parsedData = JSON.parse(typeof latestMessage.payload === 'string' ? latestMessage.payload : latestMessage.payload.toString());
-  //     if (parsedData?.data?.Sensor?.timestamp !== undefined) {
-  //       return parsedData.data.Sensor.timestamp;
-  //     }
-      
-  //     return 0;
-  //   } catch (error) {
-  //     console.error("Error extracting timestamp value:", error);
-  //     return 0;
-  //   }
-  // } 
 
   const extractSensorData = (messages: Message[]) => {
     try {
@@ -124,6 +81,19 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { doseRate: 0, cps: 0, timestamp: 0 };
     }
   }
+
+
+ const saveDoserate = async (doserate: number, cps: number, createdAt: number) => {
+  const newRecord = await database.write(async () => {
+     return  await database.get('doserate').create(record => {
+      (record as Doserate).doserate = doserate;
+      (record as Doserate).cps = cps;
+      (record as Doserate).createdAt = createdAt;
+    });
+  });
+  console.log('✅ Data saved:', newRecord)
+ };   
+
 
 
   //Connect to MQTT broker
@@ -196,6 +166,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
     connectMqtt();
+    
     // Cleanup function
     return () => {
       if (clientRef.current) {
@@ -217,6 +188,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setBatteryInfo(batteryInfo);
       setDoseRateArray(prev => [...prev, doseRate]);
       setTimestampArray(prev => [...prev, timestamp]);
+      saveDoserate(doseRate, cps, timestamp);
     }
   }, [messages]);
 
@@ -230,7 +202,8 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
     doseRateArray,
     timestampArray,
     gps,
-    batteryInfo
+    batteryInfo,
+    
   };
 
   console.log("doseRate", doseRate);

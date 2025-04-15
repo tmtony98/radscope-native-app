@@ -119,17 +119,7 @@ export default function DoseHistory() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <Surface style={styles.header} elevation={0}>
-        <IconButton
-          icon="arrow-back"
-          iconColor="#31435E"
-          size={24}
-          onPress={() => router.back()}
-          style={styles.backButton}
-        />
-        <Text variant="titleLarge" style={styles.headerTitle}>Dose Graph History</Text>
-        <View style={styles.placeholder} />
-      </Surface>
+      
 
       {/* Content */}
       <ScrollView style={styles.content}>

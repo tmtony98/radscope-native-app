@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../Themes/theme';
 import { SegmentedButtons } from 'react-native-paper';
-
+import Header from '@/components/Header';
 export default function SpectrumSettings() {
   const router = useRouter();
   
@@ -17,16 +17,14 @@ export default function SpectrumSettings() {
   const [smoothingPoints, setSmoothingPoints] = useState(50);
   
   return (
+    <View style={{flex:1}}>
+    <Header title="Spectrum Settings"  showBackButton={true} />
     <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={[TYPOGRAPHY.headLineMedium, styles.headerTitle]}>Spectrum Settings</Text>
-        <TouchableOpacity onPress={() => {/* Save logic */}}>
-          <Text style={styles.saveButtonText}>Save</Text>
-        </TouchableOpacity>
-      </View>
+
+   
+       
+
+
       
       <View style={CARD_STYLE.container}>
         <Text style={[TYPOGRAPHY.headLineSmall, styles.sectionTitle]}>Enable Energy Axis</Text>
@@ -112,6 +110,7 @@ export default function SpectrumSettings() {
         </View>
       </View>
     </ScrollView>
+    </View>
   );
 }
 
@@ -121,18 +120,18 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
     padding: SPACING.md,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: SPACING.lg,
-    paddingVertical: 16,
-    backgroundColor: '#F8FAFC',
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    height: 70,
-  },
+  // header: {
+  //   flexDirection: 'row',
+  //   alignItems: 'center',
+  //   justifyContent: 'space-between',
+  //   marginBottom: SPACING.lg,
+  //   paddingVertical: 16,
+  //   backgroundColor: '#F8FAFC',
+  //   paddingHorizontal: 16,
+  //   borderBottomWidth: 1,
+  //   borderBottomColor: '#E5E7EB',
+  //   height: 70,
+  // },
   headerTitle: {
     flex: 2,
     textAlign: 'center',

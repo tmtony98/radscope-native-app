@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
 import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../../Themes/theme';
 import * as SecureStore from 'expo-secure-store';
-
+import Header from '@/components/Header';
 
 //gener
 
@@ -96,10 +96,17 @@ export default function Settings() {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={TYPOGRAPHY.headLineMedium}>Settings</Text>
+    
 
+
+    <View style={{flex:1}}>  <Header title="General Settings" />
+    
+    <View style={styles.container}>
+      
+      {/* <Text style={TYPOGRAPHY.headLineMedium}>Settings</Text> */}
+     
       <View style={CARD_STYLE.container}>
+        
         <Text style={TYPOGRAPHY.headLineSmall}>Discovery Type</Text>
         
         {/* Custom segmented button */}
@@ -185,6 +192,9 @@ export default function Settings() {
         <Text style={styles.saveButtonText}>Save All Settings</Text>
       </TouchableOpacity> */}
     </View>
+    
+    </View>
+   
   );
 }
 

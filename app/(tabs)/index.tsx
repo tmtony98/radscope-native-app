@@ -3,6 +3,7 @@ import App from "@/App";
 import { useMqttContext } from "@/Provider/MqttContext";
 import { useEffect, useState } from "react";
 import Dashboard from "../../components/Dashboard/Dashboard";
+import Header from "@/components/Header";
 
 export default function Index( route: any  | null) {
   const { doseRate } = useMqttContext();
@@ -10,6 +11,7 @@ export default function Index( route: any  | null) {
   
   return (
     <View style={styles.container}>
+      <Header title="Dashboard" />
      <Dashboard />
     
     </View>
