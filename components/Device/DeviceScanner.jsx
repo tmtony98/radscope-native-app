@@ -147,7 +147,7 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
         'Device Connected',
         `Successfully connected to ${item.name || 'Unknown Device'}`,
         [
-          { text: 'OK', onPress: () => router.push('/') }
+          { text: 'OK' }
         ]
       );
     } catch (error) {
@@ -210,16 +210,16 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
           
           {/* Always show discovered devices section */}
           <View style={styles.devicesContainer}>
-            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
-              {isScanning && !isRefreshing ? (
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <Text>Scanning </Text>
-                  <ActivityIndicator size="small" color="#007AFF" />
-                </View>
-              ) : (
-                'Available Devices'
-              )}
-            </Text>
+            {isScanning && !isRefreshing ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Scanning </Text>
+                <ActivityIndicator size="small" color="#007AFF" />
+              </View>
+            ) : (
+              <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
+                Available Devices
+              </Text>
+            )}
             
             <FlatList
               data={Platform.OS === 'web' ? mockServices : uniqueServices}
