@@ -1,12 +1,29 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView } from 'react-native';
-
+import { Dropdown } from 'react-native-element-dropdown';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../Themes/theme';
 import { SegmentedButtons } from 'react-native-paper';
 import Header from '@/components/Header';
+
+
+
+
+
+
+const data = [
+  { label: 'Item 1', value: '1' },
+  { label: 'Item 2', value: '2' },
+  { label: 'Item 3', value: '3' },
+  
+];
+
+
+
+
+
 export default function SpectrumSettings() {
   const router = useRouter();
   
@@ -15,17 +32,26 @@ export default function SpectrumSettings() {
   const [yAxisScaleType, setYAxisScaleType] = useState('Smoothy');
   const [sma, setSma] = useState(false);
   const [smoothingPoints, setSmoothingPoints] = useState(50);
+
+
+  const [value, setValue] = useState(null);
+    const [isFocus, setIsFocus] = useState(false)
+
+    const renderLabel = () => {
+      if (value || isFocus) {
+        return (
+          <Text style={[styles.label, isFocus && { color: 'blue' }]}>
+            Dropdown label
+          </Text>
+        );
+      }
+      return null;
+    };
   
   return (
     <View style={{flex:1}}>
     <Header title="Spectrum Settings"  showBackButton={true} />
     <ScrollView style={styles.container}>
-
-   
-       
-
-
-      
       <View style={CARD_STYLE.container}>
         <Text style={[TYPOGRAPHY.headLineSmall, styles.sectionTitle]}>Enable Energy Axis</Text>
         <View style={styles.segmentedContainer}>

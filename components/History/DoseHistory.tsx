@@ -22,10 +22,13 @@ export default function DoseHistory() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [datePickerVisible, setDatePickerVisible] = useState(false);
   const [timePickerVisible, setTimePickerVisible] = useState(false);
-  const [mode, setMode] = useState<'date' | 'time'>('date');
+  const [mode, setMode] = useState <'date' | 'time'> ('date');
   const [formattedDateTime, setFormattedDateTime] = useState('');
 
-  // Format the date for display
+  console.log("selectedDate", selectedDate.toString());
+  console.log("selectedDate ISO", selectedDate.toISOString());
+
+  //Format the date for display
   const formatDate = (date: Date): string => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -67,6 +70,8 @@ export default function DoseHistory() {
   const onDateChange = (event: any, selectedDate?: Date) => {
     const currentDate = selectedDate || new Date();
     setSelectedDate(currentDate);
+
+    console.log("currentDate", currentDate);
     setDatePickerVisible(false);
     
     // After date is selected, show time picker
@@ -110,7 +115,7 @@ export default function DoseHistory() {
         params: {
           date: updatedDateTime.toLocaleDateString(),
           startTime: formatTime(updatedDateTime),
-          endTime: formatTime(updatedDateTime)
+          // endTime: formatTime(updatedDateTime)
         }
       });
     }, 500);
@@ -123,7 +128,7 @@ export default function DoseHistory() {
 
       {/* Content */}
       <ScrollView style={styles.content}>
-        <Card style={styles.card} elevation={0}>
+        <Card style={styles.card}>
           <Card.Content>
             <View style={styles.datePickerContainer}>
               <Text variant="bodyLarge" style={styles.datePickerLabel}>Select Date:</Text>
@@ -174,7 +179,7 @@ export default function DoseHistory() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF', // White background instead of pinkish
+    backgroundColor: COLORS.background, // White background instead of pinkish
   },
   header: {
     flexDirection: 'row',
@@ -238,7 +243,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderStyle: 'dashed',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: COLORS.border,
     borderRadius: 8,
   },
   emptyStateText: {

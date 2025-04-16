@@ -11,7 +11,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { BUTTON_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../../Themes/theme'; // Removed unused CARD_STYLE
 import StyledTextInput from '../common/StyledTextInput'; // Import the new component
-
+import EnhancedDoseRateCard from '../../HOC/EnhancedDoseRateCard';
 
 const styles = StyleSheet.create({
   container: {
@@ -106,7 +106,8 @@ export default function Dashboard() {
     <GestureHandlerRootView style={styles.rootView}> 
       <ScrollView style={styles.container}>
         <DeviceDetailsCard />
-        <DoseRateCard />
+        <EnhancedDoseRateCard />
+        {/* <DoseRateCard /> */}
         <DoseRateGraph 
           onGetHistory={handleGetHistory}
         />

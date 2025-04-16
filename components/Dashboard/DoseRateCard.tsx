@@ -1,34 +1,66 @@
 import { View, Text, StyleSheet } from 'react-native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../../Themes/theme';
 import { useMqttContext } from '../../Provider/MqttContext';
+import database from '@/index.native';
+import { withObservables } from '@nozbe/watermelondb/react';
+import Doserate from '@/model/Doserate';
+import { Q } from '@nozbe/watermelondb';
 
-export default function DoseRateCard() {
-  const { doseRate, status, cps } = useMqttContext();
+type DoseRateCardProps = {
+  latestDoserate?: Doserate[] | null;
+};
+
+const DoseRateCard: React.FC<DoseRateCardProps> = ({ latestDoserate }) => {
+  const { status, cps, doseRate } = useMqttContext();
+  console.log("latestDoserate", latestDoserate);
   console.log("doseRate", doseRate);
+
+  useEffect(() => {
+    const fetchRows = async () => {
+      const allRows = await database.get('doserate').query(Q.sortBy('createdAt', Q.desc)).fetch();
+      console.log('allRows', allRows);
+    };
+    fetchRows();
+  }, []);
+
+  const xyz = database.get('doserate').query(Q.sortBy('doserate', Q.desc)).fetch();
+  console.log("xyz", xyz);
   
+
+  // Use the most recent doserate from DB, or fallback to context value
+  const doseValue =
+    latestDoserate && latestDoserate.length > 0
+      ? latestDoserate[0].doserate
+      : doseRate;
+
   return (
     <View style={CARD_STYLE.container}>
       <Text style={TYPOGRAPHY.headLineSmall}>Dose Rate</Text>
       <View style={styles.doseRateContainer}>
         <View style={styles.doseRate}>
-          <Text style={styles.doseValue}>{doseRate}</Text>
+          <Text style={styles.doseValue}>{doseValue}</Text>
           <Text style={styles.doseUnit}>uSv/h</Text>
         </View>
         <View style={styles.cpsContainer}>
-          <Text > cps value</Text>
-          <Text > {cps}</Text>
+          <Text>cps value</Text>
+          <Text>{cps}</Text>
         </View>
       </View>
       <View style={styles.mqttStatus}>
         <Text style={TYPOGRAPHY.bodyTextMedium}>MQTT Connection</Text>
-        <View style={[styles.statusIndicator, { backgroundColor: status.connected ? COLORS.success : COLORS.error }]}>
+        <View
+          style={[
+            styles.statusIndicator,
+            { backgroundColor: status.connected ? COLORS.success : COLORS.error },
+          ]}
+        >
           <Text style={styles.statusText}>{status.connected ? 'ON' : 'OFF'}</Text>
         </View>
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   doseRate: {
@@ -40,7 +72,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    
   },
   cpsContainer: {
     flexDirection: 'column',
@@ -76,3 +107,5 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
 });
+
+export default DoseRateCard;

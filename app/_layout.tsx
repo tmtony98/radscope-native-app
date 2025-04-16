@@ -41,7 +41,10 @@ export default function RootLayout() {
           <Stack>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen name="spectrum-settings" options={{ headerShown: false }} />
+            <Stack.Screen name="dose-history" options={{ headerShown: false }} />
+            <Stack.Screen name="dose-history-view" options={{ headerShown: false }} />
             <Stack.Screen name="+not-found" />
+
           </Stack>
         </View>  </GestureHandlerRootView>
       </DeviceProvider>

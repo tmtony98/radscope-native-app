@@ -11,6 +11,9 @@ import {
   MD3Colors,
 } from 'react-native-paper'
 import { LineChart } from 'react-native-chart-kit'
+import { Q } from '@nozbe/watermelondb'
+import database from '@/index.native'
+
 
 type DoseHistoryViewProps = {
   date?: string;
@@ -19,13 +22,43 @@ type DoseHistoryViewProps = {
   selectedDateTime?: Date;
 }
 
+
+
+const getDoseRateArray = async (startDate: Date) => {
+  const startTimestamp = startDate.getTime(); // milliseconds
+  const endTimestamp = Date.now()
+
+  const doseRateArray = await database
+    .get('doserate')
+    .query(
+      Q.where('createdAt', Q.gte(startTimestamp)),
+      Q.where('createdAt', Q.lte(endTimestamp)),
+      Q.sortBy('createdAt', Q.desc)
+    )
+    .fetch();
+    console.log(
+      "graphArray:", doseRateArray,
+      "nstartDate:", startDate.toLocaleString(),
+      "\nendDate:", new Date(endTimestamp).toLocaleString()
+    );
+    
+  return doseRateArray;
+}
+
+getDoseRateArray(new Date());
+
+
+// const doseRateArray = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+// const timestampArray = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
 export default function DoseHistoryView({ 
-  date = '4/27/2024', 
-  startTime = '11:30 AM', 
-  endTime = '11:30 AM', 
-  selectedDateTime = new Date()
+  date ,
+  startTime,
+  // endTime , 
+  
 }: DoseHistoryViewProps) {
   const router = useRouter();
+  console.log("startTime", startTime);
   
   // Mock data for the graph
   const graphData = {
@@ -54,21 +87,21 @@ export default function DoseHistoryView({
   };
   
   // Format date as shown in the UI
-  const formatSelectedDate = () => {
-    const formattedDate = selectedDateTime.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
+  // const formatSelectedDate = () => {
+  //   const formattedDate = selectedDateTime.toLocaleDateString('en-US', {
+  //     month: 'short',
+  //     day: 'numeric',
+  //     year: 'numeric'
+  //   });
     
-    const formattedTime = selectedDateTime.toLocaleTimeString('en-US', {
-      hour: 'numeric', 
-      minute: '2-digit',
-      hour12: true
-    });
+  //   const formattedTime = selectedDateTime.toLocaleTimeString('en-US', {
+  //     hour: 'numeric', 
+  //     minute: '2-digit',
+  //     hour12: true
+  //   });
     
-    return `${formattedTime}`;
-  };
+  //   return `${formattedTime}`;
+  // };
 
   return (
     <ScrollView style={styles.container}>
@@ -94,7 +127,56 @@ export default function DoseHistoryView({
       </Card>
       
       {/* Dose Rate Graph */}
-      <Card style={styles.card} elevation={0}>
+
+      {/* <View style={styles.chartPlaceholder}>
+        {doseRateArray.length === 0 || timestampArray.length === 0 ? (
+          <Text>No data available</Text>
+        ) : (
+          <View>
+
+            <LineChart
+              data={{
+                labels: TimeLabels,
+                datasets: [
+                  {
+                    data: DoseRateLabels
+                  }
+                ]
+              }}
+              width={Dimensions.get("window").width - 60}
+              height={220}
+              yAxisLabel=""
+              yAxisSuffix=""
+              yAxisInterval={1}
+              chartConfig={{
+                backgroundColor: "#ffffff",
+                backgroundGradientFrom: "#ffffff",
+                backgroundGradientTo: "#ffffff",
+                decimalPlaces: 2,
+                color: (opacity = 1) => `rgba(14, 23, 37, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                style: {
+                  borderRadius: 16
+                },
+                propsForDots: {
+                  r: "6",
+                  strokeWidth: "2",
+                  stroke: "#ffa726"
+                }
+              }}
+              bezier
+              style={{
+                marginVertical: 0,
+                borderRadius: 10,
+              }}
+            />
+          </View>
+        )}
+      </View> */}
+
+
+
+      {/* <Card style={styles.card} elevation={0}>
         <Card.Content>
           <Text variant="titleMedium" style={styles.sectionTitle}>Dose Rate</Text>
           <View style={styles.graphContainer}>
@@ -130,7 +212,8 @@ export default function DoseHistoryView({
           </View>
           <Text style={styles.graphSubtitle}>Dose Rate (µSv/h) vs Time (HH:MM:SS)</Text>
         </Card.Content>
-      </Card>
+      </Card> */}
+
       
       {/* Graph Parameters */}
       <Card style={styles.card} elevation={0}>
@@ -164,7 +247,7 @@ export default function DoseHistoryView({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F7F7',
+    backgroundColor: COLORS.background, 
   },
   header: {
     flexDirection: 'row',
@@ -250,4 +333,16 @@ const styles = StyleSheet.create({
   divider: {
     backgroundColor: '#E5E5E5',
   },
+  chartPlaceholder: {
+    height: 250,
+    backgroundColor: COLORS.white,
+    borderRadius: 8,
+    marginVertical: SPACING.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    // borderWidth: 1,
+    // borderColor: COLORS.border,
+    // borderStyle: 'solid',
+  },
+  
 });
