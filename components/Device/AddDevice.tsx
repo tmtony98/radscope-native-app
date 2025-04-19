@@ -11,7 +11,7 @@ const AddDevice: React.FC<AddDeviceProps> = ({ connectDevice, isConnecting }) =>
   const router = useRouter()
 
   const handleConnect = async () => {
-    console.log('Connecting to device:', deviceName, 'IP:', ipAddress)
+    // console.log('Connecting to device:', deviceName, 'IP:', ipAddress)
     
     // Validate inputs
     if (!deviceName.trim()) {

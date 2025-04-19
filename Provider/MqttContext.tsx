@@ -7,7 +7,7 @@ import Doserate from '../model/Doserate';
 
 
 // MQTT Configuration
-const BROKER_URL = 'ws://192.168.29.39:8083';
+const BROKER_URL = 'ws://192.168.74.213:8083';
 const TOPIC = 'Demo_Topic';
 const CLIENT_ID = `mqtt-client-${Math.random().toString(16).substr(2, 8)}`;
 
@@ -62,7 +62,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       if (!messages || !messages.length) return { doseRate: 0, cps: 0, timestamp: 0 , gps: null , batteryInfo: null};
       const latestMessage = messages[0];
-      console.log("latestMessage", latestMessage);
+      // console.log("latestMessage", latestMessage);
       const parsedData = JSON.parse(typeof latestMessage.payload === 'string' 
         ? latestMessage.payload 
         : latestMessage.payload.toString());
@@ -73,7 +73,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const gps = parsedData?.data?.GPS ?? null;
       const batteryInfo = parsedData?.data?.Attributes ?? null;
      
-      console.log("gps", gps);
+      // console.log("gps", gps);
       
       return { doseRate, cps, timestamp , gps , batteryInfo};
     } catch (error) {
@@ -91,7 +91,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
       (record as Doserate).createdAt = createdAt;
     });
   });
-  console.log('✅ Data saved:', newRecord)
+  // console.log('✅ Data saved:', newRecord)
  };   
 
 
@@ -110,7 +110,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
 
         client.on('connect', () => {
-          console.log(`Connected to MQTT broker ${BROKER_URL}`);
+          // console.log(`Connected to MQTT broker ${BROKER_URL}`);
           
           client.subscribe(TOPIC, (err) => {
             if (err) {
@@ -135,7 +135,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
           
           setMessages((prev) => [message, ...prev]);
-          console.log("Received payload:", message);
+          // console.log("Received payload:", message);
         });
 
         client.on('error', (err) => {
@@ -206,9 +206,9 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
   };
 
-  console.log("doseRate", doseRate);
-  console.log("cps", cps);
-  console.log("doseRateArray", doseRateArray);
+  // console.log("doseRate", doseRate);
+  // console.log("cps", cps);
+  // console.log("doseRateArray", doseRateArray);
   
   return (
     <MqttContext.Provider value={value}>

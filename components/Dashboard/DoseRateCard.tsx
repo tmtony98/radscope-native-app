@@ -13,19 +13,19 @@ type DoseRateCardProps = {
 
 const DoseRateCard: React.FC<DoseRateCardProps> = ({ latestDoserate }) => {
   const { status, cps, doseRate } = useMqttContext();
-  console.log("latestDoserate", latestDoserate);
-  console.log("doseRate", doseRate);
+  // console.log("latestDoserate", latestDoserate);
+  // console.log("doseRate", doseRate);
 
   useEffect(() => {
     const fetchRows = async () => {
       const allRows = await database.get('doserate').query(Q.sortBy('createdAt', Q.desc)).fetch();
-      console.log('allRows', allRows);
+      // console.log('allRows', allRows);
     };
     fetchRows();
   }, []);
 
   const xyz = database.get('doserate').query(Q.sortBy('doserate', Q.desc)).fetch();
-  console.log("xyz", xyz);
+  // console.log("xyz", xyz);
   
 
   // Use the most recent doserate from DB, or fallback to context value

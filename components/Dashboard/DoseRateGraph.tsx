@@ -25,7 +25,7 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
   });
 
   const DoseRateLabels = doseRateArray.slice(-6)
-  console.log("DoseRateLabels", DoseRateLabels);
+  // console.log("DoseRateLabels", DoseRateLabels);
 
   // const handleFullscreen = () => {
   //   if (Platform.OS !== 'web') {

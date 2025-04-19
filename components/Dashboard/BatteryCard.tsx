@@ -15,7 +15,7 @@ export default function BatteryCard({
 }: BatteryCardProps) {
 
   const { batteryInfo } = useMqttContext();
-  console.log("batteryInfo", batteryInfo);
+  // console.log("batteryInfo", batteryInfo);
   
   return (
     <View style={[CARD_STYLE.container, isLastCard && styles.lastCard]}>

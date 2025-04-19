@@ -10,7 +10,7 @@ export default function GPSCard() {
   
   const { gps } = useMqttContext();
 
-  console.log("gps", gps);
+  // console.log("gps", gps);
   return (
     <View style={CARD_STYLE.container}>
       <View style={styles.headerWithActions}>

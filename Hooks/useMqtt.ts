@@ -6,11 +6,11 @@ import { Message, ConnectionStatus } from '../Types';
 import 'react-native-url-polyfill/auto';
 
 // Changed to use WebSocket protocol and correct port
-const BROKER_URL = 'ws://192.168.29.39:8083';
+const BROKER_URL = 'ws://192.168.74.213:8083';
 const TOPIC = 'Demo_Topic';
 const CLIENT_ID = `mqtt-client-${Math.random().toString(16).substr(2, 8)}`;
 
-console.log("Topic is", TOPIC);
+// console.log("Topic is", TOPIC);
 
 
 const useMqtt = () => {
@@ -19,8 +19,8 @@ const useMqtt = () => {
     connected: false,
   });
   const [doseRate, setDoseRate] =  useState<number>(0);
-  console.log("status", status);
-  console.log("messages", messages);
+  // console.log("status", status);
+  // console.log("messages", messages);
   const clientRef = useRef<mqtt.MqttClient | null>(null);
 
   const connect = useCallback(() => {
@@ -35,7 +35,7 @@ const useMqtt = () => {
       });
 
       client.on('connect', () => {
-        console.log(`Connected to MQTT broker ${BROKER_URL}`);
+        // console.log(`Connected to MQTT broker ${BROKER_URL}`);
         // Don't set connected status until subscription is confirmed
         client.subscribe(TOPIC, (err) => {
           if (err) {
@@ -59,7 +59,7 @@ const useMqtt = () => {
           timestamp: new Date(),
         };
         setMessages((prev) => [message, ...prev]);
-        console.log("payload", message);
+        // console.log("payload", message);
         
       });
 
@@ -121,7 +121,7 @@ const useMqtt = () => {
   useEffect(() => { 
     if (messages) {
       const newDoseRate = getDoserate(messages);
-      console.log("newDoseRate", newDoseRate);
+      // console.log("newDoseRate", newDoseRate);
       setDoseRate(newDoseRate);
     }
   }, [messages]);
