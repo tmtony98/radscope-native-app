@@ -1,4 +1,4 @@
-import { View, StyleSheet, Text , FlatList } from "react-native";
+import { View, StyleSheet, Text , FlatList, SafeAreaView } from "react-native";
 import App from "@/App";
 import { useMqttContext } from "@/Provider/MqttContext";
 import { useEffect, useState } from "react";
@@ -21,8 +21,7 @@ export default function Index( route: any  | null) {
 const styles = StyleSheet.create({
   container: {
   flex: 1,
-   backgroundColor: '#fff',
    width: '100%',
-  //  paddingHorizontal: 16,
+   backgroundColor: '#ffffff',
   },
 });

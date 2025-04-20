@@ -1,16 +1,16 @@
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import React from 'react'
 import { COLORS, TYPOGRAPHY, SPACING } from '../Themes/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-
-type props = {
+interface Props {
   title: string;
   showBackButton?: boolean;
 }
 
-export default function Header({ title, showBackButton = false }: props) {
+const Header: React.FC<Props> = ({ title, showBackButton = false }) => {
   const router = useRouter();
 
   const handleBackPress = () => {
@@ -18,8 +18,8 @@ export default function Header({ title, showBackButton = false }: props) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView edges={['top']} style={[styles.container]}> 
+      <View style={styles.header}> 
         {showBackButton && (
           <TouchableOpacity 
             style={styles.backButton} 
@@ -29,32 +29,30 @@ export default function Header({ title, showBackButton = false }: props) {
             <Ionicons name="chevron-back" size={24} color={COLORS.primary} />
           </TouchableOpacity>
         )}
-        <Text style={TYPOGRAPHY.headLineMedium}>{title}</Text>
-        {/* {showBackButton && <View style={styles.placeholderRight} />} */}
+        <Text style={[TYPOGRAPHY.headLineMedium, { color: COLORS.primary }]}>{title}</Text>
       </View>
     </SafeAreaView>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.white,
+    zIndex: 10,
   },
   header: {
-    height: 60,  // Adjust height as needed
+    height: 60,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
     paddingHorizontal: SPACING.md,
+    backgroundColor: COLORS.white,
   },
   backButton: {
     position: 'absolute',
     left: SPACING.md,
     zIndex: 10,
-    // padding: SPACING.xs,
   },
-  // placeholderRight: {
-  //   width: 40,  // Same width as back button for balance
-  // },
 });
+
+export default Header;
