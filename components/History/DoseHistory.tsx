@@ -1,7 +1,7 @@
 import { View, StyleSheet, TouchableOpacity, ScrollView } from 'react-native'
 import React, { useState } from 'react'
 import { useRouter } from 'expo-router'
-import { COLORS, SPACING } from '../../Themes/theme'
+import { COLORS, SPACING , TYPOGRAPHY} from '../../Themes/theme'
 import { 
   Text, 
   Button, 
@@ -128,28 +128,25 @@ export default function DoseHistory() {
 
       {/* Content */}
       <ScrollView style={styles.content}>
-        <Card style={styles.card}>
-          <Card.Content>
-            <View style={styles.datePickerContainer}>
-              <Text variant="bodyLarge" style={styles.datePickerLabel}>Select Date:</Text>
-              <TouchableOpacity style={styles.datePicker} onPress={showDatePicker}>
-                <Text variant="bodyMedium" style={styles.datePickerText}>
-                  {formattedDateTime || 'Select a date'}
-                </Text>
-                <MaterialIcons name="keyboard-arrow-down" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
-          </Card.Content>
-        </Card>
-
+        <View style={styles.card}>
+          <View style={styles.datePickerContainer}>
+            <Text  style={TYPOGRAPHY.TitleMedium}>Select Date:</Text>
+            <TouchableOpacity style={styles.datePicker} onPress={showDatePicker}>
+              <Text  style={styles.datePickerText}>
+                {formattedDateTime || 'Select custom date & time'}
+              </Text>
+              <MaterialIcons name="keyboard-arrow-down" size={24} color="#666" />
+            </TouchableOpacity>
+          </View>
+        </View>
         {/* Empty state message */}
-        <Card style={styles.emptyStateCard}>
-          <Card.Content style={styles.emptyStateContainer}>
+        <View style={styles.emptyStateCard}>
+          <View style={styles.emptyStateContainer}>
             <Text variant="bodyLarge" style={styles.emptyStateText}>
               Select date day-wise to see custom Data
             </Text>
-          </Card.Content>
-        </Card>
+          </View>
+        </View>
       </ScrollView>
 
       {/* Date Picker Modal */}
@@ -207,6 +204,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   card: {
+    padding: 16,
     marginBottom: 16,
     borderRadius: 12,
     backgroundColor: '#FFFFFF', // Ensure card background is white
@@ -215,6 +213,9 @@ const styles = StyleSheet.create({
   },
   datePickerContainer: {
     marginVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   datePickerLabel: {
     marginBottom: 8,
@@ -223,15 +224,19 @@ const styles = StyleSheet.create({
   datePicker: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    // justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: '#D1D5DB',
-    borderRadius: 12,
+    borderRadius: 8,
+    width: '65%',
     padding: 12,
     backgroundColor: '#FFFFFF',
   },
   datePickerText: {
     color: '#666',
+    textAlign: 'right',
+    flex: 1,
+   
   },
   emptyStateCard: {
     borderRadius: 12,

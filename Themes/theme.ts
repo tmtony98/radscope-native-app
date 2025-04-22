@@ -229,6 +229,7 @@ export const TYPOGRAPHY = StyleSheet.create({
     textAlign: 'left',
   },
   TitleMedium: {
+    color: COLORS.text,
     fontFamily: 'Poppins-SemiBold',
     fontSize: 16,
     lineHeight: 25,

@@ -7,7 +7,7 @@ import Doserate from '../model/Doserate';
 
 
 // MQTT Configuration
-const BROKER_URL = 'ws://192.168.74.213:8083';
+const BROKER_URL = 'ws://192.168.29.39:8083';
 const TOPIC = 'Demo_Topic';
 const CLIENT_ID = `mqtt-client-${Math.random().toString(16).substr(2, 8)}`;
 
