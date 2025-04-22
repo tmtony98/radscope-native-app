@@ -20,6 +20,33 @@ import Header from '@/components/Header';
 //   }
 // }
 
+// Error Boundary for Settings screen
+const SettingsErrorBoundary: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [error, setError] = useState<Error | null>(null);
+
+  if (error) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <Text style={{ color: 'red', fontWeight: 'bold', fontSize: 18 }}>Settings Screen Error:</Text>
+        <Text style={{ marginTop: 10 }}>{error.message}</Text>
+      </View>
+    );
+  }
+
+  return (
+    <React.Fragment>
+      {React.Children.map(children, child => {
+        try {
+          return child;
+        } catch (err) {
+          setError(err as Error);
+          return null;
+        }
+      })}
+    </React.Fragment>
+  );
+};
+
 export default function Settings() {
   const [discoveryType, setDiscoveryType] = useState('local');
   const [threshold, setThreshold] = useState('');
@@ -96,105 +123,101 @@ export default function Settings() {
   };
 
   return (
-    
-
-
-    <View style={{flex:1}}>  <Header title="General Settings" />
-    
-    <View style={styles.container}>
-      
-      {/* <Text style={TYPOGRAPHY.headLineMedium}>Settings</Text> */}
-     
-      <View style={CARD_STYLE.container}>
-        
-        <Text style={TYPOGRAPHY.headLineSmall}>Discovery Type</Text>
-        
-        {/* Custom segmented button */}
-        <View style={styles.segmentedContainer}>
-          <TouchableOpacity
-            style={[
-              styles.segmentButton,
-              discoveryType === 'local' && styles.activeSegmentButton
-            ]}
-            onPress={() => handleDiscoveryTypeChange('local')}
-          >
-            <View style={styles.buttonContent}>
-              {discoveryType === 'local' && (
-                <MaterialIcons name="check" size={18} color={COLORS.white} style={styles.buttonIcon} />
-              )}
-              <Text style={[
-                styles.buttonText,
-                discoveryType === 'local' && styles.activeButtonText
-              ]}>
-                Local
-              </Text>
+    <SettingsErrorBoundary>
+      <View style={{flex:1}}>
+        <Header title="General Settings" />
+        <View style={styles.container}>
+          {/* <Text style={TYPOGRAPHY.headLineMedium}>Settings</Text> */}
+         
+          <View style={CARD_STYLE.container}>
+            
+            <Text style={TYPOGRAPHY.headLineSmall}>Discovery Type</Text>
+            
+            {/* Custom segmented button */}
+            <View style={styles.segmentedContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.segmentButton,
+                  discoveryType === 'local' && styles.activeSegmentButton
+                ]}
+                onPress={() => handleDiscoveryTypeChange('local')}
+              >
+                <View style={styles.buttonContent}>
+                  {discoveryType === 'local' && (
+                    <MaterialIcons name="check" size={18} color={COLORS.white} style={styles.buttonIcon} />
+                  )}
+                  <Text style={[
+                    styles.buttonText,
+                    discoveryType === 'local' && styles.activeButtonText
+                  ]}>
+                    Local
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[
+                  styles.segmentButton,
+                  discoveryType === 'cloud' && styles.activeSegmentButton
+                ]}
+                onPress={() => handleDiscoveryTypeChange('cloud')}
+              >
+                <View style={styles.buttonContent}>
+                  {discoveryType === 'cloud' && (
+                    <MaterialIcons name="check" size={18} color={COLORS.white} style={styles.buttonIcon} />
+                  )}
+                  <Text style={[
+                    styles.buttonText,
+                    discoveryType === 'cloud' && styles.activeButtonText
+                  ]}>
+                    Cloud
+                  </Text>
+                </View>
+              </TouchableOpacity>
             </View>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[
-              styles.segmentButton,
-              discoveryType === 'cloud' && styles.activeSegmentButton
-            ]}
-            onPress={() => handleDiscoveryTypeChange('cloud')}
-          >
-            <View style={styles.buttonContent}>
-              {discoveryType === 'cloud' && (
-                <MaterialIcons name="check" size={18} color={COLORS.white} style={styles.buttonIcon} />
-              )}
-              <Text style={[
-                styles.buttonText,
-                discoveryType === 'cloud' && styles.activeButtonText
-              ]}>
-                Cloud
-              </Text>
-            </View>
-          </TouchableOpacity>
+          </View>
+
+          <View style={CARD_STYLE.container}>
+            <Text style={TYPOGRAPHY.headLineSmall}>Alarm</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter threshold Value"
+              value={threshold}
+              onChangeText={(value) => {
+                setThreshold(value);
+                saveSetting(KEYS.THRESHOLD, value);
+              }}
+            />
+          </View>
+
+          <View style={CARD_STYLE.container}>
+            <Text style={TYPOGRAPHY.headLineSmall}>Server Credentials</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter IP Address"
+              value={ipAddress}
+              onChangeText={(value) => {
+                setIpAddress(value);
+                saveSetting(KEYS.IP_ADDRESS, value);
+              }}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Enter Port Number"
+              value={portNumber}
+              onChangeText={(value) => {
+                setPortNumber(value);
+                saveSetting(KEYS.PORT_NUMBER, value);
+              }}
+            />
+          </View>
+
+          {/* <TouchableOpacity style={styles.saveButton} onPress={saveAllSettings}>
+            <Text style={styles.saveButtonText}>Save All Settings</Text>
+          </TouchableOpacity> */}
         </View>
       </View>
-
-      <View style={CARD_STYLE.container}>
-        <Text style={TYPOGRAPHY.headLineSmall}>Alarm</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter threshold Value"
-          value={threshold}
-          onChangeText={(value) => {
-            setThreshold(value);
-            saveSetting(KEYS.THRESHOLD, value);
-          }}
-        />
-      </View>
-
-      <View style={CARD_STYLE.container}>
-        <Text style={TYPOGRAPHY.headLineSmall}>Server Credentials</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter IP Address"
-          value={ipAddress}
-          onChangeText={(value) => {
-            setIpAddress(value);
-            saveSetting(KEYS.IP_ADDRESS, value);
-          }}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Enter Port Number"
-          value={portNumber}
-          onChangeText={(value) => {
-            setPortNumber(value);
-            saveSetting(KEYS.PORT_NUMBER, value);
-          }}
-        />
-      </View>
-
-      {/* <TouchableOpacity style={styles.saveButton} onPress={saveAllSettings}>
-        <Text style={styles.saveButtonText}>Save All Settings</Text>
-      </TouchableOpacity> */}
-    </View>
-    
-    </View>
-   
+    </SettingsErrorBoundary>
   );
 }
 

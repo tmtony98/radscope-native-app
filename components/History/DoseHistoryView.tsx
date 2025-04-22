@@ -232,19 +232,21 @@ export default function DoseHistoryView({
         </Text>
 
         <View style={styles.paramRow}>
-          <Text style={TYPOGRAPHY.TitleMedium}>Date</Text>
-          <Text style={TYPOGRAPHY.TitleMedium}>
-            {date ? date.toLocaleString() : "-"}
-          </Text>
-        </View>
-
-        <View style={styles.paramRow}>
           <Text style={TYPOGRAPHY.TitleMedium}>Start Time</Text>
           <Text style={TYPOGRAPHY.TitleMedium}>
             {startTime ? startTime.toLocaleString() : "-"}
           </Text>
         </View>
 
+        <View style={styles.paramRow}>
+          <Text style={TYPOGRAPHY.TitleMedium}>Date</Text>
+          <Text style={TYPOGRAPHY.TitleMedium}>
+            {date ? date.toLocaleString() : "-"}
+          </Text>
+        </View>
+
+       
+        
         <View style={styles.paramRow}>
           <Text style={TYPOGRAPHY.TitleMedium}>End Time</Text>
           {/* <Text style={styles.paramValue}>{endTime}</Text> */}

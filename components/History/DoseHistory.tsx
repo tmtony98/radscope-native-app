@@ -142,7 +142,7 @@ export default function DoseHistory() {
         {/* Empty state message */}
         <View style={styles.emptyStateCard}>
           <View style={styles.emptyStateContainer}>
-            <Text variant="bodyLarge" style={styles.emptyStateText}>
+            <Text style={styles.emptyStateText}>
               Select date day-wise to see custom Data
             </Text>
           </View>
