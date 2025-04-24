@@ -5,6 +5,8 @@ import SQLiteAdapter from '@nozbe/watermelondb/adapters/sqlite'
 import schema from './model/schema'
 import migrations from './model/migrations'
 import Doserate from './model/Doserate'
+import SessionData from './model/SessionData'
+import Sessions from './model/Sessions'
 
 // import Post from './model/Post' // ⬅️ You'll import your Models here
 
@@ -33,6 +35,8 @@ const database = new Database({
   adapter,
   modelClasses: [
     Doserate,
+    SessionData,
+    Sessions,
     // Post, // ⬅️ You'll add Models to Watermelon here
   ],
 })
