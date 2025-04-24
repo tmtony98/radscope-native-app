@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Platform, Pressable, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import Zeroconf from 'react-native-zeroconf';
+import Zeroconf, { ImplType, Service } from 'react-native-zeroconf';
 import Button from '../Button';
 import { useRouter } from 'expo-router';
 
+
+const zeroconf = new Zeroconf();
+
 // Add these helper functions outside the component
 const stopScan = (zeroconfInstance, interval) => {
+  if (!zeroconfInstance) {
+    console.log("Zeroconf instance is null");
+    return;
+  }
   console.log("STOP SCAN called");
   
   // Clear interval if exists
@@ -36,36 +43,37 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
   const router = useRouter();
 
   // Create zeroconf instance ONCE
-  const zeroconfRef = React.useRef(new Zeroconf());
+  
 
   const deviceScan = () => {
     try {
       // Remove any existing listeners before adding new ones
       console.log("Removing all existing listeners");
-      zeroconfRef.current.removeAllListeners();
+      zeroconf.removeAllListeners();
       
       // Set up event listeners
-      zeroconfRef.current.on('start', () => {
+      zeroconf.on('start', () => {
         console.log('Scanning started');
         setIsScanning(true);
       });
 
-      zeroconfRef.current.on('stop', () => {
+      zeroconf.on('stop', () => {
         console.log('Scanning stopped by zeroconf');
         setIsScanning(false);
       });
 
-      zeroconfRef.current.on('found', service => {
+      zeroconf.on('found', service => {
         console.log('Found service:', service);
       
       });
 
-      zeroconfRef.current.on('resolved', service => {
+      zeroconf.on('resolved', service   => {
         console.log('Resolved service:', service);
+        // console.log("services", services);
         setServices(prev => [...prev, service]);
       });
 
-      zeroconfRef.current.on('error', err => {
+      zeroconf.on('error', err => {
         console.error('Zeroconf error:', err);
         setError('Error during service discovery');
         setIsScanning(false);
@@ -73,7 +81,8 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
 
       // Start scanning
       console.log('Starting scan...');
-      zeroconfRef.current.scan();
+      zeroconf.scan('spectrometer','tcp','local.');
+
       console.log('Scan started successfully');
     } catch (err) {
       console.error('Scan error:', err);
@@ -91,7 +100,7 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
     
     return () => {
       console.log("Component unmounting");
-      stopScan(zeroconfRef.current, scanInterval);
+      stopScan(zeroconf, scanInterval);
     };
   }, []);
 
@@ -101,7 +110,7 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
     if (isRefreshing) {
       // Stop scanning
       console.log("Stopping scan");
-      stopScan(zeroconfRef.current, scanInterval);
+      stopScan(zeroconf.current, scanInterval);
       
       // Update state
       setIsRefreshing(false);
