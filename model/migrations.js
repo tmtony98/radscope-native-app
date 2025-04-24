@@ -47,6 +47,19 @@ export default schemaMigrations({
            columns: ['sessionId'],
          }
       ],
+    },
+    {
+      toVersion: 4,
+      steps: [
+        addColumns({
+          table: 'sessions',
+          columns: [
+            // Note: The previous migration added 'sessionId'. This migration (v3) will remove it.
+            // Keeping the v2 migration definition is standard practice.
+            { name: 'stoppedAt', type: 'number', isIndexed: true },
+          ],
+        }),
+      ],
     }
   ],
 })

@@ -7,7 +7,11 @@ import Doserate from '../model/Doserate';
 
 
 // MQTT Configuration
-const BROKER_URL = 'ws://192.168.29.39:8083';
+// const BROKER_URL = 'ws://192.168.29.39:8083'; //office
+const BROKER_URL = 'ws://192.168.1.11:8083'; //hostel
+// const BROKER_URL = 'ws://192.168.74.213:8083'; //tony phone
+
+ 
 const TOPIC = 'Demo_Topic';
 const CLIENT_ID = `mqtt-client-${Math.random().toString(16).substr(2, 8)}`;
 
@@ -51,10 +55,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [timestamp, setTimestamp] = useState<number>(0);
   const [gps, setGps] = useState< GpsData | null>(null);
   const [batteryInfo, setBatteryInfo] = useState <BatteryData | null>(null);
-
- 
-
- 
+  
 
 
 
@@ -66,16 +67,14 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const parsedData = JSON.parse(typeof latestMessage.payload === 'string' 
         ? latestMessage.payload 
         : latestMessage.payload.toString());
-      
+      console.log("parsedData", parsedData);
       const doseRate = parsedData?.data?.Sensor?.doserate?.value ?? 0;
       const cps = parsedData?.data?.Sensor?.doserate?.cps ?? 0;
       const timestamp = parsedData?.timestamp ?? 0;
       const gps = parsedData?.data?.GPS ?? null;
       const batteryInfo = parsedData?.data?.Attributes ?? null;
-     
-      // console.log("gps", gps);
-      
-      return { doseRate, cps, timestamp , gps , batteryInfo};
+
+      return { doseRate, cps, timestamp , gps , batteryInfo };
     } catch (error) {
       console.error("Error extracting sensor data:", error);
       return { doseRate: 0, cps: 0, timestamp: 0 };
@@ -92,8 +91,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   });
   // console.log('✅ Data saved:', newRecord)
- };   
-
+ }; 
 
 
   //Connect to MQTT broker
@@ -110,7 +108,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
 
         client.on('connect', () => {
-          // console.log(`Connected to MQTT broker ${BROKER_URL}`);
+           console.log(`Connected to MQTT broker ${BROKER_URL}`);
           
           client.subscribe(TOPIC, (err) => {
             if (err) {
@@ -189,6 +187,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setDoseRateArray(prev => [...prev, doseRate]);
       setTimestampArray(prev => [...prev, timestamp]);
       saveDoserate(doseRate, cps, timestamp);
+
     }
   }, [messages]);
 
@@ -203,7 +202,6 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
     timestampArray,
     gps,
     batteryInfo,
-    
   };
 
   // console.log("doseRate", doseRate);

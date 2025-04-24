@@ -6,6 +6,7 @@ class Sessions extends Model {
 
   @field('sessionName') sessionName!: any
   @date('createdAt') createdAt!: number
+  @date('stoppedAt') stoppedAt!: number
 }
 
 export default Sessions
