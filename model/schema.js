@@ -23,7 +23,7 @@ export default appSchema({
       name: "sessionData",
       columns: [
         { name: "sessionId", type: "string", isIndexed: true },
-        { name: "data", type: "string" },
+        { name: "data", type: "string" , isOptional: true },
         { name: "timestamp", type: "number", isIndexed: true },
       ],
     })

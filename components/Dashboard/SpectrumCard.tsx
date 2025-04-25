@@ -4,7 +4,7 @@ import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY , BUTTON_STYLE } from '../../Th
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LineChart } from 'react-native-chart-kit';
-
+import { useMqttContext } from '../../Provider/MqttContext';
 type SpectrumCardProps = {
   duration?: string;
   onFullscreen?: () => void;
@@ -15,6 +15,8 @@ export default function SpectrumCard({
   onFullscreen = () => {},
 }: SpectrumCardProps) {
   const router = useRouter();
+
+  const { spectrum } = useMqttContext();
   
  
   
@@ -32,7 +34,7 @@ export default function SpectrumCard({
       <View style={styles.headerWithActions}>
         <View style={styles.titleContainer}>
           <Text style={styles.title}>Spectrum</Text>
-          <Text style={styles.durationText}>{duration}</Text>
+          {/* <Text style={styles.durationText}>{duration}</Text> */}
         </View>
         <TouchableOpacity 
           style={[BUTTON_STYLE.mediumButtonWithIconLeft, { backgroundColor: '#31435E' }]} 
@@ -48,73 +50,67 @@ export default function SpectrumCard({
         </TouchableOpacity>
       </View>
       
-      <View style={styles.fullscreenButtonContainer}>
+      {/* <View style={styles.fullscreenButtonContainer}>
         <TouchableOpacity style={styles.iconButton} onPress={onFullscreen}>
           <MaterialIcons name="fullscreen" size={24} color="#31435E" />
         </TouchableOpacity>
-      </View>
+      </View> */}
       
-      <View style={styles.chartContainer}>
-        <View style={styles.yAxisLabels}>
-          <Text style={styles.axisLabel}>1200</Text>
-          <Text style={styles.axisLabel}>1100</Text>
-          <Text style={styles.axisLabel}>1000</Text>
-          <Text style={styles.axisLabel}>900</Text>
-          <Text style={styles.axisLabel}>800</Text>
-          <Text style={styles.axisLabel}>700</Text>
-          <Text style={styles.axisLabel}>600</Text>
-          <Text style={styles.axisLabel}>500</Text>
-          <Text style={styles.axisLabel}>400</Text>
-          <Text style={styles.axisLabel}>300</Text>
-          <Text style={styles.axisLabel}>200</Text>
-          <Text style={styles.axisLabel}>100</Text>
-          <Text style={styles.axisLabel}>0</Text>
-        </View>
+
+     
+      
+     
+          
+          
         
-        <View style={styles.chartContent}>
-          <LineChart
-            data={{
-              labels: months,
-              datasets: [
-                {
-                  data: energyValues.data,
-                  color: () => '#7BBC47', // Green line color adjusted
-                  strokeWidth: 3,
+   
+     
+      <View style={styles.chartPlaceholder}>
+        {spectrum.length === 0 || spectrum.length === 0 ? (
+          <Text>No data available</Text>
+        ) : (
+          <View>
+
+            <LineChart
+              data={{
+                labels: spectrum.map(String),
+                datasets: [
+                  {
+                    data: spectrum
+                  }
+                ]
+              }}
+              width={Dimensions.get("window").width - 60}
+              height={220}
+              yAxisLabel=""
+              yAxisSuffix=""
+              yAxisInterval={1}
+              chartConfig={{
+                backgroundColor: "#ffffff",
+                backgroundGradientFrom: "#ffffff",
+                backgroundGradientTo: "#ffffff",
+                decimalPlaces: 2,
+                color: (opacity = 1) => `rgba(14, 23, 37, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                style: {
+                  borderRadius: 16
                 },
-              ],
-            }}
-            width={Dimensions.get('window').width - 100}
-            height={200}
-            chartConfig={{
-              backgroundColor: '#fff',
-              backgroundGradientFrom: '#fff',
-              backgroundGradientTo: '#fff',
-              decimalPlaces: 0,
-              color: () => '#333',
-              labelColor: () => '#333',
-              propsForBackgroundLines: {
-                stroke: '#E5E5E5',
-                strokeWidth: 1,
-              },
-              propsForLabels: {
-                fontSize: 10,
-              },
-              propsForHorizontalLabels: {
-                fontSize: 9,
-              }
-            }}
-            bezier
-            style={styles.chart}
-            withHorizontalLines={true}
-            withVerticalLines={false}
-            withDots={false}
-            withShadow={false}
-            withInnerLines={false}
-            withOuterLines={false}
-            fromZero
-          />
-        </View>
-      </View>
+                propsForDots: {
+                  r: "6",
+                  strokeWidth: "2",
+                  stroke: "#ffa726"
+                }
+              }}
+              bezier
+              style={{
+                marginVertical: 0,
+                borderRadius: 10,
+              }}
+            />
+          </View>
+        )}
+      
+    </View>
       
       <Text style={styles.chartLabel}>Energy (Kev) vs Count</Text>
     </View>
@@ -198,4 +194,26 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 8,
   },
+  chartPlaceholder: {
+    height: 250,
+    backgroundColor: COLORS.white,
+    borderRadius: 8,
+    marginVertical: SPACING.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    // borderWidth: 1,
+    // borderColor: COLORS.border,
+    // borderStyle: 'solid',
+  },
+  buttonContainer: {
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: COLORS.white,
+    fontFamily: 'Poppins-Medium',
+    fontSize: 16,
+    marginLeft: SPACING.sm,
+  },
 });
+
+

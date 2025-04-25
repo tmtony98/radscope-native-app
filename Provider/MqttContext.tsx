@@ -1,14 +1,17 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import mqtt from 'precompiled-mqtt';
-import { Message, ConnectionStatus , GpsData, BatteryData } from '../Types';
+import { Message, ConnectionStatus , GpsData, BatteryData, Payload } from '../Types';
 import 'react-native-url-polyfill/auto';
 import database from '../index.native';
 import Doserate from '../model/Doserate';
 
 
 // MQTT Configuration
-// const BROKER_URL = 'ws://192.168.29.39:8083'; //office
-const BROKER_URL = 'ws://192.168.1.11:8083'; //hostel
+const BROKER_URL = 'ws://192.168.29.39:8083'; //office bbd
+// const BROKER_URL = 'ws://192.168.1.50:8083'; //office kv
+
+
+// const BROKER_URL = 'ws://192.168.1.11:8083'; //hostel
 // const BROKER_URL = 'ws://192.168.74.213:8083'; //tony phone
 
  
@@ -17,6 +20,7 @@ const CLIENT_ID = `mqtt-client-${Math.random().toString(16).substr(2, 8)}`;
 
 // Create context with default values
 type MqttContextType = {
+  message: Message;
   messages: Message[];
   status: ConnectionStatus;
   doseRate: number;
@@ -26,11 +30,18 @@ type MqttContextType = {
   doseRateArray: number[];
   timestampArray: number[];
   timestamp: number;
+  spectrum:number[]
 };
 
 
 
 const MqttContext = createContext<MqttContextType>({
+  message: {
+    id: '',
+    topic: '',
+    payload: '',
+    timestamp: new Date()
+  },
   messages: [],
   status: { connected: false },
   doseRate: 0,
@@ -40,11 +51,18 @@ const MqttContext = createContext<MqttContextType>({
   timestampArray: [],
   gps: null,
   batteryInfo: null,
+  spectrum:[]
 });
 
 export const useMqttContext = () => useContext(MqttContext);
 
 export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [message, setMessage] = useState<Message>({
+    id: '',
+    topic: '',
+    payload: '',
+    timestamp: new Date()
+  });
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<ConnectionStatus>({ connected: false });
   const [doseRate, setDoseRate] = useState<number>(0);
@@ -53,15 +71,17 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clientRef = useRef<mqtt.MqttClient | null>(null);
   const [timestampArray, setTimestampArray] = useState<number[]>([]);
   const [timestamp, setTimestamp] = useState<number>(0);
-  const [gps, setGps] = useState< GpsData | null>(null);
+  const [gps, setGps] = useState<GpsData | null>(null);
   const [batteryInfo, setBatteryInfo] = useState <BatteryData | null>(null);
+  const [spectrum , setSpectrum] = useState<number[]>([])
   
 
 
 
   const extractSensorData = (messages: Message[]) => {
     try {
-      if (!messages || !messages.length) return { doseRate: 0, cps: 0, timestamp: 0 , gps: null , batteryInfo: null};
+      if (!messages || !messages.length)
+         return { doseRate: 0, cps: 0, timestamp: 0 , gps: null , batteryInfo: null};
       const latestMessage = messages[0];
       // console.log("latestMessage", latestMessage);
       const parsedData = JSON.parse(typeof latestMessage.payload === 'string' 
@@ -73,11 +93,12 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const timestamp = parsedData?.timestamp ?? 0;
       const gps = parsedData?.data?.GPS ?? null;
       const batteryInfo = parsedData?.data?.Attributes ?? null;
+      const spectrum = parsedData?.data?.Sensor?.spectrum?.bins ?? null
 
-      return { doseRate, cps, timestamp , gps , batteryInfo };
+      return { doseRate, cps, timestamp , gps , batteryInfo , spectrum };
     } catch (error) {
       console.error("Error extracting sensor data:", error);
-      return { doseRate: 0, cps: 0, timestamp: 0 };
+      return { doseRate: 0, cps: 0, timestamp: 0 , gps: null , batteryInfo: null , spectrum: null };
     }
   }
 
@@ -133,6 +154,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
           
           setMessages((prev) => [message, ...prev]);
+          setMessage(message);
           // console.log("Received payload:", message);
         });
 
@@ -178,7 +200,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Update dose rate when messages change
   useEffect(() => {
     if (messages.length > 0) {
-      const { doseRate, cps, timestamp , gps , batteryInfo } = extractSensorData(messages);
+      const { doseRate, cps, timestamp , gps , batteryInfo , spectrum } = extractSensorData(messages);
       setDoseRate(doseRate);
       setCps(cps);
       setTimestamp(timestamp);
@@ -187,12 +209,13 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setDoseRateArray(prev => [...prev, doseRate]);
       setTimestampArray(prev => [...prev, timestamp]);
       saveDoserate(doseRate, cps, timestamp);
-
+      setSpectrum(spectrum);
     }
   }, [messages]);
 
   // Context value
   const value = {
+    message,
     messages,
     status,
     doseRate,
@@ -202,11 +225,13 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
     timestampArray,
     gps,
     batteryInfo,
+    spectrum
   };
 
   // console.log("doseRate", doseRate);
   // console.log("cps", cps);
   // console.log("doseRateArray", doseRateArray);
+  console.log("spectrum", spectrum);
   
   return (
     <MqttContext.Provider value={value}>
