@@ -1,7 +1,7 @@
 import { appSchema, tableSchema } from "@nozbe/watermelondb";
 
 export default appSchema({
-  version: 4,
+  version: 5,
   tables: [
     tableSchema({
       name: "doserate",
@@ -15,6 +15,8 @@ export default appSchema({
       name: "sessions",
       columns: [
         { name: "sessionName", type: "string" },
+        { name: "timeLimit", type: "number", isOptional: true },
+        { name: "timeInterval", type: "number", isOptional: true },
         { name: "createdAt", type: "number", isIndexed: true },
         { name: "stoppedAt", type: "number", isIndexed: true },
       ],

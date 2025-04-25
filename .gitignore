@@ -36,4 +36,9 @@ yarn-error.*
 *.tsbuildinfo
 
 app-example
-api.md
+api.md.idea/.gitignore
+.idea/caches/deviceStreaming.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/my-app.iml
+.idea/vcs.xml

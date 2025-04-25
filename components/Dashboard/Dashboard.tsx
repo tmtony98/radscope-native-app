@@ -24,15 +24,29 @@ import SessionData from '@/model/SessionData';
 export default function Dashboard() {
   const [sessionName, setSessionName] = useState('');
   const [isLogging, setIsLogging] = useState(false);
-  const [activeSessionId, setActiveSessionId] = useState<string>(" ");
+  const [activeSessionId, setActiveSessionId] = useState<string>("");
+  // Add state for time limit and interval
+  const [timeLimit, setTimeLimit] = useState<number>(0); // in hours
+  const [timeInterval, setTimeInterval] = useState<number>(1); // in seconds, default 1 second
+  
+  // Refs for timers to be able to clear them
+  const saveIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timeLimitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   const bottomSheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ['40%'], []);
 
   const { message } = useMqttContext();
 
-  console.log('messagessss', message)
+  // Handler for time limit slider
+  const handleTimeLimitChange = useCallback((value: number) => {
+    setTimeLimit(value);
+  }, []);
 
-
+  // Handler for time interval slider
+  const handleTimeIntervalChange = useCallback((value: number) => {
+    setTimeInterval(value);
+  }, []);
 
   const handleSheetChanges = useCallback((index: number) => {
     if (index === -1) {
@@ -44,21 +58,33 @@ export default function Dashboard() {
     bottomSheetRef.current?.expand();
   }, []);
 
-
-  
   const closeBottomSheet = useCallback(() => {
     bottomSheetRef.current?.close();
-   
   }, []);
 
   const openSessionView = () => {
-    router.push('/SessionView')
+    router.push('/SessionView');
   };
 
+  // Function to clear all timers
+  const clearAllTimers = useCallback(() => {
+    if (saveIntervalRef.current) {
+      clearInterval(saveIntervalRef.current);
+      saveIntervalRef.current = null;
+    }
+    
+    if (timeLimitTimeoutRef.current) {
+      clearTimeout(timeLimitTimeoutRef.current);
+      timeLimitTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Handle stopping the session - clear timers and update state
   const handleStopSuccess = useCallback(() => {
+    clearAllTimers();
     setIsLogging(false);
     setActiveSessionId("");
-  }, []);
+  }, [clearAllTimers]);
 
   const handleFullscreen = () => {
     console.log('Fullscreen pressed');
@@ -68,73 +94,113 @@ export default function Dashboard() {
     console.log('Get history pressed');
   };
 
+  // Function to save current message data to database
+  const saveSessionData = useCallback(async () => {
+    if (!isLogging || !activeSessionId || !message) {
+      return;
+    }
+    
+    console.log('Saving session data at interval');
+    try {
+      await database.write(async () => {
+        await database.get<SessionData>('sessionData').create(entry => {
+          entry.sessionId = activeSessionId;
+          entry.data = message;
+          // timestamp is handled by WatermelonDB
+        });
+      });
+      console.log('Session data saved successfully');
+    } catch (error) {
+      console.error('Failed to save session data:', error);
+    }
+  }, [isLogging, activeSessionId, message]);
 
-  const handleSaveSession = useCallback( async () => {
+  // Initialize timers when session starts
+  const setupTimers = useCallback((sessionId: string) => {
+    // Convert time values to milliseconds
+    const timeLimitMs = timeLimit * 60 * 60 * 1000; // hours to ms
+    const timeIntervalMs = timeInterval * 1000; // seconds to ms
+    
+    // Setup interval for saving data
+    if (timeIntervalMs > 0) {
+      saveIntervalRef.current = setInterval(saveSessionData, timeIntervalMs);
+      console.log(`Set up save interval: ${timeInterval} seconds`);
+    }
+    
+    // Setup auto-stop timer if time limit > 0
+    if (timeLimitMs > 0) {
+      timeLimitTimeoutRef.current = setTimeout(async () => {
+        console.log(`Time limit of ${timeLimit} hours reached, stopping session`);
+        
+        try {
+          await database.write(async () => {
+            const sessionToStop = await database.get<Sessions>('sessions').find(sessionId);
+            await sessionToStop.update(session => {
+              session.stoppedAt = new Date().getTime();
+            });
+          });
+          
+          handleStopSuccess();
+        } catch (error) {
+          console.error('Failed to auto-stop session:', error);
+        }
+      }, timeLimitMs);
+      
+      console.log(`Set up time limit: ${timeLimit} hours`);
+    }
+  }, [timeLimit, timeInterval, saveSessionData, handleStopSuccess]);
+
+  const handleSaveSession = useCallback(async () => {
     console.log('Start logging pressed with session name:', sessionName);
     try {
-      // Wrap the create operation in database.write
+      // Clear any existing timers
+      clearAllTimers();
+      
+      // Start a new session
       setIsLogging(true);
       const newSession = await database.write(async () => {
         console.log("Inside database.write - preparing to create...");
         const createdSession = await database.get('sessions').create((session: any) => {
           console.log("Inside create builder...");
           (session as Sessions).sessionName = sessionName;
+          (session as Sessions).timeLimit = timeLimit;
+          (session as Sessions).timeInterval = timeInterval;
           (session as Sessions).createdAt = new Date().getTime();
+          (session as Sessions).stoppedAt = 0; // Initialize with 0
         });
 
-        console.log("Inside database.write - create finished, returning.");
-        console.log("createdSession", createdSession);
+        console.log("Session created:", createdSession);
         return createdSession;
       });
       
-      console.log('newSession saved:', newSession.id);
+      console.log('Session saved, ID:', newSession.id);
       setActiveSessionId(newSession.id);
-      setIsLogging(true);
+      
+      // Set up timers for the new session
+      setupTimers(newSession.id);
+      
+      // Save initial data point
+      await saveSessionData();
+      
       closeBottomSheet();
     } catch (error) {
       console.error("Failed to save session:", error);
-      console.log("Error:", error);
-      
+      setIsLogging(false);
     }
-    console.log("isLogging" , isLogging);
-    
-  }, [closeBottomSheet, sessionName]);
+  }, [closeBottomSheet, sessionName, timeLimit, timeInterval, clearAllTimers, setupTimers, saveSessionData]);
 
-  // useEffect to save message data when logging is active
+  // Clean up timers when component unmounts
   useEffect(() => {
-    // Guard clause: Only proceed if logging, we have a session ID, and a message exists
-    if (!isLogging || !activeSessionId || !message) {
-      return;
-    }
-    // Define async function for the database write operation
-    const writeData = async () => {
-      console.log('Attempting to save SessionData for message:', message);
-      try {
-        await database.write(async () => {
-          await database.get<SessionData>('sessionData').create(entry => {
-            entry.sessionId = activeSessionId; // Use the active session ID
-            entry.data = message;             // Save the current message
-            // The 'timestamp' field with @date should be set automatically by WatermelonDB on creation
-          });
-        });
-        console.log('SessionData saved successfully for message:', message);
-      } catch (error) {
-        console.error('Failed to save SessionData:', error);
-        // Optional: Handle error, e.g., set an error state, show a notification
-      }
+    return () => {
+      clearAllTimers();
     };
-
-    // Execute the write operation
-    writeData();
-
-  }, [message, isLogging, activeSessionId]); // Dependencies: Re-run when message, isLogging, or activeSessionId changes
+  }, [clearAllTimers]);
 
   return (
     <GestureHandlerRootView style={styles.rootView}> 
       <ScrollView style={styles.container}>
         <DeviceDetailsCard />
         <EnhancedDoseRateCard />
-        {/* <DoseRateCard /> */}
         <DoseRateGraph 
           onGetHistory={handleGetHistory}
         />
@@ -150,11 +216,11 @@ export default function Dashboard() {
           onStopSuccess={handleStopSuccess}
           isLogging={isLogging}
           activeSessionId={activeSessionId}
+          timeLimit={timeLimit}
+          timeInterval={timeInterval}
+          onTimeLimitChange={handleTimeLimitChange}
+          onTimeIntervalChange={handleTimeIntervalChange}
         />
-          {/* <SessionLoggingCard 
-            onDownload={handleDownload}
-            onStart={openBottomSheet}
-          /> */}
         <BatteryCard 
           isLastCard={true}
         />
@@ -175,8 +241,6 @@ export default function Dashboard() {
             placeholder="Enter File Name"
             value={sessionName}
             onChangeText={setSessionName}
-           
-           
           />
           <View style={styles.bottomSheetButtons}>
             <TouchableOpacity style={styles.cancelButton} onPress={closeBottomSheet}>
@@ -200,11 +264,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     width: '100%',
-    paddingHorizontal: SPACING.md, // Use theme spacing
+    paddingHorizontal: SPACING.md,
   },
   rootView: {
     flex: 1,
-    backgroundColor: COLORS.background, // Use background color from theme
+    backgroundColor: COLORS.background,
   },
   bottomSheetBackground: {
     backgroundColor: COLORS.background,
@@ -217,7 +281,7 @@ const styles = StyleSheet.create({
   bottomSheetTitle: {
     ...TYPOGRAPHY.headLineSmall,
     marginBottom: SPACING.md,
-    textAlign: 'left', // Align title left
+    textAlign: 'left',
     color: COLORS.text,
   },
   bottomSheetButtons: {
@@ -226,28 +290,20 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xl,
     marginBottom: SPACING.sm,
     paddingBottom: SPACING.sm,
-    // flex: 1,
-    
-
   },
   cancelButton: {
-    ...BUTTON_STYLE.mediumButton, // Use spread syntax
+    ...BUTTON_STYLE.mediumButton,
     backgroundColor: COLORS.error,
     marginRight: SPACING.sm,
-
-    // borderColor: COLORS.primary,
-    // borderWidth: 1,
   },
   cancelButtonText: {
-    ...BUTTON_STYLE.mediumButtonText, // Use spread syntax
+    ...BUTTON_STYLE.mediumButtonText,
     color: COLORS.white,
   },
   saveButtonText: {
-     ...BUTTON_STYLE.mediumButtonText,
-    
-   },
-   disabledButton: {
-    opacity: 0.5, // Style for the disabled button
-   },
-  
+    ...BUTTON_STYLE.mediumButtonText,
+  },
+  disabledButton: {
+    opacity: 0.5,
+  },
 });

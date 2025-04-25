@@ -21,7 +21,10 @@ type SessionLoggingCardProps = {
   onStopSuccess?: () => void;
   isLogging?: boolean;
   activeSessionId?: string | null;
- 
+  timeLimit?: number;
+  timeInterval?: number;
+  onTimeLimitChange?: (value: number) => void;
+  onTimeIntervalChange?: (value: number) => void;
 };
 
 
@@ -36,6 +39,10 @@ export const SessionLoggingwithDb = ({
   onStopSuccess = () => {},
   isLogging = false,
   activeSessionId = null,
+  timeLimit = 0,
+  timeInterval = 1,
+  onTimeLimitChange = () => {},
+  onTimeIntervalChange = () => {},
 }: SessionLoggingCardProps) => {
 
 // React.Dispatch<React.SetStateAction<string>>;
@@ -85,34 +92,42 @@ export const SessionLoggingwithDb = ({
       <Text style={TYPOGRAPHY.headLineSmall}>Session Logging</Text>
       <View style={styles.sliderContainer}>
         <Text style={[TYPOGRAPHY.smallText, { textAlign: "left" }]}>
-          Logging Time Limit (hrs)
+          Logging Time Limit (hrs): {timeLimit}
         </Text>
         <View style={styles.slider}>
           <Text style={TYPOGRAPHY.smallText}>0</Text>
           <Slider
             style={{ width: "85%", height: 40 }}
             minimumValue={0}
-            maximumValue={100}
-            minimumTrackTintColor="#000000"
-            maximumTrackTintColor="#000000"
+            maximumValue={24}
+            step={1}
+            value={timeLimit}
+            onValueChange={onTimeLimitChange}
+            minimumTrackTintColor={COLORS.primary}
+            maximumTrackTintColor={COLORS.textSecondary}
+            disabled={isLogging}
           />
-          <Text style={TYPOGRAPHY.smallText}>100</Text>
+          <Text style={TYPOGRAPHY.smallText}>24</Text>
         </View>
       </View>
       <View style={styles.sliderContainer}>
         <Text style={[TYPOGRAPHY.smallText, { textAlign: "left" }]}>
-          Logging Time Interval (s)
+          Logging Time Interval (s): {timeInterval}
         </Text>
         <View style={styles.slider}>
-          <Text style={TYPOGRAPHY.smallText}>0</Text>
+          <Text style={TYPOGRAPHY.smallText}>1</Text>
           <Slider
             style={{ width: "85%", height: 40 }}
-            minimumValue={0}
-            maximumValue={100}
-            minimumTrackTintColor="#000000"
-            maximumTrackTintColor="#000000"
+            minimumValue={1}
+            maximumValue={60}
+            step={1}
+            value={timeInterval}
+            onValueChange={onTimeIntervalChange}
+            minimumTrackTintColor={COLORS.primary}
+            maximumTrackTintColor={COLORS.textSecondary}
+            disabled={isLogging}
           />
-          <Text style={TYPOGRAPHY.smallText}>100</Text>
+          <Text style={TYPOGRAPHY.smallText}>60</Text>
         </View>
       </View>
       <View style={styles.loggingButtons}>
