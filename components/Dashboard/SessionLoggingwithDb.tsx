@@ -95,10 +95,10 @@ export const SessionLoggingwithDb = ({
           Logging Time Limit (hrs): {timeLimit}
         </Text>
         <View style={styles.slider}>
-          <Text style={TYPOGRAPHY.smallText}>0</Text>
+          <Text style={TYPOGRAPHY.smallText}>1</Text>
           <Slider
             style={{ width: "85%", height: 40 }}
-            minimumValue={0}
+            minimumValue={1}
             maximumValue={24}
             step={1}
             value={timeLimit}

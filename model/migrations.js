@@ -60,6 +60,19 @@ export default schemaMigrations({
           ],
         }),
       ],
+    },
+    {
+      toVersion: 5,
+      steps: [
+        // Add new columns to sessions table
+        addColumns({
+          table: 'sessions',
+          columns: [
+            { name: 'timeLimit', type: 'number', isOptional: true },
+            { name: 'timeInterval', type: 'number', isOptional: true },
+          ],
+        }),
+      ],
     }
   ],
 })

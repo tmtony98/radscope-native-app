@@ -96,20 +96,24 @@ export default function Dashboard() {
 
   // Function to save current message data to database
   const saveSessionData = useCallback(async () => {
-    if (!isLogging || !activeSessionId || !message) {
-      return;
-    }
+    // if (!isLogging || !activeSessionId ) {
+    //   console.log('No active session or message data');
+    //   return;
+    // }
     
     console.log('Saving session data at interval');
     try {
-      await database.write(async () => {
-        await database.get<SessionData>('sessionData').create(entry => {
+      const newData = await database.write(async () => {
+        console.log("Inside dataDB database.write to sessionDB");
+     const newDataSession =  await database.get<SessionData>('sessionData').create(entry => {
           entry.sessionId = activeSessionId;
           entry.data = message;
           // timestamp is handled by WatermelonDB
         });
+        return newDataSession;
       });
-      console.log('Session data saved successfully');
+      console.log('All message data Session data saved successfully', newData);
+      
     } catch (error) {
       console.error('Failed to save session data:', error);
     }
