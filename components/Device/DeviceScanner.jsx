@@ -3,9 +3,12 @@ import { View, Text, FlatList, Platform, Pressable, StyleSheet, Alert, ActivityI
 import Zeroconf, { ImplType, Service } from 'react-native-zeroconf';
 import Button from '../Button';
 import { useRouter } from 'expo-router';
+import { z } from 'zod';
 
 
 const zeroconf = new Zeroconf();
+const ip = z.string().ip();
+
 
 // Add these helper functions outside the component
 const stopScan = (zeroconfInstance, interval) => {
@@ -34,6 +37,7 @@ const stopScan = (zeroconfInstance, interval) => {
 
 const DeviceScanner = ({ connectDevice, isConnecting }) => {
   const [services, setServices] = useState([]);
+
   const [error, setError] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -68,9 +72,23 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
       });
 
       zeroconf.on('resolved', service   => {
-        console.log('Resolved service:', service);
-        // console.log("services", services);
-        setServices(prev => [...prev, service]);
+        const ipv4 = z.string().ip({ version: "v4" });
+        setServices(prev =>
+          ipv4.safeParse(service.host).success
+            ? [
+                ...prev.filter(
+                  s =>
+                    !(
+                      s.name === service.name &&
+                      s.host === service.host &&
+                      s.port === service.port
+                    )
+                ),
+                service
+              ]
+            : prev
+        );
+        console.log("Resolved service:", service);
       });
 
       zeroconf.on('error', err => {
@@ -82,7 +100,6 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
       // Start scanning
       console.log('Starting scan...');
       zeroconf.scan('spectrometer','tcp','local.');
-
       console.log('Scan started successfully');
     } catch (err) {
       console.error('Scan error:', err);
@@ -110,13 +127,15 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
     if (isRefreshing) {
       // Stop scanning
       console.log("Stopping scan");
-      stopScan(zeroconf.current, scanInterval);
+      // Stop the current scan by calling stopScan and passing the current zeroconf instance and scanInterval.
+      // This will clear the interval and stop the zeroconf instance.
+      stopScan(zeroconf, scanInterval);
       
-      // Update state
+      //Update state
       setIsRefreshing(false);
       setButtonText("Start Scan");
       setIsScanning(false);
-    } else {
+    } else{
       // Start scanning
       console.log("Starting scan");
       setIsRefreshing(true);
@@ -175,13 +194,7 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
     { name: 'Test Service 2', type: 'http', host: '192.168.1.1', port: 3000 }
   ];
 
-  const uniqueServices = services.filter((service, index, self) =>
-    index === self.findIndex((s) => (
-      s.name === service.name &&
-      s.host === service.host &&
-      s.port === service.port
-    ))
-  );
+
 
   return (
     <View style={{ flex: 1, padding: 20 }}>
@@ -231,7 +244,7 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
             )}
             
             <FlatList
-              data={Platform.OS === 'web' ? mockServices : uniqueServices}
+              data={Platform.OS === 'web' ? mockServices : services}
               keyExtractor={(item, index) => `${item.name || 'Unknown'}-${index}`}
               renderItem={({ item }) => (
                 <View style={{
