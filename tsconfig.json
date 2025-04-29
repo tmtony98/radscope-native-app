@@ -15,5 +15,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-, "components/MDNSDeviceScanner.jsx", "babel.config.js"  ]
+, "components/MDNSDeviceScanner.jsx", "babel.config.js", "components/Device/DeviceScanner.jsx"  ]
 }

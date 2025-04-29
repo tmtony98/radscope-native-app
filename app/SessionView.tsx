@@ -16,6 +16,7 @@ import {
   SPACING,
 } from "@/Themes/theme"; // Import theme styles
 import { useMqttContext } from "@/Provider/MqttContext";
+import StyledTextInput from "@/components/common/StyledTextInput";
 
 type Session = {
   id: string;
@@ -25,8 +26,9 @@ type Session = {
 };
 
 export default function SessionView() {
-
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [searchText, setSearchText] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
   const queryAndLogSessions = async () => {
     try {
@@ -83,10 +85,48 @@ export default function SessionView() {
     </View>
   );
 
+  const filteredSessions = sessions.filter((session) => {
+    const matchesSearch = session.sessionName
+      ?.toLowerCase()
+      .includes(searchText.toLowerCase());
+    const matchesDate = selectedDate
+      ? new Date(session.createdAt).toDateString() ===
+        selectedDate.toDateString()
+      : true;
+    return matchesSearch && matchesDate;
+  });
+
   return (
     <View style={styles.container}>
+      <View
+        style={styles.searchContainer}
+      >
+        <StyledTextInput
+        label="Search by session name"
+          style={[styles.searchInput, { flex: 1 }]}
+          placeholder="Search sessions..."
+          value={searchText}
+          onChangeText={setSearchText}
+          autoCorrect={false}
+          autoCapitalize="none"
+        />
+        <TouchableOpacity
+          style={styles.dateFilterButton}
+          onPress={() => {
+            // Show date picker modal here (platform-specific)
+            // For now, just a placeholder
+          }}
+        >
+          <Text style={styles.dateFilterButtonText}>
+            {selectedDate
+              ? selectedDate.toLocaleDateString()
+              : "Filter by Date"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <FlatList
-        data={sessions}
+        data={filteredSessions}
         renderItem={renderSessionItem}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContentContainer} // Add padding to the list content
@@ -101,12 +141,36 @@ export default function SessionView() {
 }
 
 const styles = StyleSheet.create({
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: SPACING.xs,
+    marginTop: 20,
+    paddingHorizontal: SPACING.md,
+  },
   container: {
     flex: 1,
     backgroundColor: COLORS.background, // Use background color from theme
   },
   listContentContainer: {
     padding: SPACING.md, // Add padding around the list
+  },
+  dateFilterButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: "#eee",
+    borderRadius: 6,
+  },
+  dateFilterButtonText: {
+    color: "#333",
+    fontSize: 14,
+  },
+  searchInput: {
+    
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    height: 40,
+    marginRight: 8,
   },
   itemRow: {
     flexDirection: "row",

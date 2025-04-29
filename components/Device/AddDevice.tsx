@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
   inputContainer: {
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
   },
   inputLabel: {
     ...TYPOGRAPHY.smallText,
