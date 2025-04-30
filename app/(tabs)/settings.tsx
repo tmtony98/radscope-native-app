@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
 import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../../Themes/theme';
 import * as SecureStore from 'expo-secure-store';
-import Header from '@/components/Header';
+import Header from '@/components/Dashboard/Header';
 
 //gener
 

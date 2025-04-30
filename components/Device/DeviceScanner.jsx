@@ -10,6 +10,7 @@ const zeroconf = new Zeroconf();
 const ip = z.string().ip();
 
 
+
 // Add these helper functions outside the component
 const stopScan = (zeroconfInstance, interval) => {
   if (!zeroconfInstance) {
@@ -36,8 +37,10 @@ const stopScan = (zeroconfInstance, interval) => {
 };
 
 const DeviceScanner = ({ connectDevice, isConnecting }) => {
-  const [services, setServices] = useState([]);
-
+  console.log("connectDevice", connectDevice);
+  console.log("isConnecting", isConnecting);
+  
+  const [devices, setDevices] = useState([]);
   const [error, setError] = useState(null);
   const [isScanning, setIsScanning] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -47,7 +50,7 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
   const router = useRouter();
 
   // Create zeroconf instance ONCE
-  
+  console.log("devices", devices);
 
   const deviceScan = () => {
     try {
@@ -71,9 +74,24 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
       
       });
 
-      zeroconf.on('resolved', service   => {
+      zeroconf.on('resolved', service => {
         const ipv4 = z.string().ip({ version: "v4" });
-        setServices(prev =>
+        console.log("Resolved service with TXT records:", service);
+        
+        // Extract deviceID from TXT records if available
+        const deviceID = service.txt && service.txt.deviceid ? service.txt.deviceid : '';
+        
+        // Create a device object with all necessary properties
+        const deviceObj = {
+          name: service.name || 'Unknown Device',
+          host: service.host || '',
+          port: service.port || '',
+          type: service.type || '',
+          deviceID: deviceID,
+          txt: service.txt || {}
+        };
+        
+        setDevices(prev =>
           ipv4.safeParse(service.host).success
             ? [
                 ...prev.filter(
@@ -84,11 +102,11 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
                       s.port === service.port
                     )
                 ),
-                service
+                deviceObj
               ]
             : prev
         );
-        console.log("Resolved service:", service);
+        // console.log("Added device with ID:", deviceID);
       });
 
       zeroconf.on('error', err => {
@@ -157,16 +175,19 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
   };
 
   const handleConnect = async (item) => {
-    console.log('Connecting to:', item);
+    console.log('Connecting to device:', item);
     try {
       // Format the device to match our Device type in the context
       const device = {
         name: item.name || 'Unknown Device',
         host: item.host || '',
         port: item.port || '',
+        deviceID: item.deviceID || '',
         type: item.type || '',
         isConnected: true
       };
+      
+      console.log('Connecting device with ID:', device.deviceID);
       
       // Connect the device using our props
       await connectDevice(device);
@@ -189,7 +210,7 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
   };
 
   // Mock data for testing
-  const mockServices = [
+  const mockdevices = [
     { name: 'Test Service 1', type: 'http', host: 'localhost', port: 8080 },
     { name: 'Test Service 2', type: 'http', host: '192.168.1.1', port: 3000 }
   ];
@@ -244,7 +265,7 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
             )}
             
             <FlatList
-              data={Platform.OS === 'web' ? mockServices : services}
+              data={Platform.OS === 'web' ? mockdevices : devices}
               keyExtractor={(item, index) => `${item.name || 'Unknown'}-${index}`}
               renderItem={({ item }) => (
                 <View style={{
@@ -267,6 +288,7 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
                     <Text>Type: {item.type || 'N/A'}</Text>
                     <Text>Host: {item.host || 'N/A'}</Text>
                     <Text>Port: {item.port || 'N/A'}</Text>
+                    <Text>Device ID: {item.deviceID || 'N/A'}</Text>
                   </View>
                   <View style={styles.buttonContainer}>
                     <Button
@@ -278,7 +300,7 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
               )}
               ListEmptyComponent={() => (
                 <Text style={{ textAlign: 'center', marginTop: 20, color: '#666' }}>
-                  {isScanning ? 'Searching for services...' : 'No devices found'}
+                  {isScanning ? 'Searching for devices...' : 'No devices found'}
                 </Text>
               )}
             />

@@ -9,8 +9,8 @@ import {
   Poppins_700Bold
 } from '@expo-google-fonts/poppins';
 import { SplashScreen } from 'expo-router';
-import { MqttProvider } from '../Provider/MqttContext';
-import { DeviceProvider } from '../Provider/DeviceContext';
+import { MqttProvider } from '../Provider/MqttContextProvider';
+import { DeviceProvider, useDeviceContext } from '../Provider/DeviceContextProvider';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
@@ -36,9 +36,11 @@ export default function RootLayout() {
     return null;
   }
 
+  // MqttProvider now directly uses DeviceContext
+
   return (
-    <MqttProvider>
-      <DeviceProvider>
+    <DeviceProvider>
+      <MqttProvider>
         <GestureHandlerRootView style={{ flex: 1 }}> 
           <View style={{ flex: 1 }}>
             <StatusBar
@@ -56,8 +58,8 @@ export default function RootLayout() {
             </Stack>
           </View>
         </GestureHandlerRootView>
-      </DeviceProvider>
-    </MqttProvider>
+      </MqttProvider>
+    </DeviceProvider>
   );
 }
 

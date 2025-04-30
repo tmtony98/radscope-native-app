@@ -6,7 +6,7 @@ import { TYPOGRAPHY } from '@/Themes/theme'
 
 import AddDevice from '@/components/Device/AddDevice';
 import ConnectTab from '@/components/Device/TopbarConnectTab';
-import Header from '@/components/Header';
+import Header from '@/components/Dashboard/Header';
 
 export default function ConnectPage() {
   return (

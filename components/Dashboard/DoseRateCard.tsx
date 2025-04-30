@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import React, { useEffect } from 'react';
 import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../../Themes/theme';
-import { useMqttContext } from '../../Provider/MqttContext';
+import { useMqttContext } from '../../Provider/MqttContextProvider';
 import database from '@/index.native';
 import { withObservables } from '@nozbe/watermelondb/react';
 import Doserate from '@/model/Doserate';

@@ -45,7 +45,7 @@ const useMqtt = () => {
               error: 'Failed to subscribe to topic' 
             });
           } else {
-            console.log('Successfully subscribed to topic:', TOPIC);
+            // console.log('Successfully subscribed to topic:', TOPIC);
             setStatus({ connected: true });
           }
         });

@@ -4,7 +4,7 @@ import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY, BUTTON_STYLE } from '../../The
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { useMqttContext } from '@/Provider/MqttContext';
+import { useMqttContext } from '@/Provider/MqttContextProvider';
 import { LineChart } from 'react-native-chart-kit';
 
 

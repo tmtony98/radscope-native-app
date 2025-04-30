@@ -3,19 +3,20 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY, BUTTON_STYLE } from '../../Themes/theme';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { Device } from './TopbarConnectTab';
+import { Device } from '@/Types';
+import { useDeviceContext } from '@/Provider/DeviceContextProvider';
 
 interface ConnectedDeviceCardProps {
-  connectedDevice: Device;
-  disconnectDevice: () => Promise<void>;
+  showHeader?: boolean;
 }
 
 const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({ 
-  connectedDevice, 
-  disconnectDevice 
+  showHeader = true
 }) => {
+  const { connectedDevice, disconnectDevice } = useDeviceContext();
   const router = useRouter();
 
+  // Return null if no device is connected
   if (!connectedDevice) return null;
 
   const handleViewDashboard = () => {

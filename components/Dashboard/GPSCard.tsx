@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import React from 'react';
 import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../../Themes/theme';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useMqttContext } from '@/Provider/MqttContext';
+import { useMqttContext } from '@/Provider/MqttContextProvider';
 
 
 

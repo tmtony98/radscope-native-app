@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../Themes/theme';
 import { SegmentedButtons } from 'react-native-paper';
-import Header from '@/components/Header';
+import Header from '@/components/Dashboard/Header';
 
 
 

@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import React from 'react'
-import { COLORS, TYPOGRAPHY, SPACING } from '../Themes/theme';
+import { COLORS, TYPOGRAPHY, SPACING } from '../../Themes/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';

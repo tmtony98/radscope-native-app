@@ -1,9 +1,9 @@
 import { View, StyleSheet, Text , FlatList, SafeAreaView } from "react-native";
 import App from "@/App";
-import { useMqttContext } from "@/Provider/MqttContext";
+import { useMqttContext } from "@/Provider/MqttContextProvider";
 import { useEffect, useState } from "react";
 import Dashboard from "../../components/Dashboard/Dashboard";
-import Header from "@/components/Header";
+import Header from "@/components/Dashboard/Header";
 
 export default function Index( route: any  | null) {
   const { doseRate } = useMqttContext();

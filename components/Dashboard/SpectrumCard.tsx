@@ -4,7 +4,7 @@ import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY , BUTTON_STYLE } from '../../Th
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LineChart } from 'react-native-chart-kit';
-import { useMqttContext } from '../../Provider/MqttContext';
+import { useMqttContext } from '../../Provider/MqttContextProvider';
 type SpectrumCardProps = {
   duration?: string;
   onFullscreen?: () => void;

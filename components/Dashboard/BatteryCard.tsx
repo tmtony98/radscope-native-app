@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import React from 'react';
 import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../../Themes/theme';
-import { useMqttContext } from '@/Provider/MqttContext';
+import { useMqttContext } from '@/Provider/MqttContextProvider';
 
 
 type BatteryCardProps = {

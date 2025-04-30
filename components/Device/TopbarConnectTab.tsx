@@ -1,23 +1,15 @@
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import DeviceScanner from '@/components/Device/DeviceScanner'; 
 import AddDevice from '@/components/Device/AddDevice';
 import { MaterialIcons } from '@expo/vector-icons';
 import ConnectedDeviceCard from './ConnectedDeviceCard';
 import { COLORS, SPACING } from '../../Themes/theme';
-import * as SecureStore from 'expo-secure-store';
+import { Device } from '@/Types';
+import { useDeviceContext } from '@/Provider/DeviceContextProvider';
 
 const Tab = createMaterialTopTabNavigator();
-
-// Define Device type
-export type Device = {
-  name: string;
-  host: string;
-  port?: number;
-  type?: string;
-  isConnected: boolean;
-};
 
 // Prop types for our components
 export interface DeviceScannerProps {
@@ -30,63 +22,10 @@ export interface AddDeviceProps {
   isConnecting: boolean;
 }
 
-// Storage key for the connected device
-const DEVICE_STORAGE_KEY = 'connectedDevice';
+// Export the Device interface for other components
 
-export default function ConnectTab() {
-  const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
-
-  // Load any previously connected device on mount
-  useEffect(() => {
-    const loadConnectedDevice = async () => {
-      try {
-        const savedDevice = await SecureStore.getItemAsync(DEVICE_STORAGE_KEY);
-        if (savedDevice) {
-          setConnectedDevice(JSON.parse(savedDevice));
-        }
-      } catch (error) {
-        console.error('Failed to load connected device:', error);
-      }
-    };
-
-    loadConnectedDevice();
-  }, []);
-
-  // Connect a device
-  const connectDevice = async (device: Device) => {
-    try {
-      setIsConnecting(true);
-      // Set the device as connected
-      const connectedDeviceData = { ...device, isConnected: true };
-      
-      // Save to secure storage
-      await SecureStore.setItemAsync(
-        DEVICE_STORAGE_KEY,
-        JSON.stringify(connectedDeviceData)
-      );
-      
-      // Update state
-      setConnectedDevice(connectedDeviceData);
-    } catch (error) {
-      console.error('Failed to connect device:', error);
-    } finally {
-      setIsConnecting(false);
-    }
-  };
-
-  // Disconnect the current device
-  const disconnectDevice = async () => {
-    try {
-      // Remove from secure storage
-      await SecureStore.deleteItemAsync(DEVICE_STORAGE_KEY);
-      
-      // Update state
-      setConnectedDevice(null);
-    } catch (error) {
-      console.error('Failed to disconnect device:', error);
-    }
-  };
+const ConnectTab = () => {
+  const { connectedDevice, connectDevice, disconnectDevice, isConnecting } = useDeviceContext();
 
   // Create a custom component wrapper that passes props
   const ScanDevicesWithProps = (props: any) => (
@@ -109,12 +48,7 @@ export default function ConnectTab() {
   return (
     <View style={styles.container}>
       {/* Connected Device Card */}
-      {connectedDevice && (
-        <ConnectedDeviceCard 
-          connectedDevice={connectedDevice} 
-          disconnectDevice={disconnectDevice} 
-        />
-      )}
+      {connectedDevice && <ConnectedDeviceCard />}
       
       {/* Tab Navigator */}
       <Tab.Navigator
@@ -172,6 +106,8 @@ export default function ConnectTab() {
     </View>
   );
 }
+
+export default ConnectTab;
 
 const styles = StyleSheet.create({
   container: {

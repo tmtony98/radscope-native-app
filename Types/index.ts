@@ -33,3 +33,11 @@ export interface Message {
     Temperature: number; // Temperature in degrees Celsius
   }
   
+  export interface Device {
+    name: string;
+    deviceID?: string;
+    isConnected: boolean;
+    port?: number | string;
+    host: string;
+    type?: string;
+  };

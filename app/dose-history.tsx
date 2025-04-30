@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import DoseHistory from '../components/History/DoseHistory';
-import Header from '@/components/Header';
+import Header from '@/components/Dashboard/Header';
 
 export default function DoseHistoryPage() {
   return (

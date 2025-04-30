@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import DoseHistoryView from '../components/History/DoseHistoryView';
-import Header from '@/components/Header';
+import Header from '@/components/Dashboard/Header';
 
 
 export default function DoseHistoryViewPage() {
