@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   disconnectButton: {
     backgroundColor: COLORS.error,
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
+    paddingVertical: SPACING.sm,
     borderRadius: 8,
   },
   disconnectText: {
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.primary,
-    paddingVertical: SPACING.md,
+    paddingVertical: 10,
     borderRadius: 12,
   },
   viewDashboardText: {
