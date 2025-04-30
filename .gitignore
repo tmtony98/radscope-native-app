@@ -42,3 +42,6 @@ api.md.idea/.gitignore
 .idea/modules.xml
 .idea/my-app.iml
 .idea/vcs.xml
+
+# windsurf rules
+.windsurfrules
