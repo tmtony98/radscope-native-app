@@ -41,7 +41,7 @@ const App = () => {
   return (
     <ErrorBoundary>
       <SafeAreaView>
-        <DeviceScanner connectDevice={connectDevice} isConnecting={isConnecting} />
+        <DeviceScanner connectDevice={connectDevice} />
       </SafeAreaView>
     </ErrorBoundary>
   );

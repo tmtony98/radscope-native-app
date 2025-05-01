@@ -35,7 +35,7 @@ const stopScan = (zeroconfInstance, interval) => {
   }
 };
 
-const DeviceScanner = ({ connectDevice, isConnecting }) => {
+const DeviceScanner = ({ connectDevice }) => {
   const [services, setServices] = useState([]);
 
   const [error, setError] = useState(null);
@@ -49,8 +49,11 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
   // Create zeroconf instance ONCE
   
 
-  const deviceScan = () => {
+  const startDeviceScan = async () => {
     try {
+      // clear the devices array
+      setServices([]);
+
       // Remove any existing listeners before adding new ones
       console.log("Removing all existing listeners");
       zeroconf.removeAllListeners();
@@ -108,24 +111,25 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
   };
 
   // Cleanup on component unmount
-  useEffect(() => {
-    if (Platform.OS === 'web') {
-      setError('MDNS scanning is not supported on web platform');
-    } else {
-      deviceScan();
-    }
+  // useEffect(() => {
+  //   if (Platform.OS === 'web') {
+  //     setError('MDNS scanning is not supported on web platform');
+  //   } else {
+  //     deviceScan();
+  //   }
     
-    return () => {
-      console.log("Component unmounting");
-      stopScan(zeroconf, scanInterval);
-    };
-  }, []);
+  //   return () => {
+  //     console.log("Component unmounting");
+  //     stopScan(zeroconf, scanInterval);
+  //   };
+  // }, []);
 
-  // Updated refresh function
-  const reFresh = () => {
-    console.log("REFRESH called, current isRefreshing:", isRefreshing);
-    if (isRefreshing) {
-      // Stop scanning
+
+  let stopTimer = null;
+  
+
+  const handleStopScan = () => {
+    console.log("STOP called, current isRefreshing:", isRefreshing);
       console.log("Stopping scan");
       // Stop the current scan by calling stopScan and passing the current zeroconf instance and scanInterval.
       // This will clear the interval and stop the zeroconf instance.
@@ -135,29 +139,42 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
       setIsRefreshing(false);
       setButtonText("Start Scan");
       setIsScanning(false);
-    } else{
+      
+      // Clear the stop timer
+      if (stopTimer) {
+        clearTimeout(stopTimer);
+        stopTimer = null;
+      }
+  };
+
+
+  // Updated refresh function
+  const handleStartScan = () => {
+    console.log("REFRESH called, current isRefreshing:", isRefreshing);
       // Start scanning
       console.log("Starting scan");
       setIsRefreshing(true);
       setButtonText("Stop Scanning");
       
       // Start the initial scan
-      deviceScan();
-      
-      // Set up interval for continuous scanning
-      const interval = setInterval(() => {
-        console.log("Interval triggered, running deviceScan()");
-        deviceScan();
-      }, 4000);
-      console.log("Interval " , interval);
-      
-      setScanInterval(interval);
-      console.log("Set scan interval:", interval);
-    }
+      stopScan(zeroconf, scanInterval);
+      startDeviceScan();
+
+      // stop the scan automatically after 10 seconds
+      stopTimer = setTimeout(() => {
+        console.log("Stopping scan after 10 seconds");
+        stopScan(zeroconf, scanInterval);
+        setIsRefreshing(false);
+        setButtonText("Start Scan");
+        setIsScanning(false);
+      }, 10000);
   };
 
   const handleConnect = async (item) => {
     console.log('Connecting to:', item);
+    // Stop the current scan by calling stopScan and passing the current zeroconf instance and scanInterval.
+    handleStopScan();
+    
     try {
       // Format the device to match our Device type in the context
       const device = {
@@ -199,16 +216,25 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
   return (
     <View style={{ flex: 1, padding: 20 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10 }}>
-        <Button
-          title={buttonText}
-          onPress={() => {
-            console.log("Button pressed, current state:", isRefreshing);
-            reFresh();
-          }}
-          buttonStyle={{ 
-            backgroundColor: isRefreshing ? '#ff4040' : '#31435E' 
-          }}
-        />
+        {
+          isRefreshing ? (
+            <Button
+              title="Stop Scanning"
+              onPress={handleStopScan}
+              buttonStyle={{ 
+                backgroundColor: '#ff4040' 
+              }}
+            />
+          ) : (
+            <Button
+              title="Start Scanning"
+              onPress={handleStartScan}
+              buttonStyle={{ 
+                backgroundColor: '#31435E' 
+              }}
+            />
+          )
+        }
       </View>
       
       {error ? (
@@ -232,7 +258,7 @@ const DeviceScanner = ({ connectDevice, isConnecting }) => {
           
           {/* Always show discovered devices section */}
           <View style={styles.devicesContainer}>
-            {isScanning && !isRefreshing ? (
+            {isRefreshing ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
                 <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Scanning </Text>
                 <ActivityIndicator size="small" color="#007AFF" />

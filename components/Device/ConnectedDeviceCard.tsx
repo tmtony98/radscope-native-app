@@ -4,9 +4,10 @@ import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY, BUTTON_STYLE } from '../../The
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Device } from './TopbarConnectTab';
+import { useMqttContext } from '@/Provider/MqttContext';
 
 interface ConnectedDeviceCardProps {
-  connectedDevice: Device;
+  connectedDevice: Device | null;
   disconnectDevice: () => Promise<void>;
 }
 
@@ -15,8 +16,10 @@ const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({
   disconnectDevice 
 }) => {
   const router = useRouter();
+  const mqttContext = useMqttContext();
 
-  if (!connectedDevice) return null;
+  // get status
+  const { status } = mqttContext;
 
   const handleViewDashboard = () => {
     router.push('/');
@@ -27,42 +30,54 @@ const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Text style={[TYPOGRAPHY.headLineSmall, styles.headerText]}>Connected Devices</Text>
-        <View style={styles.connectedBadge}>
-          <Text style={styles.connectedText}>1 Connected</Text>
-        </View>
-      </View>
+<>
+{connectedDevice ? (
 
-      <View style={styles.cardContainer}>
-        <View style={styles.deviceInfoContainer}>
-          <View style={styles.deviceIconContainer}>
-            <MaterialIcons name="devices" size={24} color={COLORS.primary} />
-          </View>
-          <View style={styles.deviceDetails}>
-            <Text style={[TYPOGRAPHY.TitleMedium, styles.deviceName]}>
-              {connectedDevice.name || 'Device Name'}
-            </Text>
-            <Text style={styles.deviceIp}>{connectedDevice.host}</Text>
-          </View>
-          <TouchableOpacity 
-            style={styles.disconnectButton} 
-            onPress={handleDisconnect}
-          >
-            <Text style={styles.disconnectText}>Disconnect</Text>
-          </TouchableOpacity>
-        </View>
+<View style={styles.container}>
+<View style={styles.headerContainer}>
+  <Text style={[TYPOGRAPHY.headLineSmall, styles.headerText]}>Connected Devices</Text>
+ 
+ {status.connected ? <View style={styles.connectedBadge}>
+    <Text style={styles.connectedText}> Connected</Text>
+  </View> :   <> <View style={styles.disconnectedBadge}>
+    <Text style={styles.connectedText}>Disconnected</Text>
+  </View> 
+  </>  }
+  
+</View>
 
-        <TouchableOpacity 
-          style={styles.viewDashboardButton}
-          onPress={handleViewDashboard}
-        >
-          <Text style={styles.viewDashboardText}>View Dashboard</Text>
-          <MaterialIcons name="chevron-right" size={20} color={COLORS.white} />
-        </TouchableOpacity>
-      </View>
+<View style={styles.cardContainer}>
+  <View style={styles.deviceInfoContainer}>
+    <View style={styles.deviceIconContainer}>
+      <MaterialIcons name="devices" size={24} color={COLORS.primary} />
     </View>
+    <View style={styles.deviceDetails}>
+      <Text style={[TYPOGRAPHY.TitleMedium, styles.deviceName]}>
+        {connectedDevice.name || 'Device Name'}
+      </Text>
+      <Text style={styles.deviceIp}>{connectedDevice.host}</Text>
+    </View>
+    <TouchableOpacity 
+      style={styles.disconnectButton} 
+      onPress={handleDisconnect}
+    >
+      <Text style={styles.disconnectText}>Disconnect</Text>
+    </TouchableOpacity>
+  </View>
+
+  <TouchableOpacity 
+    style={styles.viewDashboardButton}
+    onPress={handleViewDashboard}
+  >
+    <Text style={styles.viewDashboardText}>View Dashboard</Text>
+    <MaterialIcons name="chevron-right" size={20} color={COLORS.white} />
+  </TouchableOpacity>
+</View>
+</View>
+) :null
+  }
+</>
+  
   );
 };
 
@@ -83,6 +98,12 @@ const styles = StyleSheet.create({
   },
   connectedBadge: {
     backgroundColor: '#166907',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  disconnectedBadge: {
+    backgroundColor: '#E62B2B',
     paddingHorizontal: SPACING.sm,
     paddingVertical: 4,
     borderRadius: 12,

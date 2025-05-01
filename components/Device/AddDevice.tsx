@@ -1,14 +1,25 @@
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { COLORS, SPACING, TYPOGRAPHY, BUTTON_STYLE } from '../../Themes/theme'
 import StyledTextInput from '../common/StyledTextInput'
 import { useRouter } from 'expo-router'
 import { AddDeviceProps } from './TopbarConnectTab'
+import { useMqttContext } from '@/Provider/MqttContext'
 
-const AddDevice: React.FC<AddDeviceProps> = ({ connectDevice, isConnecting }) => {
+const AddDevice: React.FC<AddDeviceProps> = ({ connectDevice }) => {
   const [deviceName, setDeviceName] = useState('')
   const [ipAddress, setIpAddress] = useState('')
   const router = useRouter()
+  const mqttContext = useMqttContext();
+  const [isConnecting, setIsConnecting] = useState(false)
+  
+  const { status } = mqttContext;
+
+  useEffect(() => {
+    setIsConnecting(status.connected)
+  }, [status.connected])
+
+  
 
   const handleConnect = async () => {
     // console.log('Connecting to device:', deviceName, 'IP:', ipAddress)

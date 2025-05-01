@@ -6,7 +6,8 @@ import AddDevice from '@/components/Device/AddDevice';
 import { MaterialIcons } from '@expo/vector-icons';
 import ConnectedDeviceCard from './ConnectedDeviceCard';
 import { COLORS, SPACING } from '../../Themes/theme';
-import * as SecureStore from 'expo-secure-store';
+import { useMqttContext } from '@/Provider/MqttContext';
+import { useDeviceContext } from '@/Provider/DeviceContext';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -27,51 +28,75 @@ export interface DeviceScannerProps {
 
 export interface AddDeviceProps {
   connectDevice: (device: Device) => Promise<void>;
-  isConnecting: boolean;
 }
 
 // Storage key for the connected device
 const DEVICE_STORAGE_KEY = 'connectedDevice';
 
 export default function ConnectTab() {
-  const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
-  const [isConnecting, setIsConnecting] = useState(false);
+  const mqttContext = useMqttContext();
+  const { connectMqtt, disconnectMqtt, status } = mqttContext;
+  const { setDeviceInStore, resetDeviceInStore, connectedDevice  } = useDeviceContext();
 
   // Load any previously connected device on mount
-  useEffect(() => {
-    const loadConnectedDevice = async () => {
-      try {
-        const savedDevice = await SecureStore.getItemAsync(DEVICE_STORAGE_KEY);
-        if (savedDevice) {
-          setConnectedDevice(JSON.parse(savedDevice));
-        }
-      } catch (error) {
-        console.error('Failed to load connected device:', error);
-      }
-    };
+  // useEffect(() => {
+  //   const loadConnectedDevice = async () => {
+  //     try {
+  //       const savedDevice = await SecureStore.getItemAsync(DEVICE_STORAGE_KEY);
+  //       if (savedDevice) {
+  //         setConnectedDevice(JSON.parse(savedDevice));
+  //         reconnectMQTT(JSON.parse(savedDevice));
+  //       }
+  //     } catch (error) {
+  //       console.error('Failed to load connected device:', error);
+  //     }
+  //   };
 
-    loadConnectedDevice();
-  }, []);
+  //   loadConnectedDevice();
+  // }, []);
+
+  // const loadConnectedDevice = async () => {
+  //   try {
+  //     const savedDevice = await SecureStore.getItemAsync(DEVICE_STORAGE_KEY);
+  //     if (savedDevice) {
+  //       setConnectedDevice(JSON.parse(savedDevice));
+  //     }
+  //   } catch (error) {
+  //     console.error('Failed to load connected device:', error);
+  //   }
+  // };
+
+  // set setConnectedDevice when the status changes
+  // useEffect(() => {
+  //   if (status.connected) {
+  //     loadConnectedDevice();
+  //   } 
+    
+  //   // else {
+  //   //   setConnectedDevice(null);
+  //   // }
+  // }, [status.connected]);
+
+  const reconnectMQTT = (device: Device) => {
+      disconnectMqtt();
+      connectMqtt(device.host, device.port || 8083, device.name);
+  }
 
   // Connect a device
   const connectDevice = async (device: Device) => {
     try {
-      setIsConnecting(true);
       // Set the device as connected
-      const connectedDeviceData = { ...device, isConnected: true };
+      const connectedDeviceData = { ...device, isConnected: false };
       
       // Save to secure storage
-      await SecureStore.setItemAsync(
-        DEVICE_STORAGE_KEY,
-        JSON.stringify(connectedDeviceData)
-      );
+      await setDeviceInStore(connectedDeviceData);
+      reconnectMQTT(device);
       
       // Update state
-      setConnectedDevice(connectedDeviceData);
+      // setConnectedDevice(connectedDeviceData);
     } catch (error) {
       console.error('Failed to connect device:', error);
     } finally {
-      setIsConnecting(false);
     }
   };
 
@@ -79,10 +104,12 @@ export default function ConnectTab() {
   const disconnectDevice = async () => {
     try {
       // Remove from secure storage
-      await SecureStore.deleteItemAsync(DEVICE_STORAGE_KEY);
+      await resetDeviceInStore();
+
+      disconnectMqtt();
       
       // Update state
-      setConnectedDevice(null);
+      // setConnectedDevice(null);
     } catch (error) {
       console.error('Failed to disconnect device:', error);
     }
@@ -93,7 +120,6 @@ export default function ConnectTab() {
     <DeviceScanner 
       {...props} 
       connectDevice={connectDevice} 
-      isConnecting={isConnecting} 
     />
   );
 
@@ -102,7 +128,6 @@ export default function ConnectTab() {
     <AddDevice 
       {...props} 
       connectDevice={connectDevice} 
-      isConnecting={isConnecting} 
     />
   );
 

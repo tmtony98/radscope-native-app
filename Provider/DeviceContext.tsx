@@ -13,16 +13,16 @@ export type Device = {
 // Define the context type
 type DeviceContextType = {
   connectedDevice: Device | null;
-  connectDevice: (device: Device) => Promise<void>;
-  disconnectDevice: () => Promise<void>;
+  setDeviceInStore: (device: Device) => Promise<void>;
+  resetDeviceInStore: () => Promise<void>;
   isConnecting: boolean;
 };
 
 // Create context with default values
 const DeviceContext = createContext<DeviceContextType>({
   connectedDevice: null,
-  connectDevice: async () => {},
-  disconnectDevice: async () => {},
+  setDeviceInStore: async () => {},
+  resetDeviceInStore: async () => {},
   isConnecting: false,
 });
 
@@ -53,8 +53,8 @@ export const DeviceProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     loadConnectedDevice();
   }, []);
 
-  // Connect a device
-  const connectDevice = async (device: Device) => {
+  // Set a device
+  const setDeviceInStore = async (device: Device) => {
     try {
       setIsConnecting(true);
       // Set the device as connected
@@ -75,8 +75,8 @@ export const DeviceProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     }
   };
 
-  // Disconnect the current device
-  const disconnectDevice = async () => {
+  // Reset the current device
+  const resetDeviceInStore = async () => {
     try {
       // Remove from secure storage
       await SecureStore.deleteItemAsync(DEVICE_STORAGE_KEY);
@@ -92,8 +92,8 @@ export const DeviceProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     <DeviceContext.Provider
       value={{
         connectedDevice,
-        connectDevice,
-        disconnectDevice,
+        setDeviceInStore,
+        resetDeviceInStore,
         isConnecting,
       }}
     >
