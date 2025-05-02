@@ -11,7 +11,7 @@ import Doserate from '../model/Doserate';
 // const BROKER_URL = 'ws://192.168.1.50:8083'; //office kv
 
 
-// const BROKER_URL = 'ws://192.168.1.11:8083'; //hostel
+const BROKER_URL = 'ws://192.168.1.11:8083'; //hostel
 // const BROKER_URL = 'ws://192.168.74.213:8083'; //tony phone
 
 
@@ -29,8 +29,7 @@ type MqttContextType = {
   cps: number;
   gps: GpsData | null;
   batteryInfo: BatteryData | null;
-  doseRateArray: number[];
-  timestampArray: number[];
+  doseRateGraphArray: { doseRate: number; timestamp: number; cps: number }[];
   timestamp: number;
   spectrum:number[],
   connectMqtt: (mqtt_host: string, mqtt_port: number, deviceId: any) => void;
@@ -51,8 +50,7 @@ const MqttContext = createContext<MqttContextType>({
   doseRate: 0,
   cps: 0,
   timestamp: 0,
-  doseRateArray: [],
-  timestampArray: [],
+  doseRateGraphArray: [],
   gps: null,
   batteryInfo: null,
   spectrum:[],
@@ -72,14 +70,15 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<ConnectionStatus>({ connected: false });
   const [doseRate, setDoseRate] = useState<number>(0);
-  const [doseRateArray, setDoseRateArray] = useState<number[]>([]);
+  // const [doseRateArray, setDoseRateArray] = useState<number[]>([]);
   const [cps, setCps] = useState<number>(0);
   const clientRef = useRef<mqtt.MqttClient | null>(null);
-  const [timestampArray, setTimestampArray] = useState<number[]>([]);
+  // const [timestampArray, setTimestampArray] = useState<number[]>([]);
   const [timestamp, setTimestamp] = useState<number>(0);
   const [gps, setGps] = useState<GpsData | null>(null);
   const [batteryInfo, setBatteryInfo] = useState <BatteryData | null>(null);
   const [spectrum , setSpectrum] = useState<number[]>([])
+  const [doseRateGraphArray, setDoseRateGraphArray] = useState<{ doseRate: number; timestamp: number; cps: number }[]>([]);
   
   const extractSensorData = (messages: Message[]) => {
     try {
@@ -241,8 +240,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setTimestamp(timestamp);
       setGps(gps);
       setBatteryInfo(batteryInfo);
-      setDoseRateArray(prev => [...prev, doseRate]);
-      setTimestampArray(prev => [...prev, timestamp]);
+      setDoseRateGraphArray(prev => [...prev, { doseRate, timestamp, cps }].slice(-10));
       saveDoserate(doseRate, cps, timestamp);
       setSpectrum(spectrum);
     }
@@ -255,10 +253,9 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
     status,
     doseRate,
     cps,
-    timestamp,
-    doseRateArray,
-    timestampArray,
+    doseRateGraphArray,
     gps,
+    timestamp,
     batteryInfo,
     spectrum,
     connectMqtt,

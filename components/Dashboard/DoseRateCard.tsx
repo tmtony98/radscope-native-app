@@ -12,12 +12,10 @@ type DoseRateCardProps = {
 };
 
 const DoseRateCard: React.FC<DoseRateCardProps> = ({ latestDoserate }) => {
-  const { status, cps, doseRate } = useMqttContext();
-  // console.log("latestDoserate", latestDoserate);
+  const { status,  doseRateGraphArray } = useMqttContext();
+  console.log("doseRateGraphArray", doseRateGraphArray);
 
   const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
-  // console.log(currentTime,"=======  doseRate", doseRate, "=======  cps", cps);
 
   useEffect(() => {
     const fetchRows = async () => {
@@ -27,27 +25,31 @@ const DoseRateCard: React.FC<DoseRateCardProps> = ({ latestDoserate }) => {
     fetchRows();
   }, []);
 
-  const xyz = database.get('doserate').query(Q.sortBy('doserate', Q.desc)).fetch();
+//get the latest doserate from doseRateGraphArray 
+
+  const latestDoseRate = doseRateGraphArray.length > 0 ? doseRateGraphArray[doseRateGraphArray.length - 1].doseRate : 0;
+  const latestCps = doseRateGraphArray.length > 0 ? doseRateGraphArray[doseRateGraphArray.length - 1].cps : 0;
+  // const xyz = database.get('doserate').query(Q.sortBy('doserate', Q.desc)).fetch();
   // console.log("xyz", xyz);
-  
+ 
 
   // Use the most recent doserate from DB, or fallback to context value
-  const doseValue =
-    latestDoserate && latestDoserate.length > 0
-      ? latestDoserate[0].doserate
-      : doseRate;
+  // const doseValue =
+  //   latestDoserate && latestDoserate.length > 0
+  //     ? latestDoserate[0].doserate
+  //     : doseRate;
 
   return (
     <View style={CARD_STYLE.container}>
       <Text style={TYPOGRAPHY.headLineSmall}>Dose Rate</Text>
       <View style={styles.doseRateContainer}>
         <View style={styles.doseRate}>
-          <Text style={styles.doseValue}>{doseValue}</Text>
+          <Text style={styles.doseValue}>{latestDoseRate}</Text>
           <Text style={styles.doseUnit}>uSv/h</Text>
         </View>
         <View style={styles.cpsContainer}>
           <Text>cps value</Text>
-          <Text>{cps}</Text>
+          <Text>{latestCps}</Text>
         </View>
       </View>
       <View style={styles.mqttStatus}>
