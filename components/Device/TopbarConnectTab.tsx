@@ -79,14 +79,20 @@ export default function ConnectTab() {
 
   const reconnectMQTT = (device: Device) => {
       disconnectMqtt();
-      connectMqtt(device.host, device.port || 8083, device.name);
+      console.log("disconnecting and connecting to MQTT broker:", device.host, device.port, device.name);
+      
+      // Use port 8883 for WebSocket connection if the device port is 1883 (standard MQTT)
+      const wsPort = device.port === 1883 ? 8883 : (device.port || 8883);
+      
+      // Pass the device object to connectMqtt to handle both device ID and Demo_Topic
+      connectMqtt(device.host, wsPort, device);
   }
 
   // Connect a device
   const connectDevice = async (device: Device) => {
     try {
       // Set the device as connected
-      const connectedDeviceData = { ...device, isConnected: false };
+      const connectedDeviceData = { ...device, isConnected: true };
       
       // Save to secure storage
       await setDeviceInStore(connectedDeviceData);

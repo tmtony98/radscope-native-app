@@ -5,6 +5,7 @@ import StyledTextInput from '../common/StyledTextInput'
 import { useRouter } from 'expo-router'
 import { AddDeviceProps } from './TopbarConnectTab'
 import { useMqttContext } from '@/Provider/MqttContext'
+import { useDeviceContext } from '@/Provider/DeviceContext'
 
 const AddDevice: React.FC<AddDeviceProps> = ({ connectDevice }) => {
   const [deviceName, setDeviceName] = useState('')
@@ -12,10 +13,17 @@ const AddDevice: React.FC<AddDeviceProps> = ({ connectDevice }) => {
   const router = useRouter()
   const mqttContext = useMqttContext();
   const [isConnecting, setIsConnecting] = useState(false)
+
+  // use deviceContext and load ip address\
+  const deviceContext = useDeviceContext();
+  const { connectedDevice } = deviceContext;
   
   const { status } = mqttContext;
 
   useEffect(() => {
+    if (connectedDevice) {
+      setIpAddress(connectedDevice.host)
+    }
     setIsConnecting(status.connected)
   }, [status.connected])
 
@@ -114,7 +122,7 @@ const AddDevice: React.FC<AddDeviceProps> = ({ connectDevice }) => {
         <TouchableOpacity 
           style={BUTTON_STYLE.mediumButton} 
           onPress={handleConnect}
-          disabled={isConnecting}
+          // disabled={isConnecting}
         >
           <Text style={styles.connectButtonText}>
             {isConnecting ? 'Connecting...' : 'Connect'}

@@ -33,7 +33,7 @@ type MqttContextType = {
   timestampArray: number[];
   timestamp: number;
   spectrum:number[],
-  connectMqtt: (mqtt_host: string, mqtt_port: number, deviceId: string) => void;
+  connectMqtt: (mqtt_host: string, mqtt_port: number, deviceId: any) => void;
   disconnectMqtt: () => void;
 };
 
@@ -90,7 +90,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const parsedData = JSON.parse(typeof latestMessage.payload === 'string' 
         ? latestMessage.payload 
         : latestMessage.payload.toString());
-      console.log("parsedData", parsedData);
+      // console.log("parsedData", parsedData);
       const doseRate = parsedData?.data?.Sensor?.doserate?.value ?? 0;
       const cps = parsedData?.data?.Sensor?.doserate?.cps ?? 0;
       const timestamp = parsedData?.timestamp ?? 0;
@@ -118,11 +118,13 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
  }; 
 
 
-  const connectMqtt = async (mqtt_host: string, mqtt_port: number, deviceId: string) => {
+  const connectMqtt = async (mqtt_host: string, mqtt_port: number, deviceId: any) => {
     try {
       console.log("Connecting to MQTT broker:", mqtt_host, mqtt_port, deviceId);
       const CLIENT_ID = `mqtt-client-${Math.random().toString(16).substr(2, 8)}`;
-      const client = mqtt.connect(`ws://${mqtt_host}:8883`, {
+      
+      // Use the provided port or fallback to WebSocket port 8883
+      const client = mqtt.connect(`ws://${mqtt_host}:8083`, {
         clientId: CLIENT_ID,
         clean: true,
         connectTimeout: 10000,
@@ -130,20 +132,34 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
         keepalive: 60,
         rejectUnauthorized: false
       });
-
+    console.log("MQTT portttt:", mqtt_port);
+    
       client.on('connect', () => {
         console.log(`Connected to MQTT broker ${mqtt_host}`);
-        // // const TOPIC = 'device/GS200/spectrum/GS200X1D83ADD17C168';
-        const TOPIC = `device/GS200/spectrum/${deviceId}`;
+        
+        // Subscribe to both the device-specific topic and Demo_Topic
+        // const TOPIC = `device/GS200/spectrum/${actualDeviceId}`;
+        const TOPIC = `device/GS200/spectrum/+`;
+        
+        // Subscribe to device-specific topic
         client.subscribe(TOPIC, (err) => {
           if (err) {
-            console.error('Subscription error:', err);
+            console.error('Subscription error for device topic:', err);
+          } else {
+            console.log('Successfully subscribed to device topic:', TOPIC);
+          }
+        });
+        
+        // Also subscribe to Demo_Topic used by Python script
+        client.subscribe('Demo_Topic', (err) => {
+          if (err) {
+            console.error('Subscription error for Demo_Topic:', err);
             setStatus({ 
               connected: false, 
-              error: 'Failed to subscribe to topic' 
+              error: 'Failed to subscribe to Demo_Topic' 
             });
           } else {
-            console.log('Successfully subscribed to topic:', TOPIC);
+            console.log('Successfully subscribed to Demo_Topic');
             setStatus({ connected: true });
           }
         });
@@ -159,7 +175,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         setMessages((prev) => [message, ...prev]);
         setMessage(message);
-        console.log("Received payload:", message);
+        // console.log("Received payload:", message);
       });
 
       client.on('error', (err) => {
@@ -252,7 +268,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // console.log("doseRate", doseRate);
   // console.log("cps", cps);
   // console.log("doseRateArray", doseRateArray);
-  console.log("spectrum", spectrum);
+  // console.log("spectrum", spectrum);
   
   return (
     <MqttContext.Provider value={value}>

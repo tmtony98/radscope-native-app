@@ -39,7 +39,8 @@ const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({
  
  {status.connected ? <View style={styles.connectedBadge}>
     <Text style={styles.connectedText}> Connected</Text>
-  </View> :   <> <View style={styles.disconnectedBadge}>
+  </View> :   <>
+   <View style={styles.disconnectedBadge}>
     <Text style={styles.connectedText}>Disconnected</Text>
   </View> 
   </>  }

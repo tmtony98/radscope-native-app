@@ -10,13 +10,17 @@ type BatteryCardProps = {
 };
 
 export default function BatteryCard({
+
  
   isLastCard = false,
 }: BatteryCardProps) {
 
   const { batteryInfo } = useMqttContext();
-  // console.log("batteryInfo", batteryInfo);
+  const now = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  // console.log("=======batteryInfo====", batteryInfo, "=======  currentTime", now);
   
+
+
   return (
     <View style={[CARD_STYLE.container, isLastCard && styles.lastCard]}>
       <Text style={TYPOGRAPHY.headLineSmall}>Battery</Text>

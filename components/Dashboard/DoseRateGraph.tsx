@@ -25,7 +25,10 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
   });
 
   const DoseRateLabels = doseRateArray.slice(-6)
-  // console.log("DoseRateLabels", DoseRateLabels);
+
+  // add time stamp in milliseconds to the log
+  const timestampMs = Date.now();
+  console.log(`======= DoseRateLabels ${timestampMs}`, DoseRateLabels);
 
   // const handleFullscreen = () => {
   //   if (Platform.OS !== 'web') {
@@ -62,6 +65,10 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
           <View>
 
             <LineChart
+              // withDots = {false}
+              // withShadow = {false}
+              // withInnerLines = {false}
+              // withOuterLines = {false}
               data={{
                 labels: TimeLabels,
                 datasets: [

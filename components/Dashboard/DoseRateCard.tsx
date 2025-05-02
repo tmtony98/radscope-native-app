@@ -14,7 +14,10 @@ type DoseRateCardProps = {
 const DoseRateCard: React.FC<DoseRateCardProps> = ({ latestDoserate }) => {
   const { status, cps, doseRate } = useMqttContext();
   // console.log("latestDoserate", latestDoserate);
-  // console.log("doseRate", doseRate);
+
+  const currentTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+  // console.log(currentTime,"=======  doseRate", doseRate, "=======  cps", cps);
 
   useEffect(() => {
     const fetchRows = async () => {
