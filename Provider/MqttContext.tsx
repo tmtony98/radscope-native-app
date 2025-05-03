@@ -1,10 +1,18 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import mqtt from 'precompiled-mqtt';
-import { Message, ConnectionStatus , GpsData, BatteryData } from '../Types';
 import 'react-native-url-polyfill/auto';
 import database from '../index.native';
 import Doserate from '../model/Doserate';
+import { Message, ConnectionStatus, GpsData, BatteryData, LiveData, SensorData } from '../Types';
 
+interface SensorDataExtract {
+  doseRate: number;
+  cps: number;
+  timestamp: string | number;
+  gps: GpsData | null;
+  batteryInfo: BatteryData | null;
+  spectrum: number[];
+}
 
 // MQTT Configuration
 // const BROKER_URL = 'ws://192.168.29.39:8083'; //office bbd
@@ -31,7 +39,7 @@ type MqttContextType = {
   batteryInfo: BatteryData | null;
   doseRateGraphArray: { doseRate: number; timestamp: number; cps: number }[];
   timestamp: number;
-  spectrum:number[],
+  spectrum:number[];
   connectMqtt: (mqtt_host: string, mqtt_port: number, deviceId: any) => void;
   disconnectMqtt: () => void;
 };
@@ -54,7 +62,7 @@ const MqttContext = createContext<MqttContextType>({
   gps: null,
   batteryInfo: null,
   spectrum:[],
-  connectMqtt: (mqtt_host: string, mqtt_port: number, deviceId: string) => {},
+  connectMqtt: () => {},
   disconnectMqtt: () => {}
 });
 
@@ -69,60 +77,130 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<ConnectionStatus>({ connected: false });
-  const [doseRate, setDoseRate] = useState<number>(0);
-  // const [doseRateArray, setDoseRateArray] = useState<number[]>([]);
-  const [cps, setCps] = useState<number>(0);
-  const clientRef = useRef<mqtt.MqttClient | null>(null);
-  // const [timestampArray, setTimestampArray] = useState<number[]>([]);
-  const [timestamp, setTimestamp] = useState<number>(0);
-  const [gps, setGps] = useState<GpsData | null>(null);
-  const [batteryInfo, setBatteryInfo] = useState <BatteryData | null>(null);
-  const [spectrum , setSpectrum] = useState<number[]>([])
+  // Group related sensor data into a single state object for optimized updates
+  const [sensorData, setSensorData] = useState({
+    doseRate: 0,
+    cps: 0,
+    timestamp: 0,
+    gps: null as GpsData | null,
+    batteryInfo: null as BatteryData | null,
+    spectrum: [] as number[]
+  });
+  
+  // Destructure sensor data for easier access in the component
+  const { doseRate, cps, timestamp, gps, batteryInfo, spectrum } = sensorData;
+  
+  // Keep doseRateGraphArray separate as it has a different update pattern
   const [doseRateGraphArray, setDoseRateGraphArray] = useState<{ doseRate: number; timestamp: number; cps: number }[]>([]);
   
-  const extractSensorData = (messages: Message[]) => {
+  const clientRef = useRef<mqtt.MqttClient | null>(null);
+  const messageQueueRef = useRef<Message[]>([]);
+  const processingRef = useRef(false);
+  
+  // Memoize the extractSensorData function to prevent unnecessary recreations
+  const extractSensorData = useCallback((payload: string): SensorDataExtract => {
     try {
-      if (!messages || !messages.length)
-         return { doseRate: 0, cps: 0, timestamp: 0 , gps: null , batteryInfo: null};
-      const latestMessage = messages[0];
-      // console.log("latestMessage", latestMessage);
-      const parsedData = JSON.parse(typeof latestMessage.payload === 'string' 
-        ? latestMessage.payload 
-        : latestMessage.payload.toString());
-      // console.log("parsedData", parsedData);
-      const doseRate = parsedData?.data?.Sensor?.doserate?.value ?? 0;
-      const cps = parsedData?.data?.Sensor?.doserate?.cps ?? 0;
-      const timestamp = parsedData?.timestamp ?? 0;
-      const gps = parsedData?.data?.GPS ?? null;
-      const batteryInfo = parsedData?.data?.Attributes ?? null;
-      const spectrum = parsedData?.data?.Sensor?.spectrum?.bins ?? null
-
-      return { doseRate, cps, timestamp , gps , batteryInfo , spectrum };
+      if (!payload) {
+        return { doseRate: 0, cps: 0, timestamp: 0, gps: null, batteryInfo: null, spectrum: [] };
+      }
+      
+      const parsedData: LiveData = JSON.parse(payload);
+      
+      // Only log in development
+      if (__DEV__) {
+        console.log("parsedData", parsedData);
+      }
+      
+      return {
+        doseRate: parsedData.data.Sensor.doserate.value ?? 0,
+        cps: parsedData.data.Sensor.doserate.cps ?? 0,
+        timestamp: parsedData.timestamp ?? 0,
+        gps: parsedData.data.GPS ?? null,
+        batteryInfo: parsedData.data.Attributes ?? null,
+        spectrum: parsedData.data.Sensor.spectrum.bins ?? []
+      };
     } catch (error) {
       console.error("Error extracting sensor data:", error);
-      return { doseRate: 0, cps: 0, timestamp: 0 , gps: null , batteryInfo: null , spectrum: null };
+      return { doseRate: 0, cps: 0, timestamp: 0, gps: null, batteryInfo: null, spectrum: [] };
     }
-  }
+  }, []);
 
-
- const saveDoserate = async (doserate: number, cps: number, createdAt: number) => {
-  const newRecord = await database.write(async () => {
-     return  await database.get('doserate').create(record => {
-      (record as Doserate).doserate = doserate;
-      (record as Doserate).cps = cps;
-      (record as Doserate).createdAt = createdAt;
-    });
-  });
-  // console.log('✅ Data saved:', newRecord)
- }; 
-
-
-  const connectMqtt = async (mqtt_host: string, mqtt_port: number, deviceId: any) => {
+  // Move database operations outside of the render cycle
+  const saveDoserate = useCallback(async (doserate: number, cps: number, createdAt: number) => {
     try {
-      console.log("Connecting to MQTT broker:", mqtt_host, mqtt_port, deviceId);
+      await database.write(async () => {
+        return await database.get('doserate').create(record => {
+          (record as Doserate).doserate = doserate;
+          (record as Doserate).cps = cps;
+          (record as Doserate).createdAt = createdAt;
+        });
+      });
+    } catch (error) {
+      console.error("Error saving doserate:", error);
+    }
+  }, []);
+
+  // Process messages in batches to reduce render cycles
+  const processMessageQueue = useCallback(async () => {
+    if (processingRef.current || messageQueueRef.current.length === 0) {
+      return;
+    }
+    
+    processingRef.current = true;
+    
+    try {
+      // Get the latest message for processing
+      const latestMessage = messageQueueRef.current[0];
+      
+      // Update messages state (only keep last 50 to prevent memory issues)
+      setMessages(prev => [latestMessage, ...prev].slice(0, 50));
+      setMessage(latestMessage);
+      
+      // Process the latest message data
+      const data = extractSensorData(latestMessage.payload.toString());
+      const newTimestamp = new Date(data.timestamp).getTime();
+      
+      // Batch state updates
+      setSensorData({
+        doseRate: data.doseRate,
+        cps: data.cps,
+        timestamp: newTimestamp,
+        gps: data.gps,
+        batteryInfo: data.batteryInfo,
+        spectrum: data.spectrum
+      });
+      
+      // Update graph array with the new values (keep only last 10)
+      setDoseRateGraphArray(prev => 
+        [...prev, { doseRate: data.doseRate, timestamp: newTimestamp, cps: data.cps }].slice(-10)
+      );
+      
+      // Save data to database outside of render cycle
+      // Uncomment if needed
+      // await saveDoserate(data.doseRate, data.cps, newTimestamp);
+      
+      // Clear processed messages
+      messageQueueRef.current = messageQueueRef.current.slice(1);
+    } finally {
+      processingRef.current = false;
+      
+      // Process next batch if there are more messages
+      if (messageQueueRef.current.length > 0) {
+        processMessageQueue();
+      }
+    }
+  }, [extractSensorData, saveDoserate]);
+
+  // Connect to MQTT broker
+  const connectMqtt = useCallback(async (mqtt_host: string, mqtt_port: number, deviceId: any) => {
+    try {
+      if (__DEV__) {
+        console.log("Connecting to MQTT broker:", mqtt_host, mqtt_port, deviceId);
+      }
+      
       const CLIENT_ID = `mqtt-client-${Math.random().toString(16).substr(2, 8)}`;
       
-      // Use the provided port or fallback to WebSocket port 8883
+      // Use the provided port or fallback to WebSocket port 8083
       const client = mqtt.connect(`ws://${mqtt_host}:8083`, {
         clientId: CLIENT_ID,
         clean: true,
@@ -131,20 +209,24 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
         keepalive: 60,
         rejectUnauthorized: false
       });
-    console.log("MQTT portttt:", mqtt_port);
+      
+      if (__DEV__) {
+        console.log("MQTT port:", mqtt_port);
+      }
     
       client.on('connect', () => {
-        console.log(`Connected to MQTT broker ${mqtt_host}`);
+        if (__DEV__) {
+          console.log(`Connected to MQTT broker ${mqtt_host}`);
+        }
         
         // Subscribe to both the device-specific topic and Demo_Topic
-        // const TOPIC = `device/GS200/spectrum/${actualDeviceId}`;
         const TOPIC = `device/GS200/spectrum/+`;
         
         // Subscribe to device-specific topic
         client.subscribe(TOPIC, (err) => {
           if (err) {
             console.error('Subscription error for device topic:', err);
-          } else {
+          } else if (__DEV__) {
             console.log('Successfully subscribed to device topic:', TOPIC);
           }
         });
@@ -158,7 +240,9 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
               error: 'Failed to subscribe to Demo_Topic' 
             });
           } else {
-            console.log('Successfully subscribed to Demo_Topic');
+            if (__DEV__) {
+              console.log('Successfully subscribed to Demo_Topic');
+            }
             setStatus({ connected: true });
           }
         });
@@ -172,9 +256,11 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
           timestamp: new Date(),
         };
         
-        setMessages((prev) => [message, ...prev]);
-        setMessage(message);
-        // console.log("Received payload:", message);
+        // Add message to queue instead of directly updating state
+        messageQueueRef.current = [message, ...messageQueueRef.current];
+        
+        // Process the queue
+        processMessageQueue();
       });
 
       client.on('error', (err) => {
@@ -186,12 +272,16 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       client.on('offline', () => {
-        console.log('MQTT client offline');
+        if (__DEV__) {
+          console.log('MQTT client offline');
+        }
         setStatus({ connected: false });
       });
 
       client.on('reconnect', () => {
-        console.log('Reconnecting to MQTT broker...');
+        if (__DEV__) {
+          console.log('Reconnecting to MQTT broker...');
+        }
         setStatus({ connected: false, error: 'Reconnecting...' });
       });
 
@@ -203,60 +293,24 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
         error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
-  };
+  }, [processMessageQueue]);
 
-  //Connect to MQTT broker
-  // useEffect(() => {
-
-  //   connectMqtt();
+  const disconnectMqtt = useCallback(() => {
+    if (__DEV__) {
+      console.log("Disconnecting from MQTT broker");
+    }
     
-  //   // Cleanup function
-  //   return () => {
-  //     if (clientRef.current) {
-  //       clientRef.current.end(true, () => {
-  //         console.log('MQTT connection closed');
-  //       });
-  //     }
-  //   };
-  // }, []);
-
-
-  const disconnectMqtt = () => {
-    console.log("Disconnecting from MQTT broker");
     if (clientRef.current) {
       clientRef.current.end(true, () => {
-        console.log('MQTT connection closed');
+        if (__DEV__) {
+          console.log('MQTT connection closed');
+        }
       });
     }
-  };
+  }, []);
 
-
-  // Update dose rate when messages change
-  useEffect(() => {
-    if (messages.length > 0) {
-      const { doseRate, cps, timestamp: timestampStr , gps , batteryInfo , spectrum } = extractSensorData(messages);
-      // timestamp - "2025-05-03 12:51:18", convert to timestamp
-      const timestamp = new Date(timestampStr).getTime();
-
-      // console.log("doseRate", doseRate);
-      // console.log("cps", cps);
-      console.log("timestamp", timestamp, typeof timestamp);
-      // console.log("gps", gps);
-      // console.log("batteryInfo", batteryInfo);
-      // console.log("spectrum", spectrum);
-      setDoseRate(doseRate);
-      setCps(cps);
-      setTimestamp(timestamp);
-      setGps(gps);
-      setBatteryInfo(batteryInfo);
-      setDoseRateGraphArray(prev => [...prev, { doseRate, timestamp, cps }].slice(-10));
-      saveDoserate(doseRate, cps, timestamp);
-      setSpectrum(spectrum);
-    }
-  }, [messages]);
-
-  // Context value
-  const value = {
+  // Memoize context value to prevent unnecessary re-renders of consumers
+  const contextValue = useMemo(() => ({
     message,
     messages,
     status,
@@ -269,16 +323,24 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
     spectrum,
     connectMqtt,
     disconnectMqtt
-  };
-
-  // console.log("doseRate", doseRate);
-  // console.log("cps", cps);
-  // console.log("doseRateArray", doseRateArray);
-  // console.log("spectrum", spectrum);
+  }), [
+    message, 
+    messages, 
+    status, 
+    doseRate, 
+    cps, 
+    doseRateGraphArray, 
+    gps, 
+    timestamp, 
+    batteryInfo, 
+    spectrum, 
+    connectMqtt, 
+    disconnectMqtt
+  ]);
   
   return (
-    <MqttContext.Provider value={value}>
+    <MqttContext.Provider value={contextValue}>
       {children}
     </MqttContext.Provider>
   );
-}; 
+};

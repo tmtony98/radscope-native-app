@@ -25,38 +25,11 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
   const font = useFont(inter, 12);
 
   const getLastTimestamp = () => {
-    return doseRateGraphArray.length > 0 ? doseRateGraphArray[doseRateGraphArray.length - 1].timestamp : 0;
+    const timestamp = doseRateGraphArray.length > 0 ? doseRateGraphArray[doseRateGraphArray.length - 1].timestamp : 0;
+    return timestamp ? format(new Date(timestamp), 'yyyy-MM-dd HH:mm:ss') : 'No data';
   };
 
-  
-  //get timelabels to plot from doserategrapharray
-  // const timeLabels = doseRateGraphArray.map((doseRate) => {
-  //   const date = new Date(doseRate.timestamp);
-  //   return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-  // });
-
-  // console.log("timeLabels", timeLabels);
-  
-
-  // const TimeLabels = timestampArray.slice(-5).map((timestamp) => {
-  //   const date = new Date(timestamp);
-  //   return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-  // });
-
-  //  const doseRateValues = doseRateGraphArray.map((doseRate) => {
-  //   return doseRate.doseRate;
-  // });
-
-  // add time stamp in milliseconds to the log
-  // const timestampMs = Date.now();
-  // console.log(`======= DoseRateLabels ${timestampMs}`, DoseRateLabels);
-
-  // const handleFullscreen = () => {
-  //   if (Platform.OS !== 'web') {
-  //     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  //   }
-  //   onFullscreen();
-  // };
+ 
 
 
   const DATA = Array.from({ length: 31 }, (_, i) => ({
@@ -109,6 +82,7 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
         data={doseRateGraphArray}
         xKey="timestamp"
         yKeys={["doseRate"]}
+        
         //add font
         axisOptions={{ 
           font,
@@ -116,7 +90,8 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
           lineColor: "#CCCCCC",
           labelColor: "#333333",
         }}
-        padding={{  bottom: 40 }}
+       
+       
         xAxis={
           {
             formatXLabel: (label: number) => new Date(label).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
@@ -152,6 +127,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: SPACING.md,
   },
   headerActions: {
     flexDirection: 'row',

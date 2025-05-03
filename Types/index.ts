@@ -33,3 +33,35 @@ export interface Message {
     Temperature: number; // Temperature in degrees Celsius
   }
   
+  export interface DoseRateData {
+    status: string;
+    value: number;
+    cps: number;
+    calib: number[];
+  }
+
+  export interface SpectrumData {
+    status: string;
+    len: number;
+    calib: number[];
+    acquisition_time: number;
+    invalid_pulses: number;
+    cpu_load: number;
+    temperature: number;
+    bins: number[];
+  }
+
+  export interface SensorData {
+    doserate: DoseRateData;
+    spectrum: SpectrumData;
+  }
+
+  export interface LiveData {
+    type: string;
+    data: {
+      GPS: GpsData;
+      Attributes: BatteryData;
+      Sensor: SensorData;
+    };
+    timestamp: string;
+  }
