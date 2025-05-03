@@ -6,6 +6,11 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useMqttContext } from '@/Provider/MqttContext';
 import { LineChart } from 'react-native-chart-kit';
+import { CartesianChart,useChartPressState , Line } from "victory-native"
+import { useFont } from "@shopify/react-native-skia";
+import inter from "../../assets/fonts/Inter/static/Inter_18pt-Bold.ttf"
+import { format } from "date-fns"; //
+
 
 
 type ChartCardProps = {
@@ -13,22 +18,38 @@ type ChartCardProps = {
   onGetHistory?: () => void;
 };
 
-const timestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
-
-  const { doseRateArray, timestampArray, timestamp } = useMqttContext();
+  const { doseRateGraphArray } = useMqttContext();
   const router = useRouter();
 
-  const TimeLabels = timestampArray.slice(-5).map((timestamp) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-  });
+  const font = useFont(inter, 12);
 
-  const DoseRateLabels = doseRateArray.slice(-6)
+  const getLastTimestamp = () => {
+    return doseRateGraphArray.length > 0 ? doseRateGraphArray[doseRateGraphArray.length - 1].timestamp : 0;
+  };
+
+  
+  //get timelabels to plot from doserategrapharray
+  // const timeLabels = doseRateGraphArray.map((doseRate) => {
+  //   const date = new Date(doseRate.timestamp);
+  //   return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  // });
+
+  // console.log("timeLabels", timeLabels);
+  
+
+  // const TimeLabels = timestampArray.slice(-5).map((timestamp) => {
+  //   const date = new Date(timestamp);
+  //   return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  // });
+
+  //  const doseRateValues = doseRateGraphArray.map((doseRate) => {
+  //   return doseRate.doseRate;
+  // });
 
   // add time stamp in milliseconds to the log
-  const timestampMs = Date.now();
-  console.log(`======= DoseRateLabels ${timestampMs}`, DoseRateLabels);
+  // const timestampMs = Date.now();
+  // console.log(`======= DoseRateLabels ${timestampMs}`, DoseRateLabels);
 
   // const handleFullscreen = () => {
   //   if (Platform.OS !== 'web') {
@@ -36,6 +57,12 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
   //   }
   //   onFullscreen();
   // };
+
+
+  const DATA = Array.from({ length: 31 }, (_, i) => ({
+    timestamp: i, // This would be actual timestamps in a real app
+    doseRate: 0.5 + 2 * Math.random(), // Random values between 0.5 and 2.5 µSv
+  }));
 
   const handleGetHistory = () => {
     if (Platform.OS !== 'web') {
@@ -47,66 +74,69 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
     // onGetHistory();
   };
 
+ 
+
+  const { state, isActive } = useChartPressState({ x: 0, y: { highTmp: 0 } });
+
   return (
     <View style={CARD_STYLE.container}>
       <View style={styles.headerWithActions}>
         <Text style={TYPOGRAPHY.headLineSmall}>Dose Rate</Text>
         <View style={styles.headerActions}>
-          <Text style={TYPOGRAPHY.smallText}>{timestamp}</Text>
+          <Text style={TYPOGRAPHY.smallText}>{getLastTimestamp()}</Text>
           {/* <TouchableOpacity style={styles.iconButton} onPress={handleFullscreen}>
             <MaterialIcons name="fullscreen" size={24} color={COLORS.primary} />
           </TouchableOpacity> */}
         </View>
       </View>
-      <View style={styles.chartPlaceholder}>
-        {doseRateArray.length === 0 || timestampArray.length === 0 ? (
-          <Text>No data available</Text>
-        ) : (
-          <View>
 
-            <LineChart
-              // withDots = {false}
-              // withShadow = {false}
-              // withInnerLines = {false}
-              // withOuterLines = {false}
-              data={{
-                labels: TimeLabels,
-                datasets: [
-                  {
-                    data: DoseRateLabels
-                  }
-                ]
-              }}
-              width={Dimensions.get("window").width - 60}
-              height={220}
-              yAxisLabel=""
-              yAxisSuffix=""
-              yAxisInterval={1}
-              chartConfig={{
-                backgroundColor: "#ffffff",
-                backgroundGradientFrom: "#ffffff",
-                backgroundGradientTo: "#ffffff",
-                decimalPlaces: 2,
-                color: (opacity = 1) => `rgba(14, 23, 37, ${opacity})`,
-                labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                style: {
-                  borderRadius: 16
-                },
-                propsForDots: {
-                  r: "6",
-                  strokeWidth: "2",
-                  stroke: "#ffa726"
-                }
-              }}
-              bezier
-              style={{
-                marginVertical: 0,
-                borderRadius: 10,
-              }}
-            />
-          </View>
+      {/* <View style={{ height: 300 }}>
+      <CartesianChart
+       chartPressState={state}
+        data={doseRateGraphArray}
+        xKey="timestamp"
+        yKeys={["doseRate"]}
+        // 👇 pass the font, opting in to axes.
+        // axisOptions={{ font }}
+      >
+        {({ points }) => (
+          <Line points={points.doseRate} color="red" strokeWidth={3} />
         )}
-      </View>
+      </CartesianChart>
+    </View> */}
+    <View style={{ height: 300, padding: 10 }}>
+      <CartesianChart
+        data={doseRateGraphArray}
+        xKey="timestamp"
+        yKeys={["doseRate"]}
+        //add font
+        axisOptions={{ 
+          font,
+          lineWidth: 1,
+          lineColor: "#CCCCCC",
+          labelColor: "#333333",
+        }}
+        padding={{  bottom: 40 }}
+        xAxis={
+          {
+            formatXLabel: (label: number) => new Date(label).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
+            font,
+            labelRotate: 45, 
+          }
+        }
+      >
+        {({ points }) => (
+          <Line 
+            points={points.doseRate} 
+            color="blue" 
+            strokeWidth={2}
+            curveType="natural" // Smooths the line
+          />
+        )}
+      </CartesianChart>
+    </View>
+
+     
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={BUTTON_STYLE.mediumButtonWithIconLeft} onPress={handleGetHistory}>
           <MaterialIcons name="history" size={24} color={COLORS.white} />

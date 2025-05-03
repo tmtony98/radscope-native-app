@@ -73,10 +73,10 @@ export default function SpectrumCard({
 
             <LineChart
               data={{
-                labels: spectrum.map(String),
+                labels:energyValues.data.map(String),
                 datasets: [
                   {
-                    data: spectrum
+                    data: energyValues.data
                   }
                 ]
               }}

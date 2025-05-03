@@ -18,6 +18,7 @@ type DeviceContextType = {
   isConnecting: boolean;
 };
 
+
 // Create context with default values
 const DeviceContext = createContext<DeviceContextType>({
   connectedDevice: null,

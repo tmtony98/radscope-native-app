@@ -208,10 +208,10 @@ export default function Dashboard() {
         <DoseRateGraph 
           onGetHistory={handleGetHistory}
         />
-        {/* <SpectrumCard 
+        <SpectrumCard 
           duration="222 s"
           onFullscreen={handleFullscreen}
-        /> */}
+        />
         <GPSCard />
 
         <SessionLoggingwithDb

@@ -24,6 +24,7 @@ const DoseRateCard: React.FC<DoseRateCardProps> = ({ latestDoserate }) => {
     };
     fetchRows();
   }, []);
+  
 
 //get the latest doserate from doseRateGraphArray 
 

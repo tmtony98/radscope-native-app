@@ -234,7 +234,16 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Update dose rate when messages change
   useEffect(() => {
     if (messages.length > 0) {
-      const { doseRate, cps, timestamp , gps , batteryInfo , spectrum } = extractSensorData(messages);
+      const { doseRate, cps, timestamp: timestampStr , gps , batteryInfo , spectrum } = extractSensorData(messages);
+      // timestamp - "2025-05-03 12:51:18", convert to timestamp
+      const timestamp = new Date(timestampStr).getTime();
+
+      // console.log("doseRate", doseRate);
+      // console.log("cps", cps);
+      console.log("timestamp", timestamp, typeof timestamp);
+      // console.log("gps", gps);
+      // console.log("batteryInfo", batteryInfo);
+      // console.log("spectrum", spectrum);
       setDoseRate(doseRate);
       setCps(cps);
       setTimestamp(timestamp);
