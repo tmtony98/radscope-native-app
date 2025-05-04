@@ -4,6 +4,7 @@ import Zeroconf, { ImplType, Service } from 'react-native-zeroconf';
 import Button from '../Button';
 import { useRouter } from 'expo-router';
 import { z } from 'zod';
+import { COLORS , TYPOGRAPHY , BUTTON_STYLE } from '@/Themes/theme';
 
 
 const zeroconf = new Zeroconf();
@@ -214,7 +215,7 @@ const DeviceScanner = ({ connectDevice }) => {
 
 
   return (
-    <View style={{ flex: 1, padding: 20 }}>
+    <View style={{ flex: 1, padding: 20, backgroundColor: COLORS.background }}>
       <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10 }}>
         {
           isRefreshing ? (
@@ -261,7 +262,7 @@ const DeviceScanner = ({ connectDevice }) => {
             {isRefreshing ? (
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
                 <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Scanning </Text>
-                <ActivityIndicator size="small" color="#007AFF" />
+                {/* <ActivityIndicator size="small" color="#007AFF" /> */}
               </View>
             ) : (
               <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
@@ -318,6 +319,10 @@ const DeviceScanner = ({ connectDevice }) => {
 export default DeviceScanner;
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
   buttonContainer: {
     marginTop: 10,
   },

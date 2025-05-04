@@ -99,7 +99,7 @@ const SpectrumCard = ({
                 lineColor: "#CCCCCC",
                 labelColor: "#333333",
               }}
-              padding={{ top: 20, left: 40, right: 20, bottom: 40 }}
+              padding={{ top: 15, bottom: 10}}
               xAxis={{
                 font,
                 tickCount: 5,

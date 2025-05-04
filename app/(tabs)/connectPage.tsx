@@ -1,8 +1,8 @@
-import { View, Text, StyleSheet } from 'react-native'
+import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import React from 'react'
 import DeviceScanner from '@/components/Device/DeviceScanner'
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs'
-import { TYPOGRAPHY } from '@/Themes/theme'
+import { TYPOGRAPHY, COLORS } from '@/Themes/theme'
 
 import AddDevice from '@/components/Device/AddDevice';
 import ConnectTab from '@/components/Device/TopbarConnectTab';
@@ -28,6 +28,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingTop: 20,
+    backgroundColor: COLORS.background,
   },
   title: {
     fontSize: 20,

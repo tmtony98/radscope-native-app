@@ -97,10 +97,10 @@ export const BUTTON_STYLE = StyleSheet.create({
   },
   mediumButtonWithIconLeft: {
     backgroundColor: COLORS.buttonPrimary,
-    paddingVertical: 15,
-    paddingLeft: 24, // 24px padding left
-    paddingRight: 30, // 30px padding right
-    borderRadius: 12,
+    paddingVertical: 12,
+    paddingLeft: 20, // 24px padding left
+    paddingRight: 26, // 30px padding right
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',

@@ -139,16 +139,19 @@ export default function ConnectTab() {
 
   return (
     <View style={styles.container}>
-      {/* Connected Device Card */}
-      {connectedDevice && (
-        <ConnectedDeviceCard 
+       {/* Connected Device Card */}
+       {connectedDevice && (
+       <View  style={{flex:0}} >
+         <ConnectedDeviceCard 
           connectedDevice={connectedDevice} 
           disconnectDevice={disconnectDevice} 
         />
+       </View >
       )}
       
-      {/* Tab Navigator */}
-      <Tab.Navigator
+      {/* Tab Navigator Container */}
+      <View style={styles.tabContainer}>
+        <Tab.Navigator
         screenOptions={{
           tabBarActiveTintColor: '#0E1725',
           tabBarInactiveTintColor: '#8E8E93',
@@ -200,6 +203,8 @@ export default function ConnectTab() {
           }}
         />
       </Tab.Navigator>
+      </View >
+     
     </View>
   );
 }
@@ -208,5 +213,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+    
+  },
+  tabContainer: {
+    // backgroundColor: '#FFFFFF',
+    flex: 1,
   },
 });

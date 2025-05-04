@@ -18,7 +18,7 @@ export default function DeviceDetailsCard() {
 
   return (
     <View style={CARD_STYLE.container}>
-    <Text style={[TYPOGRAPHY.headLineMedium, {marginBottom: 12}]}>Device Details</Text>
+    <Text style={[TYPOGRAPHY.headLineSmall, {marginBottom: 12}]}>Device Details</Text>
     <View style={styles.row}>
       <Text style={TYPOGRAPHY.TitleMedium}>Device ID</Text>
       <Text style={TYPOGRAPHY.bodyTextLarge}>{deviceDetails?.name}</Text>

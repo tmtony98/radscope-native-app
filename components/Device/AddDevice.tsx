@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { COLORS, SPACING, TYPOGRAPHY, BUTTON_STYLE } from '../../Themes/theme'
 import StyledTextInput from '../common/StyledTextInput'
@@ -83,7 +83,7 @@ const AddDevice: React.FC<AddDeviceProps> = ({ connectDevice }) => {
   }
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Text style={[TYPOGRAPHY.headLineSmall, {textAlign: 'center' ,paddingVertical: SPACING.sm}]}>Connect Device</Text>
       <Text style={styles.instructions}>
         Find the IP address of the device to be connected by heading over to settings {'>'} network {'>'} Device Ip adress
@@ -129,7 +129,7 @@ const AddDevice: React.FC<AddDeviceProps> = ({ connectDevice }) => {
           </Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   )
 }
 
