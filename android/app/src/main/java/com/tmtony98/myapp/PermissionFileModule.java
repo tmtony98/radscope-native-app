@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.facebook.react.bridge.Promise;
 import com.facebook.react.bridge.Callback;
 import com.facebook.react.bridge.ActivityEventListener;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
@@ -39,16 +40,16 @@ public class PermissionFileModule extends ReactContextBaseJavaModule implements 
     }
 
     @ReactMethod
-    public void checkAndGrantPermission(Callback errorCallback, Callback successCallback) {
+    public void checkAndGrantPermission(Promise promise) {
         try {
             if (!checkPermission()) {
                 requestPermission();
-                successCallback.invoke(false);
+                promise.resolve(false);
             } else {
-                successCallback.invoke(true);
+                promise.resolve(true);
             }
         } catch (IllegalViewOperationException e) {
-            errorCallback.invoke(e.getMessage());
+            promise.reject(e.getMessage());
         }
     }
 

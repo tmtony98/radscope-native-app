@@ -9,4 +9,23 @@ declare module '@expo-google-fonts/poppins' {
   export const Poppins_500Medium: FontSource; 
   export const Poppins_600SemiBold: FontSource;
   export const Poppins_700Bold: FontSource;
-} 
+}
+
+declare module 'react-native-manage-external-storage' {
+  export interface ManageExternalStorageInterface {
+    checkAndGrantPermission: () => Promise<boolean>;
+    hasPermission: () => Promise<boolean>;
+    requestPermission: () => void;
+  }
+
+  const ManageExternalStorage: ManageExternalStorageInterface;
+  export default ManageExternalStorage;
+}
+
+declare global {
+  interface NativeModulesStatic {
+    PermissionFile: {
+      checkAndGrantPermission: () => Promise<boolean>;
+    };
+  }
+}
