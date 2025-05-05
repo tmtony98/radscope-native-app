@@ -67,7 +67,7 @@ const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({
               ) : (
                 <>
                   <View style={styles.disconnectedBadge}>
-                    <Text style={styles.connectedText}>Disconnected</Text>
+                    <Text style={styles.disconnectedText}>Disconnected</Text>
                   </View>
                 </>
               )}
@@ -141,19 +141,22 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
   connectedBadge: {
-    backgroundColor: "#166907",
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 5,
+    // borderColor: COLORS.success,
+    borderWidth: 1,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
     borderRadius: 12,
   },
   disconnectedBadge: {
-    backgroundColor: "#E62B2B",
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 5,
+    borderColor: COLORS.error,
+    borderWidth: 1,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
     borderRadius: 12,
+    color: COLORS.error,
   },
   connectedText: {
-    color: COLORS.white,
+    color: COLORS.success,
     fontSize: 12,
     fontFamily: "Poppins-Medium",
   },
