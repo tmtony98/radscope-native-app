@@ -20,6 +20,8 @@ import { useMqttContext } from '@/Provider/MqttContext';
 import SessionData from '@/model/SessionData';
 import  ManageExternalStorage  from 'react-native-manage-external-storage';
 import RNFS from 'react-native-fs';
+// import { NativeModules } from 'react-native';
+
 
 
 
@@ -40,6 +42,9 @@ export default function Dashboard() {
 
 
   const [result, setResult] = useState(false);
+
+  // const { ManageExternalStorage } = NativeModules;
+
 
 
   // Check if the app has storage permission using arrow function
@@ -120,17 +125,76 @@ export default function Dashboard() {
     }
   };
 
+  // Check permission
+  async function checkPermission() {
+    const hasPermission = await ManageExternalStorage.hasPermission();
+    if (!hasPermission) {
+      debugger;
+      console.log("Permission not granted");
+
+      // show an alert 
+      Alert.alert(
+        "Storage Permission",
+        "RadScope needs permission to manage files on your device. Please grant 'Allow access to manage all files' on the next screen.",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+            onPress: () => console.log("Permission denied")
+          },
+          {
+            text: "Open Settings",
+            onPress: () => {
+              // Open the system settings page using Linking
+              Linking.openSettings();
+            }
+          }
+        ]
+      );
+
+      requestPermission();
+    } else{
+      debugger;
+      console.log("Permission granted");
+
+      // show an alert 
+      Alert.alert(
+        "Storage Permission",
+        "RadScope has been granted permission to manage files on your device.",
+        [
+          {
+            text: "OK",
+            onPress: () => {}
+          }
+        ]
+      );
+      setResult(true);
+    }
+  }
+
+  // Request permission
+  function requestPermission() {
+    ManageExternalStorage.requestPermission();
+  }
+
+  // Example Usage  in useEffect  checkPermission();
+  // useEffect(() => {
+  //   checkPermission();
+  // }, []);
+
+  // checkPermission();
+
   // useEffect for checking storage permission
   useEffect(() => {
     async function AskPermission() {
 
       console.log("Checking storage permission");
       await ManageExternalStorage.checkAndGrantPermission(
-            err => { 
+            (err: any) => { 
               console.log("Permission denied", err);
               setResult(false)
             },
-            res => {
+            (res: any) => {
               console.log("Permission granted", res);
             setResult(true)
             },
@@ -138,19 +202,42 @@ export default function Dashboard() {
 
    }
      AskPermission()  // This function is only executed once if the user allows the permission and this package retains that permission 
+
   }, []);
 
 
-  // check the result and print the documents directory
+  // Initialize file system and create test file
   useEffect(() => {
-    // if (result) {
-          // print the path to the documents directory
-          const BASE_PATH = Platform.OS === 'android' 
+    const initializeFileSystem = async () => {
+      try {
+        // Define base path for file storage
+        const BASE_PATH = Platform.OS === 'android' 
           ? RNFS.ExternalStorageDirectoryPath + '/radscope' 
           : RNFS.DocumentDirectoryPath + '/radscope';
-          console.log("Documents directory:", BASE_PATH);
-    // }
-  }, [result]);
+        console.log("Documents directory:", BASE_PATH);
+
+        // Create directory if it doesn't exist
+        await RNFS.mkdir(BASE_PATH);
+
+        // Save a test file using async/await
+        try {
+          await RNFS.writeFile(
+            `${BASE_PATH}/test.txt`,
+            'This is a test file',
+            'utf8'
+          );
+          console.log('Test file saved');
+        } catch (err) {
+          console.error('Error saving test file:', err);
+        }
+      } catch (error) {
+        console.error('Error initializing file system:', error);
+      }
+    };
+
+    // Execute the async function
+      initializeFileSystem();
+  }, []);
 
   const { message } = useMqttContext();
 
