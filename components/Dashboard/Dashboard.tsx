@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, PermissionsAndroid, Platform, Alert, Linking } from 'react-native';
 import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
 import DoseRateCard from './DoseRateCard';
 import DeviceDetailsCard from './DeviceDetailsCard';
@@ -18,6 +18,8 @@ import  { SessionLoggingwithDb } from './SessionLoggingwithDb';
 import { router } from 'expo-router';
 import { useMqttContext } from '@/Provider/MqttContext';
 import SessionData from '@/model/SessionData';
+import  ManageExternalStorage  from 'react-native-manage-external-storage';
+import RNFS from 'react-native-fs';
 
 
 
@@ -35,6 +37,120 @@ export default function Dashboard() {
   
   const bottomSheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ['40%'], []);
+
+
+  const [result, setResult] = useState(false);
+
+
+  // Check if the app has storage permission using arrow function
+  const checkStoragePermission = async () => {
+    try {
+      if (Platform.OS !== 'android') {
+        return true; // iOS doesn't need runtime permissions for app directory
+      }
+      
+      // For Android 10 and below, check READ_EXTERNAL_STORAGE permission
+      // Platform.Version is a number on Android and a string on iOS
+      debugger;
+      if (Platform.OS === 'android' && Platform.Version < 30) {
+        const result = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE);
+        return result;
+      }
+      
+      // For Android 11+, we can't check MANAGE_EXTERNAL_STORAGE programmatically
+      // We'll assume we don't have it and request it when needed
+      return false;
+    } catch (err) {
+      console.error("Error checking storage permission:", err);
+      return false;
+    }
+  };
+
+  // Request storage permissions using arrow function
+  const requestStoragePermission = async () => {
+    try {
+      if (Platform.OS !== 'android') {
+        return true; // iOS doesn't need runtime permissions for app directory
+      }
+      
+      // For Android 11+ (API level 30+), we need to use MANAGE_EXTERNAL_STORAGE permission
+      // Platform.Version is a number on Android and a string on iOS
+      if (Platform.OS === 'android' && Platform.Version >= 30) {
+        console.log("Android 11+ detected");
+        
+        // We need to direct the user to the system settings page
+        Alert.alert(
+          "Storage Permission Required",
+          "RadScope needs permission to manage files on your device. Please grant 'Allow access to manage all files' on the next screen.",
+          [
+            {
+              text: "Cancel",
+              style: "cancel",
+              onPress: () => console.log("Permission denied")
+            },
+            {
+              text: "Open Settings",
+              onPress: () => {
+                // Open the system settings page using Linking
+                Linking.openSettings();
+              }
+            }
+          ]
+        );
+        
+        // We'll return false here as the user needs to grant permission in settings
+        return false;
+      } else {
+        // For Android 10 and below, we can use READ_EXTERNAL_STORAGE permission
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          {
+            title: "Storage Permission",
+            message: "RadScope needs access to your storage to save data files.",
+            buttonNeutral: "Ask Me Later",
+            buttonNegative: "Cancel",
+            buttonPositive: "OK"
+          }
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      }
+    } catch (err) {
+      console.error("Error requesting storage permission:", err);
+      return false;
+    }
+  };
+
+  // useEffect for checking storage permission
+  useEffect(() => {
+    async function AskPermission() {
+
+      console.log("Checking storage permission");
+      await ManageExternalStorage.checkAndGrantPermission(
+            err => { 
+              console.log("Permission denied", err);
+              setResult(false)
+            },
+            res => {
+              console.log("Permission granted", res);
+            setResult(true)
+            },
+          );
+
+   }
+     AskPermission()  // This function is only executed once if the user allows the permission and this package retains that permission 
+  }, []);
+
+
+  // check the result and print the documents directory
+  useEffect(() => {
+    // if (result) {
+          // print the path to the documents directory
+          const BASE_PATH = Platform.OS === 'android' 
+          ? RNFS.ExternalStorageDirectoryPath + '/radscope' 
+          : RNFS.DocumentDirectoryPath + '/radscope';
+          console.log("Documents directory:", BASE_PATH);
+    // }
+  }, [result]);
 
   const { message } = useMqttContext();
 
@@ -213,6 +329,18 @@ export default function Dashboard() {
           onFullscreen={handleFullscreen}
         />
         <GPSCard />
+
+        <SessionLoggingCard
+          onDownload={openSessionView}
+          onStart={openBottomSheet}
+          onStopSuccess={handleStopSuccess}
+          isLogging={isLogging}
+          activeSessionId={activeSessionId}
+          timeLimit={timeLimit}
+          timeInterval={timeInterval}
+          onTimeLimitChange={handleTimeLimitChange}
+          onTimeIntervalChange={handleTimeIntervalChange}
+        />
 
         <SessionLoggingwithDb
           onDownload={openSessionView}
