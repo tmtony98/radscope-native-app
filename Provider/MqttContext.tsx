@@ -103,14 +103,11 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!payload) {
         return { doseRate: 0, cps: 0, timestamp: 0, gps: null, batteryInfo: null, spectrum: [] };
       }
-      
       const parsedData: LiveData = JSON.parse(payload);
-      
       // Only log in development
       if (__DEV__) {
         console.log("parsedData", parsedData);
       }
-      
       return {
         doseRate: parsedData.data.Sensor.doserate.value ?? 0,
         cps: parsedData.data.Sensor.doserate.cps ?? 0,
@@ -125,7 +122,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Move database operations outside of the render cycle
+  //Move database operations outside of the render cycle
   const saveDoserate = useCallback(async (doserate: number, cps: number, createdAt: number) => {
     try {
       await database.write(async () => {

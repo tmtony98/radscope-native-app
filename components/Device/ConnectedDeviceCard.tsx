@@ -155,6 +155,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     color: COLORS.error,
   },
+  disconnectedText: {
+    color: COLORS.error,
+    fontSize: 12,
+    fontFamily: "Poppins-Medium",
+  },
   connectedText: {
     color: COLORS.success,
     fontSize: 12,

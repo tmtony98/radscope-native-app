@@ -11,6 +11,7 @@ export default function TabLayout() {
   
   return (
     <Tabs
+    initialRouteName="connectPage"
     screenOptions={{
       headerShown: false,
       tabBarActiveTintColor: '#31435E',

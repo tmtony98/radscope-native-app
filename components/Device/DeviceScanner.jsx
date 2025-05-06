@@ -93,6 +93,7 @@ const DeviceScanner = ({ connectDevice }) => {
             : prev
         );
         console.log("Resolved service:", service);
+
       });
 
       zeroconf.on('error', err => {

@@ -1,5 +1,5 @@
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import DeviceScanner from '@/components/Device/DeviceScanner'; 
 import AddDevice from '@/components/Device/AddDevice';
@@ -8,6 +8,7 @@ import ConnectedDeviceCard from './ConnectedDeviceCard';
 import { COLORS, SPACING } from '../../Themes/theme';
 import { useMqttContext } from '@/Provider/MqttContext';
 import { useDeviceContext } from '@/Provider/DeviceContext';
+import { AppState } from 'react-native';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -34,19 +35,119 @@ export interface AddDeviceProps {
 const DEVICE_STORAGE_KEY = 'connectedDevice';
 
 export default function ConnectTab() {
+
+  const appState = useRef(AppState.currentState);
+  console.log("Current app state:", appState.current);
+  //create a state to know background or foreground
+  const [isBackground, setIsBackground] = useState(true);
+  
+//   useEffect(() => {
+//     const subscription = AppState.addEventListener("change", nextAppState => {
+//       appState.current = nextAppState;
+//       console.log("Current app state:", appState.current);
+
+//       if (nextAppState === "active") {
+//         setIsBackground(false);
+//         console.log("App has come to foreground!", isBackground);
+//       } else if (nextAppState === "background") {
+//         setIsBackground(true);
+
+//         console.log("App has come to background!", isBackground);
+//       }
+//     });
+
+//     return () => {
+//       subscription.remove();
+//     };
+// }, []); 
+
   const mqttContext = useMqttContext();
   const { connectMqtt, disconnectMqtt, status } = mqttContext;
   const { setDeviceInStore, resetDeviceInStore, connectedDevice  } = useDeviceContext();
 
-  
+  // Auto-connect to previously connected device on component mount
+  useEffect(() => {
+    const autoConnectDevice = async () => {
+      try {
+        // Check if we have a connected device in the context
+        if (connectedDevice && !status.connected) {
+          console.log("Auto-connecting to previously connected device:", connectedDevice.name);
+          // Reconnect to MQTT broker
+          reconnectMQTT(connectedDevice);
+        }
+      } catch (error) {
+        console.error('Failed to auto-connect device:', error);
+      }
+    };
+
+    autoConnectDevice();
+  }, [connectedDevice]);
+
+  // Add AppState listener to reconnect when app comes to foreground
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", nextAppState => {
+      appState.current = nextAppState;
+      console.log("Current app state:", appState.current);
+
+      if (nextAppState === "active" && connectedDevice && !status.connected) {
+        console.log("App came to foreground, reconnecting to device:", connectedDevice.name);
+        reconnectMQTT(connectedDevice);
+        setIsBackground(false);
+      } else if (nextAppState === "background") {
+        setIsBackground(true);
+        console.log("App has gone to background");
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [connectedDevice, status.connected]);
+
+  // Load any previously connected device on mount
+  // useEffect(() => {
+  //   const loadConnectedDevice = async () => {
+  //     try {
+  //       const savedDevice = await SecureStore.getItemAsync(DEVICE_STORAGE_KEY);
+  //       if (savedDevice) {
+  //         setConnectedDevice(JSON.parse(savedDevice));
+  //         reconnectMQTT(JSON.parse(savedDevice));
+  //       }
+  //     } catch (error) {
+  //       console.error('Failed to load connected device:', error);
+  //     }
+  //   };
+
+  //   loadConnectedDevice();
+  // }, []);
+
+  // const loadConnectedDevice = async () => {
+  //   try {
+  //     const savedDevice = await SecureStore.getItemAsync(DEVICE_STORAGE_KEY);
+  //     if (savedDevice) {
+  //       setConnectedDevice(JSON.parse(savedDevice));
+  //     }
+  //   } catch (error) {
+  //     console.error('Failed to load connected device:', error);
+  //   }
+  // };
+
+  // set setConnectedDevice when the status changes
+  // useEffect(() => {
+  //   if (status.connected) {
+  //     loadConnectedDevice();
+  //   } 
+    
+  //   // else {
+  //   //   setConnectedDevice(null);
+  //   // }
+  // }, [status.connected]);
 
   const reconnectMQTT = (device: Device) => {
       disconnectMqtt();
       console.log("disconnecting and connecting to MQTT broker:", device.host, device.port, device.name);
-      
       // Use port 8883 for WebSocket connection if the device port is 1883 (standard MQTT)
-      const wsPort = device.port === 1883 ? 8883 : (device.port || 8883);
-      
+      const wsPort = device.port === 1883 ? 8883 : (device.port || 8883); //8083 -recheck
       // Pass the device object to connectMqtt to handle both device ID and Demo_Topic
       connectMqtt(device.host, wsPort, device);
   }
