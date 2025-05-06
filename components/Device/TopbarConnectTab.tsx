@@ -38,44 +38,7 @@ export default function ConnectTab() {
   const { connectMqtt, disconnectMqtt, status } = mqttContext;
   const { setDeviceInStore, resetDeviceInStore, connectedDevice  } = useDeviceContext();
 
-  // Load any previously connected device on mount
-  // useEffect(() => {
-  //   const loadConnectedDevice = async () => {
-  //     try {
-  //       const savedDevice = await SecureStore.getItemAsync(DEVICE_STORAGE_KEY);
-  //       if (savedDevice) {
-  //         setConnectedDevice(JSON.parse(savedDevice));
-  //         reconnectMQTT(JSON.parse(savedDevice));
-  //       }
-  //     } catch (error) {
-  //       console.error('Failed to load connected device:', error);
-  //     }
-  //   };
-
-  //   loadConnectedDevice();
-  // }, []);
-
-  // const loadConnectedDevice = async () => {
-  //   try {
-  //     const savedDevice = await SecureStore.getItemAsync(DEVICE_STORAGE_KEY);
-  //     if (savedDevice) {
-  //       setConnectedDevice(JSON.parse(savedDevice));
-  //     }
-  //   } catch (error) {
-  //     console.error('Failed to load connected device:', error);
-  //   }
-  // };
-
-  // set setConnectedDevice when the status changes
-  // useEffect(() => {
-  //   if (status.connected) {
-  //     loadConnectedDevice();
-  //   } 
-    
-  //   // else {
-  //   //   setConnectedDevice(null);
-  //   // }
-  // }, [status.connected]);
+  
 
   const reconnectMQTT = (device: Device) => {
       disconnectMqtt();
