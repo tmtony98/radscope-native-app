@@ -284,48 +284,9 @@ export const SessionLoggingCard = ({
       <View style={styles.loggingButtons}>
         <TouchableOpacity 
           style={styles.downloadButton} 
-          onPress={async () => {
-            try {
-              // First call the original download handler
-              onDownload();
-              
-              // Create sample data to export (replace with your actual data)
-              const exportData = {
-                timestamp: new Date().toISOString(),
-                sessionInfo: {
-                  date: new Date().toISOString(),
-                  deviceId: 'GS200X1-Device',
-                  // Add more session data here
-                },
-                data: {
-                  // Add your actual measurement data here
-                  sample: "This is sample data",
-                  readings: [
-                    { time: new Date().toISOString(), value: 0.42 },
-                    { time: new Date(Date.now() - 1000).toISOString(), value: 0.36 }
-                  ]
-                }
-              };
-              
-              // Save data to a persistent location
-              const success = await saveDataToDownloads(exportData);
-              
-              if (success) {
-                Alert.alert(
-                  'Export Successful',
-                  'Your data has been exported. You can choose where to save it.'
-                );
-              } else {
-                throw new Error('Export failed');
-              }
-            } catch (error) {
-              console.error('Error during export:', error);
-              Alert.alert(
-                'Export Failed',
-                'There was an error exporting your data. Please try again.'
-              );
-            }
-          }}
+          // onPress={
+          // }
+           
         >
           <MaterialIcons name="download" size={24} color={COLORS.primary} />
           <Text style={styles.downloadButtonText}>Download Files</Text>
