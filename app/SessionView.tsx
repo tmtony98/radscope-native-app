@@ -118,7 +118,7 @@ export default function SessionView() {
   };
 
   const renderSessionItem = ({ item }: { item: Session }) => (
-    <View style={[CARD_STYLE.containerList, { marginVertical: SPACING.xs }]}>
+    <View style={[CARD_STYLE.containerList, { marginVertical: SPACING.xs  , marginHorizontal: SPACING.xs}]}>
       <View style={styles.detailsContainer}>
         <View  style={styles.mainText} >
           <Text style={[TYPOGRAPHY.TitleMedium, styles.detailText]}>

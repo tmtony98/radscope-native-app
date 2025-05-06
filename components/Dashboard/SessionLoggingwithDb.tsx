@@ -34,7 +34,7 @@ export const SessionLoggingwithDb = ({
   // the component will still function without throwing errors. For example, if onStart, onDownload, or onStopSuccess
   // are not passed, they default to no-op functions, preventing undefined function errors when called.
   // Similarly, isLogging and activeSessionId default to false and null, providing safe initial states.
-  onStart = () => {},
+  onStart = () => {}, //opens bottom sheet
   onDownload = () => {},
   onStopSuccess = () => {},
   isLogging = false,
@@ -48,9 +48,12 @@ export const SessionLoggingwithDb = ({
 // React.Dispatch<React.SetStateAction<string>>;
 
 
-  const handleDownload = () => {
+  const handleDownload = () => { //routing for now
     router.push('/SessionView')
   };
+
+
+  
   const handleStopSession = useCallback(async () => {
     if (!activeSessionId) {
       console.error("Cannot stop session: No active session ID found.");
