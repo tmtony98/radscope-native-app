@@ -62,7 +62,7 @@ useEffect(() => {
   initializeDirectory();
 }, []); // Initialize directory when component mounts
 
-
+ 
 
 // Create date-based directory structure
 const createDateBasedDirectory = async (date = new Date()) => {
@@ -286,7 +286,7 @@ const appendJsonToFile = useCallback(async (jsonData: Message, date = new Date()
 
   // Add an effect to monitor isLogging changes and trigger initial data save when logging starts
   useEffect(() => {
-    console.log('isLogging state changed to:', isLogging);
+    // console.log('isLogging state changed to:', isLogging);
     
     // When logging starts and we have an active session ID, save the initial data point
     if (isLogging && activeSessionId) {

@@ -15,11 +15,11 @@ interface SensorDataExtract {
 }
 
 // MQTT Configuration
-// const BROKER_URL = 'ws://192.168.29.39:8083'; //office bbd
+const BROKER_URL = 'ws://192.168.29.39:8083'; //office bbd
 // const BROKER_URL = 'ws://192.168.1.50:8083'; //office kv
 
 
-const BROKER_URL = 'ws://192.168.1.11:8083'; //hostel
+// const BROKER_URL = 'ws://192.168.1.11:8083'; //hostel
 // const BROKER_URL = 'ws://192.168.74.213:8083'; //tony phone
 
 
@@ -106,7 +106,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const parsedData: LiveData = JSON.parse(payload);
       // Only log in development
       if (__DEV__) {
-        console.log("parsedData", parsedData);
+        // console.log("parsedData", parsedData);
       }
       return {
         doseRate: parsedData.data.Sensor.doserate.value ?? 0,

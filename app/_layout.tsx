@@ -11,9 +11,11 @@ import {
 import { SplashScreen } from 'expo-router';
 import { MqttProvider } from '../Provider/MqttContext';
 import { DeviceProvider } from '../Provider/DeviceContext';
+import { SettingsProvider } from '../Provider/SettingsContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
+
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
@@ -37,6 +39,7 @@ export default function RootLayout() {
   }
 
   return (
+    <SettingsProvider>
     <MqttProvider>
       <DeviceProvider>
         <GestureHandlerRootView style={{ flex: 1 }}> 
@@ -58,6 +61,7 @@ export default function RootLayout() {
         </GestureHandlerRootView>
       </DeviceProvider>
     </MqttProvider>
+    </SettingsProvider>
   );
 }
 

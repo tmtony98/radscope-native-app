@@ -44,7 +44,7 @@ export const DeviceProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const { connectMqtt , disconnectMqtt , status  } = useMqttContext();
 
    const appState = useRef(AppState.currentState);
-    console.log("Current app state:", appState.current);
+    // console.log("Current app state:", appState.current);
     //create a state to know background or foreground
     const [isBackground, setIsBackground] = useState(true);
     
@@ -104,12 +104,11 @@ const reconnectMQTT = (device: Device) => {
       console.log("disconnecting and connecting to MQTT broker:", device.host, device.port, device.name);
       // Use port 8883 for WebSocket connection if the device port is 1883 (standard MQTT)
       const wsPort = device.port === 1883 ? 8883 : (device.port || 8883); //8083 -recheck
-      // Pass the device object to connectMqtt to handle both device ID and Demo_Topic
+      console.log("WebSocket port at devicecontext:", wsPort);
+           
+      //Pass the device object to connectMqtt to handle both device ID and Demo_Topic
       connectMqtt(device.host, wsPort, device);
   }
-
-
-
 
 
 
@@ -136,7 +135,7 @@ const reconnectMQTT = (device: Device) => {
   useEffect(() => {
     const subscription = AppState.addEventListener("change", nextAppState => {
       appState.current = nextAppState;
-      console.log("Current app state:", appState.current);
+      // console.log("Current app state:", appState.current);
 
       if (nextAppState === "active" && connectedDevice && !status.connected) {
         console.log("App came to foreground, reconnecting to device:", connectedDevice.name);

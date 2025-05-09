@@ -37,7 +37,7 @@ const DEVICE_STORAGE_KEY = 'connectedDevice';
 export default function ConnectTab() {
 
   const appState = useRef(AppState.currentState);
-  console.log("Current app state:", appState.current);
+  // console.log("Current app state:", appState.current);
   //create a state to know background or foreground
   const [isBackground, setIsBackground] = useState(true);
   
@@ -87,7 +87,7 @@ export default function ConnectTab() {
   useEffect(() => {
     const subscription = AppState.addEventListener("change", nextAppState => {
       appState.current = nextAppState;
-      console.log("Current app state:", appState.current);
+      // console.log("Current app state:", appState.current);
 
       if (nextAppState === "active" && connectedDevice && !status.connected) {
         console.log("App came to foreground, reconnecting to device:", connectedDevice.name);

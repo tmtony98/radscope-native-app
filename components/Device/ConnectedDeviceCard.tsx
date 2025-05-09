@@ -58,7 +58,9 @@ const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({
                 <Text style={[TYPOGRAPHY.TitleMedium, styles.deviceName]}>
                   {connectedDevice.name || "Device Name"}
                 </Text>
-                <Text style={styles.deviceIp}>{connectedDevice.host}</Text>
+                
+                <Text style={styles.deviceIp}>IP-Address: {connectedDevice.host}</Text>
+                <Text style={styles.deviceIp}>Port: {connectedDevice.port}</Text>
               </View>
               {status.connected ? (
                 <View style={styles.connectedBadge}>
@@ -78,11 +80,11 @@ const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({
                 style={styles.disconnectBtn}
                 onPress={handleDisconnect}
               >
-                <MaterialIcons
+                {/* <MaterialIcons
                   name="chevron-right"
                   size={20}
-                  color={COLORS.error}
-                />
+                  color={COLORS.white}
+                /> */}
 
                 <Text style={styles.disconnectText}>Disconnect</Text>
               </TouchableOpacity>
@@ -110,16 +112,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    // paddingHorizontal: SPACING.md,
-    // borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.error,
-
+    backgroundColor: COLORS.error,
     paddingVertical: 12,
     paddingLeft: 16, // 24px padding left
     paddingRight: 16, // 30px padding right
     borderRadius: 10,
     borderStyle: "solid",
+  },
+  disconnectText: {
+    color: COLORS.white,
+    fontFamily: "Poppins-Medium",
+    fontWeight: "600",
+    fontSize: 16,
   },
   btnRow: {
     flexDirection: "row",
@@ -197,18 +201,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Poppins-Regular",
   },
-  disconnectButton: {
-    backgroundColor: COLORS.error,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: 8,
-  },
-  disconnectText: {
-    color: COLORS.error,
-    fontFamily: "Poppins-Medium",
-    fontWeight: "700",
-    fontSize: 16,
-  },
+ 
+ 
   viewDashboardButton: {
     flexDirection: "row",
     alignItems: "center",
