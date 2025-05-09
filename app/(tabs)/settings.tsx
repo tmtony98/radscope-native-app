@@ -1,136 +1,113 @@
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
-import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../../Themes/theme';
-import * as SecureStore from 'expo-secure-store';
+import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY , BUTTON_STYLE } from '../../Themes/theme';
 import Header from '@/components/Header';
+import { useSettingsContext } from '@/Provider/SettingsContext';
+import { generalSettings } from '@/Provider/SettingsContext';
+import StyledTextInput from '@/components/common/StyledTextInput';
 
-//gener
 
-// async function save(key, value) {
-//   await SecureStore.setItemAsync(key, value);
-// }
 
-// async function getValueFor(key) {
-//   let result = await SecureStore.getItemAsync(key);
-//   if (result) {
-//     alert("🔐 Here's your value 🔐 \n" + result);
-//   } else {
-//     alert('No values stored under that key.');
-//   }
-// }
-
-// Error Boundary for Settings screen
-const SettingsErrorBoundary: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [error, setError] = useState<Error | null>(null);
-
-  if (error) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-        <Text style={{ color: 'red', fontWeight: 'bold', fontSize: 18 }}>Settings Screen Error:</Text>
-        <Text style={{ marginTop: 10 }}>{error.message}</Text>
-      </View>
-    );
-  }
-
-  return (
-    <React.Fragment>
-      {React.Children.map(children, child => {
-        try {
-          return child;
-        } catch (err) {
-          setError(err as Error);
-          return null;
-        }
-      })}
-    </React.Fragment>
-  );
-};
 
 export default function Settings() {
-  const [discoveryType, setDiscoveryType] = useState('local');
-  const [threshold, setThreshold] = useState('');
-  const [ipAddress, setIpAddress] = useState('');
-  const [portNumber, setPortNumber] = useState('');
+  const { getGeneralSettings , storeGeneralSettings, general_Settings_Key } = useSettingsContext();
 
-  // Storage keys
-  const KEYS = {
-    DISCOVERY_TYPE: 'discoveryType',
-    THRESHOLD: 'threshold',
-    IP_ADDRESS: 'ipAddress',
-    PORT_NUMBER: 'portNumber'
+  // Combined state using generalSettings type
+  const [generalSettings, setGeneralSettings] = useState<generalSettings>({
+    discoveryType: 'Local',
+    Alarm: 0,
+    serverCredentials: {
+      IP_Address: '',
+      port: 0,
+    },
+  });
+console.log('generalSettings', generalSettings);
+
+  const [hasChanges, setHasChanges] = useState(false);
+  const [initialSettings, setInitialSettings] = useState<generalSettings | null>(null);
+
+  console.log('generalSettings', generalSettings);
+
+  // Function to save the general settings
+  const handleSave = async () => {
+    try {
+      const res = await storeGeneralSettings(generalSettings);
+      console.log('Settings saved successfully:', res);
+      setHasChanges(false);
+    } catch (error) {
+      console.error('Error saving settings:', error);
+    }
   };
 
-  // Load saved settings on component mount
+  const handleCancel = () => {
+    if (initialSettings) {
+      setGeneralSettings(initialSettings);
+      setHasChanges(false);
+    }
+  };
+
+  // Load settings on mount
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        // Load discovery type
-        const savedDiscoveryType = await SecureStore.getItemAsync(KEYS.DISCOVERY_TYPE);
-        if (savedDiscoveryType)
-           setDiscoveryType(savedDiscoveryType);
-        
-        // Load threshold
-        const savedThreshold = await SecureStore.getItemAsync(KEYS.THRESHOLD);
-        if (savedThreshold)
-          setThreshold(savedThreshold);
-        
-        // Load IP address
-        const savedIpAddress = await SecureStore.getItemAsync(KEYS.IP_ADDRESS);
-        if (savedIpAddress)
-           setIpAddress(savedIpAddress);
-        
-        // Load port number
-        const savedPortNumber = await SecureStore.getItemAsync(KEYS.PORT_NUMBER);
-        if (savedPortNumber) 
-          setPortNumber(savedPortNumber);
+        const settings = await getGeneralSettings(general_Settings_Key);
+        if (settings) {
+          setGeneralSettings(settings);
+          setInitialSettings(settings); // Store initial values
+        }
       } catch (error) {
-        Alert.alert('Error', 'Failed to load settings');
+        console.error('Error loading settings:', error);
       }
     };
 
     loadSettings();
-  }, []);
+  }, [getGeneralSettings, general_Settings_Key]);
 
-  // Save individual setting
-  const saveSetting = async (key: string, value: string) => {
-    try {
-      await SecureStore.setItemAsync(key, value);
-      // Alert.alert('Success', `${value} saved successfully`);
-    } catch (error) {
-      Alert.alert('Error', `Failed to save ${key}`);
-    }
+  // Update handlers
+  const handleDiscoveryTypeChange = (type: string) => {
+    setGeneralSettings((prev) => ({
+      ...prev,
+      discoveryType: type,
+    }));
+    setHasChanges(true);
   };
 
-  // Save all settings
-  const saveAllSettings = async () => {
-    try {
-      await SecureStore.setItemAsync(KEYS.DISCOVERY_TYPE, discoveryType);
-      await SecureStore.setItemAsync(KEYS.THRESHOLD, threshold);
-      await SecureStore.setItemAsync(KEYS.IP_ADDRESS, ipAddress);
-      await SecureStore.setItemAsync(KEYS.PORT_NUMBER, portNumber);
-      
-      Alert.alert('Success', 'Settings saved successfully');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to save settings');
-    }
+  const handleAlarmChange = (value: string) => {
+    setGeneralSettings((prev) => ({
+      ...prev,
+      Alarm: parseInt(value) || 0,
+    }));
+    setHasChanges(true);
   };
 
-  // Handle discovery type change
-  const handleDiscoveryTypeChange = (type: string ) => {
-    setDiscoveryType(type);
-    saveSetting(KEYS.DISCOVERY_TYPE, type);
+  const handleIpAddressChange = (value: string) => {
+    setGeneralSettings((prev) => ({
+      ...prev,
+      serverCredentials: {
+        ...prev.serverCredentials,
+        IP_Address: value,
+      },
+    }));
+    setHasChanges(true);
+  };
+
+  const handlePortChange = (value: string) => {
+    setGeneralSettings((prev) => ({
+      ...prev,
+      serverCredentials: {
+        ...prev.serverCredentials,
+        port: parseInt(value) || 0,
+      },
+    }));
+    setHasChanges(true);
   };
 
   return (
-    <SettingsErrorBoundary>
-      <View style={{flex:1}}>
-        <Header title="General Settings" />
-        <View style={styles.container}>
-          {/* <Text style={TYPOGRAPHY.headLineMedium}>Settings</Text> */}
-         
+    <View style={{flex:1}}>
+      <Header title="General Settings" />
+      <ScrollView style={styles.container}>
           <View style={CARD_STYLE.container}>
-            
             <Text style={TYPOGRAPHY.headLineSmall}>Discovery Type</Text>
             
             {/* Custom segmented button */}
@@ -138,37 +115,36 @@ export default function Settings() {
               <TouchableOpacity
                 style={[
                   styles.segmentButton,
-                  discoveryType === 'local' && styles.activeSegmentButton
+                  generalSettings.discoveryType === 'Local' && styles.activeSegmentButton
                 ]}
-                onPress={() => handleDiscoveryTypeChange('local')}
+                onPress={() => handleDiscoveryTypeChange('Local')}
               >
                 <View style={styles.buttonContent}>
-                  {discoveryType === 'local' && (
+                  {generalSettings.discoveryType === 'Local' && (
                     <MaterialIcons name="check" size={18} color={COLORS.white} style={styles.buttonIcon} />
                   )}
                   <Text style={[
                     styles.buttonText,
-                    discoveryType === 'local' && styles.activeButtonText
+                    generalSettings.discoveryType === 'Local' && styles.activeButtonText
                   ]}>
                     Local
                   </Text>
                 </View>
               </TouchableOpacity>
-              
               <TouchableOpacity
                 style={[
                   styles.segmentButton,
-                  discoveryType === 'cloud' && styles.activeSegmentButton
+                  generalSettings.discoveryType === 'Cloud' && styles.activeSegmentButton
                 ]}
-                onPress={() => handleDiscoveryTypeChange('cloud')}
+                onPress={() => handleDiscoveryTypeChange('Cloud')}
               >
                 <View style={styles.buttonContent}>
-                  {discoveryType === 'cloud' && (
+                  {generalSettings.discoveryType === 'Cloud' && (
                     <MaterialIcons name="check" size={18} color={COLORS.white} style={styles.buttonIcon} />
                   )}
                   <Text style={[
                     styles.buttonText,
-                    discoveryType === 'cloud' && styles.activeButtonText
+                    generalSettings.discoveryType === 'Cloud' && styles.activeButtonText
                   ]}>
                     Cloud
                   </Text>
@@ -176,52 +152,78 @@ export default function Settings() {
               </TouchableOpacity>
             </View>
           </View>
-
           <View style={CARD_STYLE.container}>
             <Text style={TYPOGRAPHY.headLineSmall}>Alarm</Text>
-            <TextInput
-              style={styles.input}
+            <StyledTextInput
+              label="Alarm Threshold"
+              value={generalSettings.Alarm.toString()}
+              keyboardType="numeric"
+              onChangeText={handleAlarmChange}
               placeholder="Enter threshold Value"
-              value={threshold}
-              onChangeText={(value) => {
-                setThreshold(value);
-                saveSetting(KEYS.THRESHOLD, value);
-              }}
             />
           </View>
-
           <View style={CARD_STYLE.container}>
             <Text style={TYPOGRAPHY.headLineSmall}>Server Credentials</Text>
-            <TextInput
-              style={styles.input}
+            <StyledTextInput
+              label="IP Address"
+              value={generalSettings.serverCredentials.IP_Address}
+              onChangeText={handleIpAddressChange}
               placeholder="Enter IP Address"
-              value={ipAddress}
-              onChangeText={(value) => {
-                setIpAddress(value);
-                saveSetting(KEYS.IP_ADDRESS, value);
-              }}
+              style={{ marginBottom: SPACING.md }}
             />
-            <TextInput
-              style={styles.input}
+            <StyledTextInput
+              label="Port"
+              value={generalSettings.serverCredentials.port.toString()}
+              keyboardType="numeric"
+              onChangeText={handlePortChange}
               placeholder="Enter Port Number"
-              value={portNumber}
-              onChangeText={(value) => {
-                setPortNumber(value);
-                saveSetting(KEYS.PORT_NUMBER, value);
-              }}
             />
           </View>
-
-          {/* <TouchableOpacity style={styles.saveButton} onPress={saveAllSettings}>
-            <Text style={styles.saveButtonText}>Save All Settings</Text>
-          </TouchableOpacity> */}
-        </View>
-      </View>
-    </SettingsErrorBoundary>
+          <View style={styles.btnRow}>
+            <TouchableOpacity
+              style={[
+                BUTTON_STYLE.mediumButton,
+                styles.cancelBtn,
+                !hasChanges && styles.disabledButton
+              ]}
+              onPress={handleCancel}
+              disabled={!hasChanges}
+            >
+              <Text style={[styles.saveButtonText, !hasChanges && styles.disabledButtonText]}>Cancel</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[
+                BUTTON_STYLE.mediumButtonWithIconLeft,
+                styles.saveButton,
+                !hasChanges && styles.disabledButton
+              ]}
+              onPress={handleSave}
+              disabled={!hasChanges}
+            >
+              <Text style={[styles.saveButtonText, !hasChanges && styles.disabledButtonText]}>Save Settings</Text>
+            </TouchableOpacity>
+          </View>
+         
+        </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  btnRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: SPACING.md,
+  },
+  cancelBtn:{
+    backgroundColor: COLORS.error,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: SPACING.md,
+    marginBottom: SPACING.md,
+  },
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -234,7 +236,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
     marginTop: SPACING.sm,
-    padding: 0,
   },
   segmentButton: {
     flex: 1,
@@ -270,20 +271,20 @@ const styles = StyleSheet.create({
   buttonIcon: {
     marginRight: 4,
   },
-  input: {
-    height: 50,
-    borderColor: COLORS.border,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: SPACING.sm,
-    marginVertical: SPACING.xs,
-  },
   saveButton: {
     backgroundColor: COLORS.primary,
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
+    marginLeft: SPACING.sm,
+    marginBottom: SPACING.md,
     marginTop: SPACING.md,
+  },
+  disabledButton: {
+    opacity: 0.5
+  },
+  disabledButtonText: {
+    opacity: 0.7
   },
   saveButtonText: {
     color: COLORS.white,
