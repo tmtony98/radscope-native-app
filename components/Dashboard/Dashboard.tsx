@@ -21,8 +21,7 @@ import SessionData from '@/model/SessionData';
 // import ManageExternalStorage from 'react-native-manage-external-storage';
 import RNFS from 'react-native-fs';
 import { Message } from '@/Types';
-
-
+import transformMqttMessageToSessionData from '@/utils/UtilityFunctions';
 
 
 export default function Dashboard() {
@@ -36,111 +35,61 @@ export default function Dashboard() {
   // Refs for timers to be able to clear them
   const saveIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeLimitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Store the active session name in a ref to ensure it persists throughout the session
+  const activeSessionNameRef = useRef<string>('');
   
   const bottomSheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ['40%'], []);
   //import msg from mqtt
-  const { message } = useMqttContext();
+  const { message , createDateBasedDirectory } = useMqttContext();
 
-  // Base path in external storage
-const BASE_PATH = RNFS.ExternalStorageDirectoryPath + '/radscope';
-
-// Initialize the base directory
-const initializeDirectory = async () => {
-  try {
-    const exists = await RNFS.exists(BASE_PATH);
-    if (!exists) {
-      await RNFS.mkdir(BASE_PATH);
-      console.log('Created base directory:', BASE_PATH);
-    }
-  } catch (error) {
-    console.error('Error initializing directory:', error);
-  }
-};
-
-useEffect(() => {
-  initializeDirectory();
-}, []); // Initialize directory when component mounts
-
- 
-
-// Create date-based directory structure
-const createDateBasedDirectory = async (date = new Date()) => {
-  const year = date.getFullYear().toString();
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const day = date.getDate().toString().padStart(2, '0');
-  
-  const yearPath = `${BASE_PATH}/${year}`;
-  const monthPath = `${yearPath}/${month}`;
-  const dayPath = `${monthPath}/${day}`;
-  
-  try {
-    const yearExists = await RNFS.exists(yearPath);
-    if (!yearExists) {
-      await RNFS.mkdir(yearPath);
-    }
-    
-    const monthExists = await RNFS.exists(monthPath);
-    if (!monthExists) {
-      await RNFS.mkdir(monthPath);
-    }
-    
-    const dayExists = await RNFS.exists(dayPath);
-    if (!dayExists) {
-      await RNFS.mkdir(dayPath);
-    }
-    
-    return dayPath; // Return the path of the day directory eg: /radscope/2025/05/06
-  } catch (error) {
-    console.error('Error creating date-based directory:', error);
-    throw error;
-  }
-};
-
-
-// Remove this console.log that's outside the function
-// console.log('Starting to append JSON data to file...', message);
-
-// Replace the regular function with useCallback
 const appendJsonToFile = useCallback(async (jsonData: Message, date = new Date()) => {
-  // console.log('Starting to append JSON data to file...', jsonData);
   try {
-    const dirPath = await createDateBasedDirectory(date);
-    const fileName = `data.jsonl`;
-    const filePath = `${dirPath}/${fileName}`;
+    const data = transformMqttMessageToSessionData(message);
+    console.log('Transformed data:', data);
     
+    // Use the active session name from the ref, which persists throughout the session
+    // Fall back to sessionName state, then to a default if both are empty
+    const currentSessionName = activeSessionNameRef.current || sessionName || 'unnamed_session';
+    
+    const dirPath = await createDateBasedDirectory(date, "session");
+    console.log('Directory path:', dirPath);
+    console.log('Using session name:', currentSessionName);
+
+    const fileName = `${currentSessionName}.jsonl`;
+    const filePath = `${dirPath}/${fileName}`;
+    console.log('File path for saving:', filePath);
+
     // Convert JSON object to string and add a newline
-    const jsonString = JSON.stringify(jsonData) + '\n';
+    const jsonString = JSON.stringify(data) + '\n';
+    console.log('JSON string to append:', jsonString);
     
     const fileExists = await RNFS.exists(filePath);
+    console.log('File exists:', fileExists);
     
     if (fileExists) {
-      const result = await RNFS.appendFile(filePath, jsonString, 'utf8');
+      await RNFS.appendFile(filePath, jsonString, 'utf8');
       console.log('Successfully appended JSON data to file:', filePath);
-     
     } else {
       await RNFS.writeFile(filePath, jsonString, 'utf8');
+      console.log('File does not exist, created new file:', filePath);
     }
-    
-    console.log('Successfully appended JSON data to file:', filePath);
+
     return filePath;
   } catch (error) {
     console.error('Error appending JSON to file:', error);
     throw error;
   }
-}, [message]);
-
-// Append JSON to JSONL file
-
-
-
-
-
-
-
+}, [message, createDateBasedDirectory, sessionName]);
 
   const [isExternalStorageAvailable, setIsExternalStorageAvailable] = useState(false);
   
+
+// useEffect(() => {
+//   appendJsonToFile(message);
+// }, [message, appendJsonToFile]);
+
+
   // useEffect for checking storage permission
   useEffect(() => {
     const AskPermission = async () => {
@@ -158,42 +107,6 @@ const appendJsonToFile = useCallback(async (jsonData: Message, date = new Date()
     AskPermission();  // This function is only executed once if the user allows the permission and this package retains that permission
 
   }, []);
-
-
-  // Initialize file system and create test file
-  // useEffect(() => {
-  //   const initializeFileSystem = async () => {
-  //     try {
-  //       // Define base path for file storage
-  //       const BASE_PATH = Platform.OS === 'android' 
-  //         ? RNFS.ExternalStorageDirectoryPath + '/radscope' 
-  //         : RNFS.DocumentDirectoryPath + '/radscope';
-  //       console.log("Documents directory:", BASE_PATH);
-
-  //       // Create directory if it doesn't exist
-  //       await RNFS.mkdir(BASE_PATH);
-
-  //       // Save a test file using async/await
-  //       try {
-  //         await RNFS.writeFile(
-  //           `${BASE_PATH}/test.txt`,
-  //           'This is a test file',
-  //           'utf8'
-  //         );
-  //         console.log('Test file saved');
-  //       } catch (err) {
-  //         console.error('Error saving test file:', err);
-  //       }
-  //     } catch (error) {
-  //       console.error('Error initializing file system:', error);
-  //     }
-  //   };
-
-  //   // Execute the async function
-  //   if (isExternalStorageAvailable) {
-  //     initializeFileSystem();
-  //   }
-  // }, [isExternalStorageAvailable]);
 
 
 
@@ -243,6 +156,8 @@ const appendJsonToFile = useCallback(async (jsonData: Message, date = new Date()
     clearAllTimers();
     setIsLogging(false);
     setActiveSessionId("");
+    // Clear the active session name ref when stopping
+    activeSessionNameRef.current = '';
   }, [clearAllTimers]);
 
   const handleFullscreen = () => {
@@ -259,14 +174,6 @@ const appendJsonToFile = useCallback(async (jsonData: Message, date = new Date()
 
 
 
-
-
-
-
-
-
-
-
   // Function to save current message data to database
   const saveSessionData = useCallback(async () => {
     if (!isLogging) {
@@ -278,22 +185,23 @@ const appendJsonToFile = useCallback(async (jsonData: Message, date = new Date()
     try {
       await appendJsonToFile(message, new Date());
       console.log('All message data Session data saved successfully');
-      
+      // debugger
     } catch (error) {
       console.error('Failed to save session data:', error);
     }
-  }, [isLogging, message, appendJsonToFile]);
+  }, [isLogging , appendJsonToFile]);
 
   // Add an effect to monitor isLogging changes and trigger initial data save when logging starts
   useEffect(() => {
-    // console.log('isLogging state changed to:', isLogging);
+    console.log('isLogging state changed to:', isLogging);
     
     // When logging starts and we have an active session ID, save the initial data point
-    if (isLogging && activeSessionId) {
+    if (isLogging) {
       console.log('Logging started, saving initial data point');
+     
       saveSessionData();
     }
-  }, [isLogging, activeSessionId, saveSessionData]);
+  }, [isLogging, saveSessionData]);
 
   // Initialize timers when session starts
   const setupTimers = useCallback((sessionId: string) => {
@@ -335,6 +243,10 @@ const appendJsonToFile = useCallback(async (jsonData: Message, date = new Date()
     try {
       // Clear any existing timers
       clearAllTimers();
+      
+      // Store the session name in the ref to ensure it persists throughout the session
+      activeSessionNameRef.current = sessionName;
+      console.log('Stored session name in ref:', activeSessionNameRef.current);
       
       // Start a new session
       const newSession = await database.write(async () => {
@@ -390,7 +302,7 @@ const appendJsonToFile = useCallback(async (jsonData: Message, date = new Date()
         />
         <GPSCard />
 
-        <SessionLoggingCard
+        {/* <SessionLoggingCard
           onDownload={openSessionView}
           onStart={openBottomSheet}
           onStopSuccess={handleStopSuccess}
@@ -400,7 +312,7 @@ const appendJsonToFile = useCallback(async (jsonData: Message, date = new Date()
           timeInterval={timeInterval}
           onTimeLimitChange={handleTimeLimitChange}
           onTimeIntervalChange={handleTimeIntervalChange}
-        />
+        /> */}
 
         <SessionLoggingwithDb
           onDownload={openSessionView}

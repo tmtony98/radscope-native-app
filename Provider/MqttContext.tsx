@@ -3,7 +3,9 @@ import mqtt from 'precompiled-mqtt';
 import 'react-native-url-polyfill/auto';
 import database from '../index.native';
 import Doserate from '../model/Doserate';
-import { Message, ConnectionStatus, GpsData, BatteryData, LiveData, SensorData } from '../Types';
+import { Message, ConnectionStatus, GpsData, BatteryData, LiveData, SensorData  , DoserateData } from '../Types';
+import RNFS from 'react-native-fs';
+
 
 interface SensorDataExtract {
   doseRate: number;
@@ -14,13 +16,29 @@ interface SensorDataExtract {
   spectrum: number[];
 }
 
+
+
+
+
+
+
+
 // MQTT Configuration
-const BROKER_URL = 'ws://192.168.29.39:8083'; //office bbd
+// const BROKER_URL = 'ws://192.168.29.39:8083'; //office bbd
 // const BROKER_URL = 'ws://192.168.1.50:8083'; //office kv
 
 
 // const BROKER_URL = 'ws://192.168.1.11:8083'; //hostel
-// const BROKER_URL = 'ws://192.168.74.213:8083'; //tony phone
+const BROKER_URL = 'ws://192.168.74.213:8083'; //tony phone
+const BASE_PATH = RNFS.ExternalStorageDirectoryPath + '/Radscope';
+const DOSERATE_PATH = BASE_PATH + '/Doserate_data';
+const SESSION_PATH = BASE_PATH + '/Sessions_data';
+
+const MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December'
+];
+
 
 
  
@@ -42,6 +60,8 @@ type MqttContextType = {
   spectrum:number[];
   connectMqtt: (mqtt_host: string, mqtt_port: number, deviceId: any) => void;
   disconnectMqtt: () => void;
+  createDateBasedDirectory: (date?: Date, type?: 'doserate' | "session") => Promise<string>;
+
 };
 
 
@@ -63,7 +83,9 @@ const MqttContext = createContext<MqttContextType>({
   batteryInfo: null,
   spectrum:[],
   connectMqtt: () => {},
-  disconnectMqtt: () => {}
+  disconnectMqtt: () => {},
+  createDateBasedDirectory: async () => '',
+  
 });
 
 export const useMqttContext = () => useContext(MqttContext);
@@ -75,6 +97,8 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
     payload: '',
     timestamp: new Date()
   });
+  // console.log("message", message);
+  
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<ConnectionStatus>({ connected: false });
   // Group related sensor data into a single state object for optimized updates
@@ -96,7 +120,8 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clientRef = useRef<mqtt.MqttClient | null>(null);
   const messageQueueRef = useRef<Message[]>([]);
   const processingRef = useRef(false);
-  
+
+
   // Memoize the extractSensorData function to prevent unnecessary recreations
   const extractSensorData = useCallback((payload: string): SensorDataExtract => {
     try {
@@ -104,6 +129,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return { doseRate: 0, cps: 0, timestamp: 0, gps: null, batteryInfo: null, spectrum: [] };
       }
       const parsedData: LiveData = JSON.parse(payload);
+      
       // Only log in development
       if (__DEV__) {
         // console.log("parsedData", parsedData);
@@ -136,6 +162,152 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error("Error saving doserate:", error);
     }
   }, []);
+
+
+
+// Initialize the base directory
+const initializeDirectory = async () => {
+  try {
+    // Create base directory if it doesn't exist
+    const baseExists = await RNFS.exists(BASE_PATH);
+    if (!baseExists) {
+      await RNFS.mkdir(BASE_PATH);
+      console.log('Created base directory:', BASE_PATH);
+    }
+
+    // Create doserate_data directory if it doesn't exist
+    const doserateExists = await RNFS.exists(DOSERATE_PATH);
+    if (!doserateExists) {
+      await RNFS.mkdir(DOSERATE_PATH);
+      console.log('Created doserate data directory:', DOSERATE_PATH);
+    }
+    // Create spectrum_data directory if it doesn't exist
+    const spectrumExists = await RNFS.exists(SESSION_PATH);
+    if (!spectrumExists) {
+      await RNFS.mkdir(SESSION_PATH);
+      console.log('Created spectrum data directory:', SESSION_PATH);
+    }
+  } catch (error) {
+    console.error('Error initializing directories:', error);
+  }
+};
+
+useEffect(() => {
+  initializeDirectory();
+}, []); // Initialize directory when component mounts
+
+
+
+const createDateBasedDirectory = async (date = new Date(), type:string) => {
+  const year = date.getFullYear().toString();
+  const month = MONTHS[date.getMonth()]; // Get month name instead of number
+  const day = date.getDate().toString().padStart(2, '0');
+  
+  if (type === 'doserate') {
+    const doseratePath = `${DOSERATE_PATH}/${year}`;
+    const monthPath = `${doseratePath}/${month}`;
+    const dayPath = `${monthPath}/${day}`;
+    
+    try {
+      const yearExists = await RNFS.exists(doseratePath);
+      if (!yearExists) {
+        await RNFS.mkdir(doseratePath);
+      }
+      
+      const monthExists = await RNFS.exists(monthPath);
+      if (!monthExists) {
+        await RNFS.mkdir(monthPath);
+      }
+      
+      const dayExists = await RNFS.exists(dayPath);
+      if (!dayExists) {
+        await RNFS.mkdir(dayPath);
+      }
+      
+      return dayPath; // Return the path of the day directory eg: /radscope/doserate/2025/05/06
+    } catch (error) {
+      console.error('Error creating date-based directory:', error);
+      throw error;
+    }
+  }
+  else{
+    const sessionPath = `${SESSION_PATH}/${year}`;
+    const monthPath = `${sessionPath}/${month}`;
+    const dayPath = `${monthPath}/${day}`;
+    
+    try {
+      const yearExists = await RNFS.exists(sessionPath);
+      if (!yearExists) {
+        await RNFS.mkdir(sessionPath);
+      }
+      
+      const monthExists = await RNFS.exists(monthPath);
+      if (!monthExists) {
+        await RNFS.mkdir(monthPath);
+      }
+      
+      const dayExists = await RNFS.exists(dayPath);
+      if (!dayExists) {
+        await RNFS.mkdir(dayPath);
+      }
+      
+      return dayPath; // Return the path of the day directory eg: /radscope/spectrum/2025/05/06
+    } catch (error) {
+      console.error('Error creating date-based directory:', error);
+      throw error;
+    }
+  }
+};
+
+
+const saveDoserateToExternal = useCallback(async (doserate: number, cps: number, createdAt: number) => {
+  try {
+    const date = new Date(createdAt);
+    const dirPath = await createDateBasedDirectory(date, 'doserate');
+    const fileName = 'doserate.jsonl';
+    const filePath = `${dirPath}/${fileName}`;
+
+    // Format timestamp string in required format: YYYY-MM-DD HH:mm:ss
+    const timeStr = date.toISOString()
+      .replace('T', ' ')    // Replace T with space
+      .slice(0, 19);       // Take only YYYY-MM-DD HH:mm:ss part
+    
+    // Create data object in exact required format
+    const doserateData = {
+      [timeStr]: {
+        doseRate: Number(doserate.toFixed(3)), // Format to 3 decimal places
+        time_stamp: timeStr
+      }
+    };
+
+    // Convert to JSON string with newline for JSONL format
+    const jsonString = JSON.stringify(doserateData) + '\n';
+
+    try {
+      const fileExists = await RNFS.exists(filePath);
+      if (fileExists) {
+        await RNFS.appendFile(filePath, jsonString, 'utf8');
+      } else {
+        await RNFS.writeFile(filePath, jsonString, 'utf8');
+      }
+    } catch (fileError) {
+      console.error('Error writing to file:', fileError);
+      throw fileError;
+    }
+
+  } catch (error) {
+    console.error('Error in saveDoserateToExternal:', error);
+    throw error;
+  }
+}, [createDateBasedDirectory]);
+
+// Add effect to save data when doserate changes
+useEffect(() => {
+  if (doseRate && timestamp) {
+    saveDoserateToExternal(doseRate, cps, timestamp);
+  }
+}, [doseRate, cps, timestamp, saveDoserateToExternal]);
+
 
   // Process messages in batches to reduce render cycles
   const processMessageQueue = useCallback(async () => {
@@ -319,7 +491,8 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
     batteryInfo,
     spectrum,
     connectMqtt,
-    disconnectMqtt
+    disconnectMqtt,
+    createDateBasedDirectory
   }), [
     message, 
     messages, 
@@ -332,7 +505,8 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
     batteryInfo, 
     spectrum, 
     connectMqtt, 
-    disconnectMqtt
+    disconnectMqtt,
+     createDateBasedDirectory
   ]);
   
   return (

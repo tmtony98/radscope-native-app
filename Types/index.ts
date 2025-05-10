@@ -1,7 +1,7 @@
 export interface Message {
     id: string;
     topic: string;
-    payload: String;
+    payload: string;
     timestamp: Date;
   }
   
@@ -65,3 +65,56 @@ export interface Message {
     };
     timestamp: string;
   }
+
+export interface SessionData {
+    type: string;
+    device_id: string;
+    timestamp: string;
+    Attributes: {
+      ChargingCurrent: number;
+      StatusCharging: number;
+      VoltageBUS: number;
+      Temperature: number;
+      SOC: number;
+      Voltage: number;
+    };
+    GPS: {
+      Fix: number;
+      FixMode: number;
+      Lat: number;
+      Lon: number;
+      Alt: number;
+      Sat: number;
+      Age: string;
+      Time: string;
+      Date: string;
+      Speed: number;
+      Course: number;
+    };
+    Sensor: {
+      doserate: {
+        status: string;
+        value: number;
+        cps: number;
+        calib: number[];
+      };
+      spectrum: {
+        status: string;
+        len: number;
+        calib: number[];
+        acquisition_time: number;
+        invalid_pulses: number;
+        cpu_load: number;
+        temperature: number;
+        bins: number[];
+      };
+    };
+  }
+
+  export interface DoserateData {
+    [timestamp: string]: {
+      doseRate: number;
+      time_stamp: string;
+    }
+  }
+  
