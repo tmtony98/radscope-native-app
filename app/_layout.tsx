@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Stack } from "expo-router";
 import { useFonts } from 'expo-font';
 import {
   Poppins_400Regular,
@@ -8,13 +7,14 @@ import {
   Poppins_600SemiBold,
   Poppins_700Bold
 } from '@expo-google-fonts/poppins';
-import { SplashScreen } from 'expo-router';
+import { SplashScreen, Stack } from 'expo-router';
 import { MqttProvider } from '../Provider/MqttContext';
 import { DeviceProvider } from '../Provider/DeviceContext';
 import { SettingsProvider } from '../Provider/SettingsContext';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 
 export default function RootLayout() {
@@ -48,7 +48,11 @@ export default function RootLayout() {
               style={colorScheme === 'dark' ? 'light' : 'dark'}
               backgroundColor={colorScheme === 'dark' ? '#000000' : '#ffffff'}
             />
-            <Stack>
+            <Stack
+              screenOptions={{
+                animation: 'slide_from_right',
+                animationDuration: 300,
+              }}>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="spectrum-settings" options={{ headerShown: false }} />
               <Stack.Screen name="dose-history" options={{ headerShown: false }} />
@@ -58,11 +62,10 @@ export default function RootLayout() {
               <Stack.Screen name="+not-found" />
             </Stack>
           </View>
+          <Toast />
         </GestureHandlerRootView>
       </DeviceProvider>
     </MqttProvider>
     </SettingsProvider>
   );
 }
-
-

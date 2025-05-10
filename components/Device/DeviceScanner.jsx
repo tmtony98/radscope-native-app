@@ -190,13 +190,13 @@ const DeviceScanner = ({ connectDevice }) => {
       // Connect the device using our props
       await connectDevice(device);
       
-      Alert.alert(
-        'Device Connected',
-        `Successfully connected to ${item.name || 'Unknown Device'}`,
-        [
-          { text: 'OK' }
-        ]
-      );
+      // Alert.alert(
+      //   'Device Connected',
+      //   `Successfully connected to ${item.name || 'Unknown Device'}`,
+      //   [
+      //     { text: 'OK' }
+      //   ]
+      // );
     } catch (error) {
       console.error('Failed to connect device:', error);
       Alert.alert(

@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from "react-native";
 import {
   CARD_STYLE,
   COLORS,
@@ -9,8 +9,12 @@ import {
 } from "../../Themes/theme";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useEffect, useRef } from "react";
 import { Device } from "./TopbarConnectTab";
 import { useMqttContext } from "@/Provider/MqttContext";
+import { useDeviceContext } from "@/Provider/DeviceContext";
+import Toast from 'react-native-toast-message';
+
 
 interface ConnectedDeviceCardProps {
   connectedDevice: Device | null;
@@ -23,29 +27,66 @@ const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({
 }) => {
   const router = useRouter();
   const mqttContext = useMqttContext();
+  const deviceContext = useDeviceContext();
+  const { connectedDevice: device } = deviceContext;
 
   // get status
   const { status } = mqttContext;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Fade in animation when component mounts
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true
+    }).start();
+  }, []);
 
   const handleViewDashboard = () => {
-    router.push("/");
+    // Add a slight delay for better visual effect
+    setTimeout(() => {
+      router.push("/");
+    }, 100);
   };
+
+  useEffect(() => {
+    if (status.connected) {
+      // Show toast immediately
+      Toast.show({
+        type: 'success',
+        text1: 'Device Connected Successfully',
+        text2: `Successfully connected to ${connectedDevice?.name || "Device"}`,
+        visibilityTime: 3000,
+        position: 'bottom',
+      });
+
+      // Navigate after 1 second
+      const navigationTimer = setTimeout(() => {
+        router.push('/');
+      }, 1500);
+
+      // Cleanup timer on unmount
+      return () => clearTimeout(navigationTimer);
+    }
+  }, [status.connected, connectedDevice?.name, router]);
 
   const handleDisconnect = async () => {
     await disconnectDevice();
+    Toast.show({
+      type: 'error',
+      text1: 'Device Disconnected',
+      text2: `Successfully Disconnected ${connectedDevice?.name || "Device"}`,
+      visibilityTime: 3000,
+      position: 'bottom',
+    });
   };
 
   return (
     <>
       {connectedDevice ? (
         <View style={styles.container}>
-          <View style={styles.headerContainer}>
-            <Text style={[TYPOGRAPHY.headLineSmall, styles.headerText]}>
-              Connected Devices
-            </Text>
-          </View>
-
-          <View style={styles.cardContainer}>
+          <Animated.View style={[styles.cardContainer, { opacity: fadeAnim }]}>
             <View style={styles.deviceInfoContainer}>
               <View style={styles.deviceIconContainer}>
                 <MaterialIcons
@@ -58,9 +99,13 @@ const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({
                 <Text style={[TYPOGRAPHY.TitleMedium, styles.deviceName]}>
                   {connectedDevice.name || "Device Name"}
                 </Text>
-                
-                <Text style={styles.deviceIp}>IP-Address: {connectedDevice.host}</Text>
-                <Text style={styles.deviceIp}>Port: {connectedDevice.port}</Text>
+
+                <Text style={styles.deviceIp}>
+                  IP Address: {connectedDevice.host}
+                </Text>
+                <Text style={styles.deviceIp}>
+                  Port: {connectedDevice.port}
+                </Text>
               </View>
               {status.connected ? (
                 <View style={styles.connectedBadge}>
@@ -80,12 +125,6 @@ const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({
                 style={styles.disconnectBtn}
                 onPress={handleDisconnect}
               >
-                {/* <MaterialIcons
-                  name="chevron-right"
-                  size={20}
-                  color={COLORS.white}
-                /> */}
-
                 <Text style={styles.disconnectText}>Disconnect</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -100,7 +139,7 @@ const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({
                 />
               </TouchableOpacity>
             </View>
-          </View>
+          </Animated.View>
         </View>
       ) : null}
     </>
@@ -145,17 +184,17 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
   connectedBadge: {
-    // borderColor: COLORS.success,
+    borderColor: COLORS.success,
     borderWidth: 1,
     paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
+    paddingVertical: 1,
     borderRadius: 12,
   },
   disconnectedBadge: {
     borderColor: COLORS.error,
     borderWidth: 1,
     paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
+    paddingVertical: 1,
     borderRadius: 12,
     color: COLORS.error,
   },
@@ -201,8 +240,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: "Poppins-Regular",
   },
- 
- 
+
   viewDashboardButton: {
     flexDirection: "row",
     alignItems: "center",

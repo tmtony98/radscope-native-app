@@ -5,14 +5,15 @@ import { useEffect, useState } from "react";
 import Dashboard from "../../components/Dashboard/Dashboard";
 import Header from "@/components/Header";
 
+
 export default function Index( route: any  | null) {
   
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Header title="Dashboard" />
      <Dashboard />
     
-    </View>
+    </SafeAreaView>
   );
 }
 
