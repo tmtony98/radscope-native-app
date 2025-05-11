@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import React, { useCallback  , useState} from "react";
+import React, { useCallback, useState, useRef, useEffect } from "react";
 import {
   CARD_STYLE,
   COLORS,
@@ -14,7 +14,6 @@ import Sessions from "@/model/Sessions";
 import { red } from "react-native-reanimated/lib/typescript/Colors";
 import { router } from "expo-router";
 
-
 type SessionLoggingCardProps = {
   onDownload?: () => void;
   onStart?: () => void;
@@ -27,13 +26,7 @@ type SessionLoggingCardProps = {
   onTimeIntervalChange?: (value: number) => void;
 };
 
-
-
 export const SessionLoggingwithDb = ({
-  // Default values are provided here to ensure that if the parent component does not supply these props,
-  // the component will still function without throwing errors. For example, if onStart, onDownload, or onStopSuccess
-  // are not passed, they default to no-op functions, preventing undefined function errors when called.
-  // Similarly, isLogging and activeSessionId default to false and null, providing safe initial states.
   onStart = () => {}, //opens bottom sheet
   onDownload = () => {},
   onStopSuccess = () => {},
@@ -44,58 +37,82 @@ export const SessionLoggingwithDb = ({
   onTimeLimitChange = () => {},
   onTimeIntervalChange = () => {},
 }: SessionLoggingCardProps) => {
+  const [displayTimeLimit, setDisplayTimeLimit] = useState(timeLimit);
+  const [displayTimeInterval, setDisplayTimeInterval] = useState(timeInterval);
 
-// React.Dispatch<React.SetStateAction<string>>;
+  const timeLimitRef = useRef(timeLimit);
+  const timeIntervalRef = useRef(timeInterval);
 
+  useEffect(() => {
+    timeLimitRef.current = timeLimit;
+    timeIntervalRef.current = timeInterval;
+    setDisplayTimeLimit(timeLimit);
+    setDisplayTimeInterval(timeInterval);
+  }, [timeLimit, timeInterval]);
 
-  const handleDownload = () => { //routing for now
-    router.push('/SessionView')
+  const handleTimeLimitSliding = useCallback((value: number) => {
+    timeLimitRef.current = value;
+    setDisplayTimeLimit(value);
+  }, []);
+
+  const handleTimeLimitComplete = useCallback(() => {
+    onTimeLimitChange(timeLimitRef.current);
+  }, [onTimeLimitChange]);
+
+  const handleIntervalSliding = useCallback((value: number) => {
+    timeIntervalRef.current = value;
+    setDisplayTimeInterval(value);
+  }, []);
+
+  const handleIntervalComplete = useCallback(() => {
+    onTimeIntervalChange(timeIntervalRef.current);
+  }, [onTimeIntervalChange]);
+
+  const handleDownload = () => {
+    router.push("/SessionView");
   };
 
-
-  
   const handleStopSession = useCallback(async () => {
     if (!activeSessionId) {
       console.error("Cannot stop session: No active session ID found.");
       return;
     }
-    console.log('Stopping session with ID:', activeSessionId);
-  
+    console.log("Stopping session with ID:", activeSessionId);
+
     try {
       await database.write(async () => {
-        console.log("Inside database.write - preparing to update session:", activeSessionId);
+        console.log(
+          "Inside database.write - preparing to update session:",
+          activeSessionId
+        );
         try {
-          const sessionToStop = await database.get<Sessions>('sessions').find(activeSessionId);
+          const sessionToStop = await database
+            .get<Sessions>("sessions")
+            .find(activeSessionId);
           console.log("Found session to stop:", sessionToStop.id);
-          await sessionToStop.update(session => {
+          await sessionToStop.update((session) => {
             console.log("Inside update builder - setting stoppedAt");
             session.stoppedAt = new Date().getTime();
           });
           console.log("Session update successful.");
         } catch (findError) {
           console.error("Error finding session to stop:", findError);
-          // Re-throw or handle as appropriate for your app
-          throw findError; 
+          throw findError;
         }
       });
-      console.log('Session stopped successfully.');
+      console.log("Session stopped successfully.");
       onStopSuccess();
-     
     } catch (error) {
       console.error("Failed to stop session:", error);
     }
-    
   }, [activeSessionId, onStopSuccess]);
-  
-
-
 
   return (
     <View style={CARD_STYLE.container}>
       <Text style={TYPOGRAPHY.headLineSmall}>Session Logging</Text>
       <View style={styles.sliderContainer}>
         <Text style={[TYPOGRAPHY.smallText, { textAlign: "left" }]}>
-          Logging Time Limit (hrs): {timeLimit}
+          Logging Time Limit (hrs): {displayTimeLimit}
         </Text>
         <View style={styles.slider}>
           <Text style={TYPOGRAPHY.smallText}>1</Text>
@@ -105,7 +122,8 @@ export const SessionLoggingwithDb = ({
             maximumValue={24}
             step={1}
             value={timeLimit}
-            onValueChange={onTimeLimitChange}
+            onValueChange={handleTimeLimitSliding}
+            onSlidingComplete={handleTimeLimitComplete}
             minimumTrackTintColor={COLORS.primary}
             maximumTrackTintColor={COLORS.textSecondary}
             disabled={isLogging}
@@ -115,7 +133,7 @@ export const SessionLoggingwithDb = ({
       </View>
       <View style={styles.sliderContainer}>
         <Text style={[TYPOGRAPHY.smallText, { textAlign: "left" }]}>
-          Logging Time Interval (s): {timeInterval}
+          Logging Time Interval (s): {displayTimeInterval}
         </Text>
         <View style={styles.slider}>
           <Text style={TYPOGRAPHY.smallText}>1</Text>
@@ -125,7 +143,8 @@ export const SessionLoggingwithDb = ({
             maximumValue={60}
             step={1}
             value={timeInterval}
-            onValueChange={onTimeIntervalChange}
+            onValueChange={handleIntervalSliding}
+            onSlidingComplete={handleIntervalComplete}
             minimumTrackTintColor={COLORS.primary}
             maximumTrackTintColor={COLORS.textSecondary}
             disabled={isLogging}
@@ -207,7 +226,6 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-Medium",
     fontSize: 16,
     marginLeft: SPACING.sm,
-    // backgroundColor: COLORS.error
   },
 });
 
