@@ -43,44 +43,55 @@ export default function Dashboard() {
   //import msg from mqtt
   const { message , createDateBasedDirectory } = useMqttContext();
 
-const appendJsonToFile = useCallback(async (jsonData: Message, date = new Date()) => {
-  try {
-    const data = transformMqttMessageToSessionData(message);
-    console.log('Transformed data:', data);
-    
-    // Use the active session name from the ref, which persists throughout the session
-    // Fall back to sessionName state, then to a default if both are empty
-    const currentSessionName = activeSessionNameRef.current || sessionName || 'unnamed_session';
-    
-    const dirPath = await createDateBasedDirectory(date, "session");
-    console.log('Directory path:', dirPath);
-    console.log('Using session name:', currentSessionName);
-
-    const fileName = `${currentSessionName}.jsonl`;
-    const filePath = `${dirPath}/${fileName}`;
-    console.log('File path for saving:', filePath);
-
-    // Convert JSON object to string and add a newline
-    const jsonString = JSON.stringify(data) + '\n';
-    console.log('JSON string to append:', jsonString);
-    
-    const fileExists = await RNFS.exists(filePath);
-    console.log('File exists:', fileExists);
-    
-    if (fileExists) {
-      await RNFS.appendFile(filePath, jsonString, 'utf8');
-      console.log('Successfully appended JSON data to file:', filePath);
-    } else {
-      await RNFS.writeFile(filePath, jsonString, 'utf8');
-      console.log('File does not exist, created new file:', filePath);
+  const saveSessionData = useCallback(async () => {
+    if (!isLogging || !message) {
+      console.log('No active session, not logging, or no message available');
+      return;
     }
+    
+    console.log('Saving session data at interval, isLogging:', isLogging);
+    try {
+      const data = transformMqttMessageToSessionData(message);
+      if (data === null) {
+        debugger
+        console.warn('Skipping file write - transformed data is null');
+        return;
+      }
+      console.log('Transformed data:', data);
+      
+      // Use the active session name from the ref, which persists throughout the session
+      // Fall back to sessionName state, then to a default if both are empty
+      const currentSessionName = activeSessionNameRef.current || sessionName || 'unnamed_session';
+      
+      const date = new Date();
+      const dirPath = await createDateBasedDirectory(date, "session");
+      console.log('Directory path:', dirPath);
+      console.log('Using session name:', currentSessionName);
 
-    return filePath;
-  } catch (error) {
-    console.error('Error appending JSON to file:', error);
-    throw error;
-  }
-}, [message, createDateBasedDirectory, sessionName]);
+      const fileName = `${currentSessionName}.jsonl`;
+      const filePath = `${dirPath}/${fileName}`;
+      console.log('File path for saving:', filePath);
+
+      // Convert JSON object to string and add a newline
+      const jsonString = JSON.stringify(data) + '\n';
+      console.log('JSON string to append:', jsonString);
+      
+      const fileExists = await RNFS.exists(filePath);
+      console.log('File exists:', fileExists);
+      
+      if (fileExists) {
+        await RNFS.appendFile(filePath, jsonString, 'utf8');
+        console.log('Successfully appended JSON data to file:', filePath);
+      } else {
+        await RNFS.writeFile(filePath, jsonString, 'utf8');
+        console.log('File does not exist, created new file:', filePath);
+      }
+
+      console.log('All message data Session data saved successfully');
+    } catch (error) {
+      console.error('Failed to save session data:', error);
+    }
+  }, [isLogging, message, createDateBasedDirectory, sessionName]);
 
   const [isExternalStorageAvailable, setIsExternalStorageAvailable] = useState(false);
   
@@ -173,23 +184,6 @@ const appendJsonToFile = useCallback(async (jsonData: Message, date = new Date()
 //fn to create directory on external storage
 
 
-
-  // Function to save current message data to database
-  const saveSessionData = useCallback(async () => {
-    if (!isLogging) {
-      console.log('No active session or not logging');
-      return;
-    }
-    
-    console.log('Saving session data at interval, isLogging:', isLogging);
-    try {
-      await appendJsonToFile(message, new Date());
-      console.log('All message data Session data saved successfully');
-      // debugger
-    } catch (error) {
-      console.error('Failed to save session data:', error);
-    }
-  }, [isLogging , appendJsonToFile]);
 
   // Add an effect to monitor isLogging changes and trigger initial data save when logging starts
   useEffect(() => {

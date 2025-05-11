@@ -66,7 +66,7 @@ export interface Message {
     timestamp: string;
   }
 
-export interface SessionData {
+export interface SessionData {  //data in message payload
     type: string;
     device_id: string;
     timestamp: string;
