@@ -1,9 +1,18 @@
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Share, Alert, PermissionsAndroid, Linking } from 'react-native';
-import React, { useCallback, useEffect, useState } from 'react';
-import RNFS from 'react-native-fs';
-import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY, BUTTON_STYLE } from '../../Themes/theme';
-import { MaterialIcons } from '@expo/vector-icons';
-import Slider from '@react-native-community/slider';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from "react-native";
+import React, { useCallback, useState, useRef, useEffect } from "react";
+import {
+  CARD_STYLE,
+  COLORS,
+  SPACING,
+  TYPOGRAPHY,
+  BUTTON_STYLE,
+} from "../../Themes/theme";
+import { MaterialIcons } from "@expo/vector-icons";
+import Slider from "@react-native-community/slider";
+import database from "@/index.native";
+import Sessions from "@/model/Sessions";
+import { red } from "react-native-reanimated/lib/typescript/Colors";
+import { router } from "expo-router";
 
 type SessionLoggingCardProps = {
   onDownload?: () => void;
@@ -17,15 +26,8 @@ type SessionLoggingCardProps = {
   onTimeIntervalChange?: (value: number) => void;
 };
 
-
-
-
 export const SessionLoggingCard = ({
-  // Default values are provided here to ensure that if the parent component does not supply these props,
-  // the component will still function without throwing errors. For example, if onStart, onDownload, or onStopSuccess
-  // are not passed, they default to no-op functions, preventing undefined function errors when called.
-  // Similarly, isLogging and activeSessionId default to false and null, providing safe initial states.
-  onStart = () => {},
+  onStart = () => {}, //opens bottom sheet
   onDownload = () => {},
   onStopSuccess = () => {},
   isLogging = false,
@@ -35,306 +37,245 @@ export const SessionLoggingCard = ({
   onTimeLimitChange = () => {},
   onTimeIntervalChange = () => {},
 }: SessionLoggingCardProps) => {
+  const [displayTimeLimit, setDisplayTimeLimit] = useState(timeLimit);
+  const [displayTimeInterval, setDisplayTimeInterval] = useState(timeInterval);
+  const [isTimeLimitSliding, setIsTimeLimitSliding] = useState(false);
+  const [isTimeIntervalSliding, setIsTimeIntervalSliding] = useState(false);
+  const timeLimitRef = useRef(timeLimit);
+  const timeIntervalRef = useRef(timeInterval);
 
-  // Define base path for storage
-  // const BASE_PATH = Platform.OS === 'android' 
-  // ? RNFS.ExternalStorageDirectoryPath + '/radscope' 
-  // : RNFS.DocumentDirectoryPath + '/radscope';
+  useEffect(() => {
+    timeLimitRef.current = timeLimit;
+    timeIntervalRef.current = timeInterval;
+    setDisplayTimeLimit(timeLimit);
+    setDisplayTimeInterval(timeInterval);
+  }, [timeLimit, timeInterval]);
 
-  const BASE_PATH = "";
+  const handleTimeLimitSliding = useCallback((value: number) => {
+    timeLimitRef.current = value;
+    setDisplayTimeLimit(value);
+  }, []);
 
-  // Check if the app has storage permission using arrow function
-  const checkStoragePermission = async () => {
-    try {
-      if (Platform.OS !== 'android') {
-        return true; // iOS doesn't need runtime permissions for app directory
-      }
-      
-      // For Android 10 and below, check READ_EXTERNAL_STORAGE permission
-      // Platform.Version is a number on Android and a string on iOS
-      if (Platform.OS === 'android' && Platform.Version < 30) {
-        const result = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE);
-        return result;
-      }
-      
-      // For Android 11+, we can't check MANAGE_EXTERNAL_STORAGE programmatically
-      // We'll assume we don't have it and request it when needed
-      return false;
-    } catch (err) {
-      console.error("Error checking storage permission:", err);
-      return false;
-    }
+  const handleTimeLimitComplete = useCallback(() => {
+    onTimeLimitChange(timeLimitRef.current);
+    setIsTimeLimitSliding(false);
+  }, [onTimeLimitChange]);
+
+  const handleIntervalSliding = useCallback((value: number) => {
+    timeIntervalRef.current = value;
+    setDisplayTimeInterval(value);
+  }, []);
+
+  const handleIntervalComplete = useCallback(() => {
+    onTimeIntervalChange(timeIntervalRef.current);
+    setIsTimeIntervalSliding(false);
+  }, [onTimeIntervalChange]);
+
+  const handleDownload = () => {
+    router.push("/SessionView");
   };
 
-  // Request storage permissions using arrow function
-  const requestStoragePermission = async () => {
-    try {
-      if (Platform.OS !== 'android') {
-        return true; // iOS doesn't need runtime permissions for app directory
-      }
-      
-      // For Android 11+ (API level 30+), we need to use MANAGE_EXTERNAL_STORAGE permission
-      // Platform.Version is a number on Android and a string on iOS
-      if (Platform.OS === 'android' && Platform.Version >= 30) {
-        console.log("Android 11+ detected");
-        
-        // We need to direct the user to the system settings page
-        Alert.alert(
-          "Storage Permission Required",
-          "RadScope needs permission to manage files on your device. Please grant 'Allow access to manage all files' on the next screen.",
-          [
-            {
-              text: "Cancel",
-              style: "cancel",
-              onPress: () => console.log("Permission denied")
-            },
-            {
-              text: "Open Settings",
-              onPress: () => {
-                // Open the system settings page using Linking
-                Linking.openSettings();
-              }
-            }
-          ]
-        );
-        
-        // We'll return false here as the user needs to grant permission in settings
-        return false;
-      } else {
-        // For Android 10 and below, we can use READ_EXTERNAL_STORAGE permission
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-          {
-            title: "Storage Permission",
-            message: "RadScope needs access to your storage to save data files.",
-            buttonNeutral: "Ask Me Later",
-            buttonNegative: "Cancel",
-            buttonPositive: "OK"
-          }
-        );
-        return granted === PermissionsAndroid.RESULTS.GRANTED;
-      }
-    } catch (err) {
-      console.error("Error requesting storage permission:", err);
-      return false;
-    }
-  };
+  const handleStopSession = useCallback(async () => {
+    console.log("Stopping session with ID:", activeSessionId);
 
-  // Ensure directory exists using arrow function
-  const ensureDirectoryExists = async (dirPath: string) => {
     try {
-      const exists = await RNFS.exists(dirPath);
-      if (!exists) {
-        await RNFS.mkdir(dirPath);
-      }
-      return true;
+      console.log("Session stopped successfully.");
+      onStopSuccess();
     } catch (error) {
-      console.error('Error creating directory:', error);
-      return false;
+      console.error("Failed to stop session:", error);
     }
-  };
+  }, [activeSessionId, onStopSuccess]);
 
-  // Function to save data to a location that persists after app uninstallation
-  const saveDataToDownloads = async (data: any) => {
-    try {
-      // Generate a unique filename with timestamp
-      const date = new Date();
-      const dateStr = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
-      const timeStr = `${date.getHours().toString().padStart(2, '0')}${date.getMinutes().toString().padStart(2, '0')}`;
-      const fileName = `radscope_export_${dateStr}_${timeStr}.json`;
-      
-      // Format the data as a pretty-printed JSON string
-      const jsonString = JSON.stringify(data, null, 2);
-      
-      // First check if we already have permission
-      const hasPermission = await checkStoragePermission();
-      
-      if (hasPermission) {
-        try {
-          // Ensure the base directory exists
-          await ensureDirectoryExists(BASE_PATH);
-          
-          // Create the full file path
-          const filePath = `${BASE_PATH}/${fileName}`;
-          
-          // Write the data to the file
-          await RNFS.writeFile(filePath, jsonString, 'utf8');
-          
-          // Alert the user that the file was saved
-          Alert.alert(
-            'File Saved',
-            `Data saved to ${filePath}`,
-            [
-              { 
-                text: 'Share File', 
-                onPress: async () => {
-                  try {
-                    await Share.share({
-                      title: `RadScope Data Export - ${dateStr}`,
-                      message: 'Share your RadScope data',
-                      url: Platform.OS === 'ios' ? filePath : `file://${filePath}`,
-                    });
-                  } catch (error) {
-                    console.error('Error sharing file:', error);
-                  }
-                } 
-              },
-              { text: 'OK' }
-            ]
-          );
-          
-          return true;
-        } catch (error) {
-          console.error('Error saving to file system:', error);
-          // Fall back to requesting permission and Share API
-        }
-      }
-      
-      // If we don't have permission, request it
-      const permissionRequested = await requestStoragePermission();
-      
-      // If permission was granted through the request, try saving again
-      // Platform.Version is a number on Android and a string on iOS
-      if (permissionRequested && Platform.OS === 'android' && Platform.Version < 30) {
-        try {
-          // Ensure the base directory exists
-          await ensureDirectoryExists(BASE_PATH);
-          
-          // Create the full file path
-          const filePath = `${BASE_PATH}/${fileName}`;
-          
-          // Write the data to the file
-          await RNFS.writeFile(filePath, jsonString, 'utf8');
-          
-          // Alert the user that the file was saved
-          Alert.alert(
-            'File Saved',
-            `Data saved to ${filePath}`,
-            [
-              { 
-                text: 'Share File', 
-                onPress: async () => {
-                  try {
-                    await Share.share({
-                      title: `RadScope Data Export - ${dateStr}`,
-                      message: 'Share your RadScope data',
-                      url: Platform.OS === 'ios' ? filePath : `file://${filePath}`,
-                    });
-                  } catch (error) {
-                    console.error('Error sharing file:', error);
-                  }
-                } 
-              },
-              { text: 'OK' }
-            ]
-          );
-          
-          return true;
-        } catch (error) {
-          console.error('Error saving to file system after permission granted:', error);
-          // Fall back to Share API
-        }
-      }
-      
-      // If permissions not granted or file save failed, use Share API as fallback
-      await Share.share({
-        title: `RadScope Data Export - ${dateStr}`,
-        message: `RadScope Data Export\n\nFilename: ${fileName}\n\n${jsonString}`,
-      });
-      
-      return true;
-    } catch (error) {
-      console.error('Error saving data to Downloads:', error);
-      return false;
-    }
-  };
-  //
-  
   return (
     <View style={CARD_STYLE.container}>
-      <Text style={TYPOGRAPHY.headLineSmall}>Session Logging</Text>
+      <Text style={[TYPOGRAPHY.headLineSmall, { marginBottom: 16 }]}>Session Logging</Text>
       <View style={styles.sliderContainer}>
-        <Text style={[TYPOGRAPHY.smallText, { textAlign: 'left' }]}>Logging Time Limit (hrs)</Text>
+        <Text style={[TYPOGRAPHY.bodyTextLarge, { textAlign: "left" }]}>
+          Logging Time Limit (hrs): {displayTimeLimit}
+        </Text>
         <View style={styles.slider}>
-          <Text style={TYPOGRAPHY.smallText}>0</Text>
-          <Slider
-            style={{ width: '85%', height: 40 }}
-            minimumValue={0}
-            maximumValue={100}
-            minimumTrackTintColor="#000000"
-            maximumTrackTintColor="#000000"
-          />
-          <Text style={TYPOGRAPHY.smallText}>100</Text>
+          <Text style={TYPOGRAPHY.bodyTextMedium}>1</Text>
+          <View style={styles.sliderWrapper}>
+            <Slider
+              style={styles.sliderControl}
+              minimumValue={1}
+              maximumValue={24}
+              step={1}
+              value={timeLimit}
+              onValueChange={handleTimeLimitSliding}
+              onSlidingStart={() => setIsTimeLimitSliding(true)}
+              onSlidingComplete={handleTimeLimitComplete}
+              minimumTrackTintColor={COLORS.primary}
+              maximumTrackTintColor={COLORS.textSecondary}
+              thumbTintColor={COLORS.primary}
+              disabled={isLogging}
+            />
+            {!isLogging && isTimeLimitSliding && (
+              <View
+                style={[
+                  styles.valueIndicator,
+                  {
+                    left: `${((displayTimeLimit - 1) / 23) * 100}%`,
+                    transform: [{ translateX: -20 }],
+                  },
+                ]}
+              >
+                <Text style={styles.valueIndicatorText}>{displayTimeLimit}</Text>
+              </View>
+            )}
+          </View>
+          <Text style={TYPOGRAPHY.bodyTextMedium}>24</Text>
         </View>
       </View>
       <View style={styles.sliderContainer}>
-        <Text style={[TYPOGRAPHY.smallText, { textAlign: 'left' }]}>Logging Time Interval (s)</Text>
+        <Text style={[TYPOGRAPHY.bodyTextLarge, { textAlign: "left", }]}>
+          Logging Time Interval (s): {displayTimeInterval}
+        </Text>
         <View style={styles.slider}>
-          <Text style={TYPOGRAPHY.smallText}>0</Text>
-          <Slider
-            style={{ width: '85%', height: 40 }}
-            minimumValue={0}
-            maximumValue={100}
-            minimumTrackTintColor="#000000"
-            maximumTrackTintColor="#000000"
-          />
-          <Text style={TYPOGRAPHY.smallText}>100</Text>
+          <Text style={TYPOGRAPHY.bodyTextMedium}>1</Text>
+          <View style={styles.sliderWrapper}>
+            <Slider
+              style={styles.sliderControl}
+              minimumValue={1}
+              maximumValue={600}
+              step={1}
+              value={timeInterval}
+              onValueChange={handleIntervalSliding}
+              onSlidingStart={() => setIsTimeIntervalSliding(true)}
+              onSlidingComplete={handleIntervalComplete}
+              minimumTrackTintColor={COLORS.primary}
+              maximumTrackTintColor={COLORS.textSecondary}
+              thumbTintColor={COLORS.primary}
+              disabled={isLogging}
+            />
+            {!isLogging && isTimeIntervalSliding && (
+              <View
+                style={[
+                  styles.valueIndicator,
+                  {
+                    left: `${((displayTimeInterval - 1) / 599) * 100}%`,
+                    transform: [{ translateX: -20 }],
+                  },
+                ]}
+              >
+                <Text style={styles.valueIndicatorText}>{displayTimeInterval}</Text>
+              </View>
+            )}
+          </View>
+          <Text style={TYPOGRAPHY.bodyTextMedium}>600</Text>
         </View>
       </View>
       <View style={styles.loggingButtons}>
-        <TouchableOpacity 
-          style={styles.downloadButton} 
-          // onPress={
-          // }
-           
-        >
-          <MaterialIcons name="download" size={24} color={COLORS.primary} />
-          <Text style={styles.downloadButtonText}>Download Files</Text>
+        <TouchableOpacity style={styles.downloadButton} onPress={onDownload}>
+          <MaterialIcons name="visibility" size={24} color={COLORS.primary} />
+          <Text style={styles.downloadButtonText}>View Log Files</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={BUTTON_STYLE.mediumButtonWithIconLeft} onPress={onStart}>
-          <MaterialIcons name="play-arrow" size={24} color={COLORS.white} />
-          <Text style={styles.startButtonText}>Start</Text>
-        </TouchableOpacity>
+
+        {isLogging ? (
+          <TouchableOpacity
+            style={[
+              BUTTON_STYLE.mediumButtonWithIconLeft,
+              { backgroundColor: "red" },
+            ]}
+            onPress={handleStopSession}
+          >
+            <MaterialIcons name="play-arrow" size={24} color={COLORS.white} />
+            <Text style={styles.startButtonText}>Stop</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={BUTTON_STYLE.mediumButtonWithIconLeft}
+            onPress={onStart}
+          >
+            <MaterialIcons name="play-arrow" size={24} color={COLORS.white} />
+            <Text style={styles.startButtonText}>Start</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   sliderContainer: {
     marginVertical: SPACING.sm,
   },
   slider: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginTop: SPACING.xs,
     gap: SPACING.sm,
   },
+  sliderWrapper: {
+    width: "85%",
+    height: 40,
+    position: "relative",
+    justifyContent: "center",
+  },
+  sliderControl: {
+    width: "100%",
+    height: 40,
+  },
+  thumbStyle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: COLORS.primary,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  trackStyle: {
+    height: 8,
+    borderRadius: 4,
+  },
+  valueIndicator: {
+    position: "absolute",
+    top: -20,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    zIndex: 10,
+  },
+  valueIndicatorText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: "bold",
+  },
   loggingButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginTop: SPACING.md,
   },
   downloadButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: SPACING.md,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: COLORS.primary,
-    borderStyle: 'solid',
+    borderStyle: "solid",
     paddingVertical: 10,
   },
   downloadButtonText: {
     color: COLORS.primary,
-    fontFamily: 'Poppins-Medium',
+    fontFamily: "Poppins-Medium",
     fontSize: 16,
     marginLeft: SPACING.sm,
   },
   startButtonText: {
     color: COLORS.white,
-    fontFamily: 'Poppins-Medium',
+    fontFamily: "Poppins-Medium",
+    fontSize: 16,
+    marginLeft: SPACING.sm,
+  },
+  stopButtonText: {
+    color: COLORS.white,
+    fontFamily: "Poppins-Medium",
     fontSize: 16,
     marginLeft: SPACING.sm,
   },

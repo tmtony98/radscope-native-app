@@ -24,12 +24,12 @@ interface SensorDataExtract {
 
 
 // MQTT Configuration
-// const BROKER_URL = 'ws://192.168.29.39:8083'; //office bbd
+const BROKER_URL = 'ws://192.168.29.39:8083'; //office bbd
 // const BROKER_URL = 'ws://192.168.1.50:8083'; //office kv
 
 
 // const BROKER_URL = 'ws://192.168.1.11:8083'; //hostel
-const BROKER_URL = 'ws://192.168.74.213:8083'; //tony phone
+// const BROKER_URL = 'ws://192.168.74.213:8083'; //tony phone
 const BASE_PATH = RNFS.ExternalStorageDirectoryPath + '/Radscope';
 const DOSERATE_PATH = BASE_PATH + '/Doserate_data';
 const SESSION_PATH = BASE_PATH + '/Sessions_data';

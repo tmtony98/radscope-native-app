@@ -22,7 +22,6 @@ import DeviceDetailsCard from "./DeviceDetailsCard";
 import DoseRateGraph from "./DoseRateGraph";
 import SpectrumCard from "./SpectrumCard";
 import GPSCard from "./GPSCard";
-import SessionLoggingCard from "./SessionLoggingCard";
 import BatteryCard from "./BatteryCard";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
@@ -31,7 +30,7 @@ import StyledTextInput from "../common/StyledTextInput"; // Import the new compo
 import EnhancedDoseRateCard from "../../HOC/EnhancedDoseRateCard";
 import database from "@/index.native";
 import Sessions from "@/model/Sessions";
-import { SessionLoggingwithDb } from "./SessionLoggingwithDb";
+import { SessionLoggingCard } from "./SessionLoggingCard";
 import { router } from "expo-router";
 import { useMqttContext } from "@/Provider/MqttContext";
 import SessionData from "@/model/SessionData";
@@ -333,19 +332,7 @@ export default function Dashboard() {
         <SpectrumCard duration="222 s" onFullscreen={handleFullscreen} />
         <GPSCard />
 
-        {/* <SessionLoggingCard
-          onDownload={openSessionView}
-          onStart={openBottomSheet}
-          onStopSuccess={handleStopSuccess}
-          isLogging={isLogging}
-          activeSessionId={activeSessionId}
-          timeLimit={timeLimit}
-          timeInterval={timeInterval}
-          onTimeLimitChange={handleTimeLimitChange}
-          onTimeIntervalChange={handleTimeIntervalChange}
-        /> */}
-
-        <SessionLoggingwithDb
+        <SessionLoggingCard
           onDownload={openSessionView}
           onStart={openBottomSheet}
           onStopSuccess={handleStopSuccess}
@@ -356,6 +343,7 @@ export default function Dashboard() {
           onTimeLimitChange={handleTimeLimitChange}
           onTimeIntervalChange={handleTimeIntervalChange}
         />
+        
         <BatteryCard isLastCard={true} />
       </ScrollView>
 
