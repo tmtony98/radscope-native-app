@@ -343,7 +343,7 @@ export default function Dashboard() {
           onTimeLimitChange={handleTimeLimitChange}
           onTimeIntervalChange={handleTimeIntervalChange}
         />
-        
+
         <BatteryCard isLastCard={true} />
       </ScrollView>
 
@@ -356,7 +356,7 @@ export default function Dashboard() {
         backgroundStyle={styles.bottomSheetBackground}
       >
         <BottomSheetView style={styles.bottomSheetContentContainer}>
-          <Text style={styles.bottomSheetTitle}>Add File Name</Text>
+          <Text style={styles.bottomSheetTitle}>Enter File Name</Text>
           <StyledTextInput
             label="Enter File Name"
             placeholder="Enter File Name"
