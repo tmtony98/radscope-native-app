@@ -39,7 +39,6 @@ export const SessionLoggingwithDb = ({
 }: SessionLoggingCardProps) => {
   const [displayTimeLimit, setDisplayTimeLimit] = useState(timeLimit);
   const [displayTimeInterval, setDisplayTimeInterval] = useState(timeInterval);
-
   const timeLimitRef = useRef(timeLimit);
   const timeIntervalRef = useRef(timeInterval);
 
@@ -73,33 +72,33 @@ export const SessionLoggingwithDb = ({
   };
 
   const handleStopSession = useCallback(async () => {
-    if (!activeSessionId) {
-      console.error("Cannot stop session: No active session ID found.");
-      return;
-    }
+    // if (!activeSessionId) {
+    //   console.error("Cannot stop session: No active session ID found.");
+    //   return;
+    // }
     console.log("Stopping session with ID:", activeSessionId);
 
     try {
-      await database.write(async () => {
-        console.log(
-          "Inside database.write - preparing to update session:",
-          activeSessionId
-        );
-        try {
-          const sessionToStop = await database
-            .get<Sessions>("sessions")
-            .find(activeSessionId);
-          console.log("Found session to stop:", sessionToStop.id);
-          await sessionToStop.update((session) => {
-            console.log("Inside update builder - setting stoppedAt");
-            session.stoppedAt = new Date().getTime();
-          });
-          console.log("Session update successful.");
-        } catch (findError) {
-          console.error("Error finding session to stop:", findError);
-          throw findError;
-        }
-      });
+      // await database.write(async () => {
+      //   console.log(
+      //     "Inside database.write - preparing to update session:",
+      //     activeSessionId
+      //   );
+      //   try {
+      //     const sessionToStop = await database
+      //       .get<Sessions>("sessions")
+      //       .find(activeSessionId);
+      //     console.log("Found session to stop:", sessionToStop.id);
+      //     await sessionToStop.update((session) => {
+      //       console.log("Inside update builder - setting stoppedAt");
+      //       session.stoppedAt = new Date().getTime();
+      //     });
+      //     console.log("Session update successful.");
+      //   } catch (findError) {
+      //     console.error("Error finding session to stop:", findError);
+      //     throw findError;
+      //   }
+      // });
       console.log("Session stopped successfully.");
       onStopSuccess();
     } catch (error) {

@@ -5,7 +5,7 @@ export const extractDeviceId = (topic: string): string => {
   return parts[parts.length - 1];
 };
 
- const transformMqttMessageToSessionData = (message:Message): SessionData | null => {
+export  const transformMqttMessageToSessionData = (message:Message): SessionData | null => {
   try {
     const parsedPayload = JSON.parse(message.payload);
     console.log("parsedPayload", parsedPayload);
@@ -78,4 +78,32 @@ const acquisitionStatus = (data: SessionData): boolean => {
 }
 
 
-export default transformMqttMessageToSessionData;
+export const getDataTime = (message: Message): number | null => {
+  
+  if (!message || !message.payload) {
+    console.log('No message or payload available');
+    return null;
+  }
+
+  try {
+    // Ensure payload is a string before parsing
+    const payload = typeof message.payload === 'string' 
+      ? message.payload 
+      : JSON.stringify(message.payload);
+    
+    const parsedPayload = JSON.parse(payload);
+    
+    if (!parsedPayload || !parsedPayload.timestamp) {
+      console.log('No timestamp in payload');
+      return null;
+    }
+
+    console.log("Parsed timestamp:", parsedPayload.timestamp);
+    return Math.floor(new Date(parsedPayload.timestamp).getTime() / 1000); //
+  } catch (error) {
+    console.error('Error parsing timestamp:', error);
+    return null;
+  }
+};
+
+

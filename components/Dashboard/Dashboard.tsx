@@ -1,104 +1,72 @@
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity, PermissionsAndroid, Platform, Alert, Linking, NativeModules } from 'react-native';
-import React, { useState, useRef, useCallback, useMemo, useEffect } from 'react';
-import DoseRateCard from './DoseRateCard';
-import DeviceDetailsCard from './DeviceDetailsCard';
-import DoseRateGraph from './DoseRateGraph';
-import SpectrumCard from './SpectrumCard';
-import GPSCard from './GPSCard';
-import SessionLoggingCard from './SessionLoggingCard';
-import BatteryCard from './BatteryCard';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
-import { BUTTON_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../../Themes/theme'; // Removed unused CARD_STYLE
-import StyledTextInput from '../common/StyledTextInput'; // Import the new component
-import EnhancedDoseRateCard from '../../HOC/EnhancedDoseRateCard';
-import database from '@/index.native';
-import Sessions from '@/model/Sessions';
-import  { SessionLoggingwithDb } from './SessionLoggingwithDb';
-import { router } from 'expo-router';
-import { useMqttContext } from '@/Provider/MqttContext';
-import SessionData from '@/model/SessionData';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  PermissionsAndroid,
+  Platform,
+  Alert,
+  Linking,
+  NativeModules,
+} from "react-native";
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useMemo,
+  useEffect,
+} from "react";
+import DoseRateCard from "./DoseRateCard";
+import DeviceDetailsCard from "./DeviceDetailsCard";
+import DoseRateGraph from "./DoseRateGraph";
+import SpectrumCard from "./SpectrumCard";
+import GPSCard from "./GPSCard";
+import SessionLoggingCard from "./SessionLoggingCard";
+import BatteryCard from "./BatteryCard";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import { BUTTON_STYLE, COLORS, SPACING, TYPOGRAPHY } from "../../Themes/theme"; // Removed unused CARD_STYLE
+import StyledTextInput from "../common/StyledTextInput"; // Import the new component
+import EnhancedDoseRateCard from "../../HOC/EnhancedDoseRateCard";
+import database from "@/index.native";
+import Sessions from "@/model/Sessions";
+import { SessionLoggingwithDb } from "./SessionLoggingwithDb";
+import { router } from "expo-router";
+import { useMqttContext } from "@/Provider/MqttContext";
+import SessionData from "@/model/SessionData";
 // import ManageExternalStorage from 'react-native-manage-external-storage';
-import RNFS from 'react-native-fs';
-import { Message } from '@/Types';
-import transformMqttMessageToSessionData from '@/utils/UtilityFunctions';
-
+import RNFS from "react-native-fs";
+import { Message } from "@/Types";
+import {
+  transformMqttMessageToSessionData,
+  getDataTime,
+} from "@/utils/UtilityFunctions";
 
 export default function Dashboard() {
-  const [sessionName, setSessionName] = useState('');
+  const [sessionName, setSessionName] = useState("");
   const [isLogging, setIsLogging] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string>("");
   // Add state for time limit and interval
-  const [timeLimit, setTimeLimit] = useState<number>(0); // in hours
-  const [timeInterval, setTimeInterval] = useState<number>(1); // in seconds, default 1 second
-  
+  const [timeLimit, setTimeLimit] = useState<number>(1); // in hours
+  const [timeInterval, setTimeInterval] = useState<number>(30); // in seconds, default 1 second
+
+  console.log("timeLimit", timeLimit, "timeInterval", timeInterval);
+  console.log("isLogging", isLogging);
+
   // Refs for timers to be able to clear them
   const saveIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timeLimitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  // Store the active session name in a ref to ensure it persists throughout the session
-  const activeSessionNameRef = useRef<string>('');
-  
+  const activeSessionNameRef = useRef<string>("");
+
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const snapPoints = useMemo(() => ['40%'], []);
+  const snapPoints = useMemo(() => ["40%"], []);
+
   //import msg from mqtt
-  const { message , createDateBasedDirectory } = useMqttContext();
-
-  const saveSessionData = useCallback(async () => {
-    if (!isLogging || !message) {
-      console.log('No active session, not logging, or no message available');
-      return;
-    }
-    
-    console.log('Saving session data at interval, isLogging:', isLogging);
-    try {
-      const data = transformMqttMessageToSessionData(message);
-      if (data === null) {
-        debugger
-        console.warn('Skipping file write - transformed data is null');
-        return;
-      }
-      console.log('Transformed data:', data);
-      
-      // Use the active session name from the ref, which persists throughout the session
-      // Fall back to sessionName state, then to a default if both are empty
-      const currentSessionName = activeSessionNameRef.current || sessionName || 'unnamed_session';
-      
-      const date = new Date();
-      const dirPath = await createDateBasedDirectory(date, "session");
-      console.log('Directory path:', dirPath);
-      console.log('Using session name:', currentSessionName);
-
-      const fileName = `${currentSessionName}.jsonl`;
-      const filePath = `${dirPath}/${fileName}`;
-      console.log('File path for saving:', filePath);
-
-      // Convert JSON object to string and add a newline
-      const jsonString = JSON.stringify(data) + '\n';
-      console.log('JSON string to append:', jsonString);
-      
-      const fileExists = await RNFS.exists(filePath);
-      console.log('File exists:', fileExists);
-      
-      if (fileExists) {
-        await RNFS.appendFile(filePath, jsonString, 'utf8');
-        console.log('Successfully appended JSON data to file:', filePath);
-      } else {
-        await RNFS.writeFile(filePath, jsonString, 'utf8');
-        console.log('File does not exist, created new file:', filePath);
-      }
-
-      console.log('All message data Session data saved successfully');
-    } catch (error) {
-      console.error('Failed to save session data:', error);
-    }
-  }, [isLogging, message, createDateBasedDirectory, sessionName]);
+  const { message, createDateBasedDirectory } = useMqttContext();
 
   const [isExternalStorageAvailable, setIsExternalStorageAvailable] = useState(false);
-  
 
-// useEffect(() => {
-//   appendJsonToFile(message);
-// }, [message, appendJsonToFile]);
 
 
   // useEffect for checking storage permission
@@ -106,20 +74,19 @@ export default function Dashboard() {
     const AskPermission = async () => {
       try {
         console.log("Checking storage permission");
-        const result = await NativeModules.PermissionFile.checkAndGrantPermission();
-        console.log(result ? "Permission granted" : "Permission not granted yet");
+        const result =
+          await NativeModules.PermissionFile.checkAndGrantPermission();
+        console.log(
+          result ? "Permission granted" : "Permission not granted yet"
+        );
         setIsExternalStorageAvailable(result);
       } catch (error) {
         console.error("Permission check failed:", error);
         setIsExternalStorageAvailable(false);
       }
     };
-    
-    AskPermission();  // This function is only executed once if the user allows the permission and this package retains that permission
-
+    AskPermission(); // This function is only executed once if the user allows the permission and this package retains that permission
   }, []);
-
-
 
   // Handler for time limit slider
   const handleTimeLimitChange = useCallback((value: number) => {
@@ -133,7 +100,7 @@ export default function Dashboard() {
 
   const handleSheetChanges = useCallback((index: number) => {
     if (index === -1) {
-      setSessionName('');
+      setSessionName("");
     }
   }, []);
 
@@ -146,7 +113,7 @@ export default function Dashboard() {
   }, []);
 
   const openSessionView = () => {
-    router.push('/SessionView');
+    router.push("/SessionView");
   };
 
   // Function to clear all timers
@@ -155,7 +122,7 @@ export default function Dashboard() {
       clearInterval(saveIntervalRef.current);
       saveIntervalRef.current = null;
     }
-    
+
     if (timeLimitTimeoutRef.current) {
       clearTimeout(timeLimitTimeoutRef.current);
       timeLimitTimeoutRef.current = null;
@@ -168,114 +135,189 @@ export default function Dashboard() {
     setIsLogging(false);
     setActiveSessionId("");
     // Clear the active session name ref when stopping
-    activeSessionNameRef.current = '';
+    activeSessionNameRef.current = "";
   }, [clearAllTimers]);
 
   const handleFullscreen = () => {
-    console.log('Fullscreen pressed');
+    console.log("Fullscreen pressed");
   };
 
   const handleGetHistory = () => {
-    console.log('Get history pressed');
+    console.log("Get history pressed");
   };
 
+  //fn to create directory on external storage
 
+  // Initialize timers when session starts
+  const setupTimers = useCallback(
+    (sessionId: string) => {
+      // Convert time values to milliseconds
+      const timeLimitMs = timeLimit * 60 * 60 * 1000; // hours to ms
+      const timeIntervalMs = timeInterval * 1000; // seconds to ms
 
-//fn to create directory on external storage
+      // Setup interval for saving data
+      if (timeIntervalMs > 0) {
+        saveIntervalRef.current = setInterval(saveSessionData, timeIntervalMs);
+        console.log(`Set up save interval: ${timeInterval} seconds`);
+      }
 
+      // Setup auto-stop timer if time limit > 0
+      if (timeLimitMs > 0) {
+        timeLimitTimeoutRef.current = setTimeout(async () => {
+          console.log(
+            `Time limit of ${timeLimit} hours reached, stopping session`
+          );
 
+          try {
+            await database.write(async () => {
+              const sessionToStop = await database
+                .get<Sessions>("sessions")
+                .find(sessionId);
+              await sessionToStop.update((session) => {
+                session.stoppedAt = new Date().getTime();
+              });
+            });
+
+            handleStopSuccess();
+          } catch (error) {
+            console.error("Failed to auto-stop session:", error);
+          }
+        }, timeLimitMs);
+
+        console.log(`Set up time limit: ${timeLimit} hours`);
+      }
+    },
+    [timeLimit, timeInterval, handleStopSuccess]
+  );
+
+  const handleSaveSession = useCallback(async () => {
+    console.log("Start logging pressed with session name:", sessionName);
+    try {
+      activeSessionNameRef.current = sessionName;
+      console.log("Stored session name in ref:", activeSessionNameRef.current);
+      setIsLogging(true);
+      closeBottomSheet();
+    } catch (error) {
+      console.error("Failed to save session file name:", error);
+      setIsLogging(false);
+    }
+  }, [
+    closeBottomSheet,
+    sessionName,
+    timeLimit,
+    timeInterval,
+    clearAllTimers,
+    setupTimers,
+  ]);
 
   // Add an effect to monitor isLogging changes and trigger initial data save when logging starts
   useEffect(() => {
-    console.log('isLogging state changed to:', isLogging);
-    
+    console.log("isLogging state changed to:", isLogging);
     // When logging starts and we have an active session ID, save the initial data point
     if (isLogging) {
-      console.log('Logging started, saving initial data point');
-     
-      saveSessionData();
+      // let lastDataTime
+      console.log("messageeeee", message);
+      console.log("Logging started, saving initial data point");
+      // saveSessionData();
     }
-  }, [isLogging, saveSessionData]);
+  }, [isLogging]);
 
-  // Initialize timers when session starts
-  const setupTimers = useCallback((sessionId: string) => {
-    // Convert time values to milliseconds
-    const timeLimitMs = timeLimit * 60 * 60 * 1000; // hours to ms
-    const timeIntervalMs = timeInterval * 1000; // seconds to ms
-    
-    // Setup interval for saving data
-    if (timeIntervalMs > 0) {
-      saveIntervalRef.current = setInterval(saveSessionData, timeIntervalMs);
-      console.log(`Set up save interval: ${timeInterval} seconds`);
-    }
-    
-    // Setup auto-stop timer if time limit > 0
-    if (timeLimitMs > 0) {
-      timeLimitTimeoutRef.current = setTimeout(async () => {
-        console.log(`Time limit of ${timeLimit} hours reached, stopping session`);
-        
-        try {
-          await database.write(async () => {
-            const sessionToStop = await database.get<Sessions>('sessions').find(sessionId);
-            await sessionToStop.update(session => {
-              session.stoppedAt = new Date().getTime();
-            });
-          });
-          
-          handleStopSuccess();
-        } catch (error) {
-          console.error('Failed to auto-stop session:', error);
-        }
-      }, timeLimitMs);
-      
-      console.log(`Set up time limit: ${timeLimit} hours`);
-    }
-  }, [timeLimit, timeInterval, saveSessionData, handleStopSuccess]);
+  const lastDataTimeRef = useRef<number | null>(null);
 
-  const handleSaveSession = useCallback(async () => {
-    console.log('Start logging pressed with session name:', sessionName);
-    try {
-      // Clear any existing timers
-      clearAllTimers();
-      
-      // Store the session name in the ref to ensure it persists throughout the session
-      activeSessionNameRef.current = sessionName;
-      console.log('Stored session name in ref:', activeSessionNameRef.current);
-      
-      // Start a new session
-      const newSession = await database.write(async () => {
-        console.log("Inside database.write - preparing to create...");
-        const createdSession = await database.get('sessions').create((session: any) => {
-          console.log("Inside create builder...");
-          (session as Sessions).sessionName = sessionName;
-          (session as Sessions).timeLimit = timeLimit;
-          (session as Sessions).timeInterval = timeInterval;
-          (session as Sessions).createdAt = new Date().getTime();
-          (session as Sessions).stoppedAt = 0; // Initialize with 0
-        });
-
-        console.log("Session created:", createdSession);
-        return createdSession;
-      });
-      
-      console.log('Session saved, ID:', newSession.id);
-      setActiveSessionId(newSession.id);
-      
-      // Set up timers for the new session
-      setupTimers(newSession.id);
-      
-      // Set logging state to true AFTER creating the session
-      // This will trigger the useEffect above which will save the initial data
-      setIsLogging(true);
-      
-      closeBottomSheet();
-    } catch (error) {
-      console.error("Failed to save session:", error);
+  useEffect(() => {
+    if (!isLogging) return; 
+    console.log("Setting up logging timeout...");
+    setTimeout(() => {
       setIsLogging(false);
-    }
-  }, [closeBottomSheet, sessionName, timeLimit, timeInterval, clearAllTimers, setupTimers]);
+      console.log("Logging stopped automatically after timeout");
+    }, timeLimit * 60 * 60 * 1000 );
+  }, [isLogging]);
 
-  // Clean up timers when component unmounts
+
+
+
+  useEffect(() => {
+    if (!isLogging) {
+      return;
+    } 
+    // Use ref 
+    const currentDataTime = getDataTime(message);
+    if (currentDataTime === null) {
+      console.log("Could not extract timestamp from message");
+      return;
+    }
+    
+    // Initialize lastDataTimeRef if it's not set yet
+    if (lastDataTimeRef.current === null) {
+      lastDataTimeRef.current = currentDataTime;
+      // Save the first data point immediately
+      saveSessionData();
+      console.log("Initialized lastDataTime:", lastDataTimeRef.current);
+      return;
+    }
+    if (currentDataTime >= lastDataTimeRef.current + timeInterval) { //eg 10s>=10s+10s will true when 20=20
+      console.log(`Time interval reached: ${timeInterval}s passed since last data point`);
+      // Update the last data time to current time
+      lastDataTimeRef.current = currentDataTime;
+      // Save the data
+      saveSessionData();
+    } else {
+      console.log(`Not enough time passed: ${currentDataTime - lastDataTimeRef.current}s of ${timeInterval}s interval`);
+    }
+  }, [message, isLogging, timeInterval]);
+
+  const saveSessionData = useCallback(async () => {
+    if (!isLogging || !message) {
+      console.log("No active session, not logging, or no message available");
+      return;
+    }
+
+    // console.log('Saving session data at interval, isLogging:', isLogging);
+    try {
+      const data = transformMqttMessageToSessionData(message);
+      if (data === null) {
+        debugger;
+        console.warn("Skipping file write - transformed data is null");
+        return;
+      }
+      console.log("Transformed data:", data);
+
+      // Use the active session name from the ref, which persists throughout the session
+      // Fall back to sessionName state, then to a default if both are empty
+      const currentSessionName =
+        activeSessionNameRef.current || sessionName || "unnamed_session";
+
+      const date = new Date();
+      const dirPath = await createDateBasedDirectory(date, "session");
+      console.log("Directory path:", dirPath);
+      console.log("Using session name:", currentSessionName);
+
+      const fileName = `${currentSessionName}.jsonl`;
+      const filePath = `${dirPath}/${fileName}`;
+      console.log("File path for saving:", filePath);
+
+      // Convert JSON object to string and add a newline
+      const jsonString = JSON.stringify(data) + "\n";
+      console.log("JSON string to append:", jsonString);
+
+      const fileExists = await RNFS.exists(filePath);
+      console.log("File exists:", fileExists);
+
+      if (fileExists) {
+        await RNFS.appendFile(filePath, jsonString, "utf8");
+        console.log("Successfully appended JSON data to file:", filePath);
+      } else {
+        await RNFS.writeFile(filePath, jsonString, "utf8");
+        console.log("File does not exist, created new file:", filePath);
+      }
+
+      console.log("All message data Session data saved successfully");
+    } catch (error) {
+      console.error("Failed to save session data:", error);
+    }
+  }, [isLogging, message, createDateBasedDirectory, sessionName]);
+
+  //Clean up timers when component unmounts
   useEffect(() => {
     return () => {
       clearAllTimers();
@@ -283,17 +325,12 @@ export default function Dashboard() {
   }, [clearAllTimers]);
 
   return (
-    <GestureHandlerRootView style={styles.rootView}> 
+    <GestureHandlerRootView style={styles.rootView}>
       <ScrollView style={styles.container}>
         <DeviceDetailsCard />
         <EnhancedDoseRateCard />
-        <DoseRateGraph 
-          onGetHistory={handleGetHistory}
-        />
-        <SpectrumCard 
-          duration="222 s"
-          onFullscreen={handleFullscreen}
-        />
+        <DoseRateGraph onGetHistory={handleGetHistory} />
+        <SpectrumCard duration="222 s" onFullscreen={handleFullscreen} />
         <GPSCard />
 
         {/* <SessionLoggingCard
@@ -319,9 +356,7 @@ export default function Dashboard() {
           onTimeLimitChange={handleTimeLimitChange}
           onTimeIntervalChange={handleTimeIntervalChange}
         />
-        <BatteryCard 
-          isLastCard={true}
-        />
+        <BatteryCard isLastCard={true} />
       </ScrollView>
 
       <BottomSheet
@@ -341,11 +376,17 @@ export default function Dashboard() {
             onChangeText={setSessionName}
           />
           <View style={styles.bottomSheetButtons}>
-            <TouchableOpacity style={styles.cancelButton} onPress={closeBottomSheet}>
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={closeBottomSheet}
+            >
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={[BUTTON_STYLE.mediumButton, !sessionName && styles.disabledButton]} 
+            <TouchableOpacity
+              style={[
+                BUTTON_STYLE.mediumButton,
+                !sessionName && styles.disabledButton,
+              ]}
               onPress={handleSaveSession}
               disabled={!sessionName}
             >
@@ -361,7 +402,7 @@ export default function Dashboard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    width: '100%',
+    width: "100%",
     paddingHorizontal: SPACING.md,
   },
   rootView: {
@@ -379,12 +420,12 @@ const styles = StyleSheet.create({
   bottomSheetTitle: {
     ...TYPOGRAPHY.headLineSmall,
     marginBottom: SPACING.md,
-    textAlign: 'left',
+    textAlign: "left",
     color: COLORS.text,
   },
   bottomSheetButtons: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "flex-end",
     marginTop: SPACING.xl,
     marginBottom: SPACING.sm,
     paddingBottom: SPACING.sm,
