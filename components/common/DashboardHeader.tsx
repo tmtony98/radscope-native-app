@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.white,
     zIndex: 10,
-    // marginTop:50,
+    marginTop:50,
   },
   header: {
     height: 70,
