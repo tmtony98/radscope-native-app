@@ -203,10 +203,7 @@ export default function Dashboard() {
   }, [
     closeBottomSheet,
     sessionName,
-    timeLimit,
-    timeInterval,
-    clearAllTimers,
-    setupTimers,
+   
   ]);
 
   // Add an effect to monitor isLogging changes and trigger initial data save when logging starts
@@ -215,8 +212,8 @@ export default function Dashboard() {
     // When logging starts and we have an active session ID, save the initial data point
     if (isLogging) {
       // let lastDataTime
-      console.log("messageeeee", message);
-      console.log("Logging started, saving initial data point");
+      // console.log("messageeeee", message);
+      // console.log("Logging started, saving initial data point");
       // saveSessionData();
     }
   }, [isLogging]);
@@ -225,10 +222,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!isLogging) return; 
-    console.log("Setting up logging timeout...");
+    // console.log("Setting up logging timeout...");
     setTimeout(() => {
       setIsLogging(false);
-      console.log("Logging stopped automatically after timeout");
+      // console.log("Logging stopped automatically after timeout");
     }, timeLimit * 60 * 60 * 1000 );
   }, [isLogging]);
 
@@ -242,7 +239,7 @@ export default function Dashboard() {
     // Use ref 
     const currentDataTime = getDataTime(message);
     if (currentDataTime === null) {
-      console.log("Could not extract timestamp from message");
+      // console.log("Could not extract timestamp from message");
       return;
     }
     
@@ -255,7 +252,7 @@ export default function Dashboard() {
       return;
     }
     if (currentDataTime >= lastDataTimeRef.current + timeInterval) { //eg 10s>=10s+10s will true when 20=20
-      console.log(`Time interval reached: ${timeInterval}s passed since last data point`);
+      // console.log(`Time interval reached: ${timeInterval}s passed since last data point`);
       // Update the last data time to current time
       lastDataTimeRef.current = currentDataTime;
       // Save the data
@@ -267,7 +264,7 @@ export default function Dashboard() {
 
   const saveSessionData = useCallback(async () => {
     if (!isLogging || !message) {
-      console.log("No active session, not logging, or no message available");
+      // console.log("No active session, not logging, or no message available");
       return;
     }
 
@@ -275,11 +272,9 @@ export default function Dashboard() {
     try {
       const data = transformMqttMessageToSessionData(message);
       if (data === null) {
-        debugger;
         console.warn("Skipping file write - transformed data is null");
         return;
       }
-      console.log("Transformed data:", data);
 
       // Use the active session name from the ref, which persists throughout the session
       // Fall back to sessionName state, then to a default if both are empty
@@ -288,31 +283,31 @@ export default function Dashboard() {
 
       const date = new Date();
       const dirPath = await createDateBasedDirectory(date, "session");
-      console.log("Directory path:", dirPath);
-      console.log("Using session name:", currentSessionName);
+      // console.log("Directory path:", dirPath);
+      // console.log("Using session name:", currentSessionName);
 
       const fileName = `${currentSessionName}.jsonl`;
       const filePath = `${dirPath}/${fileName}`;
-      console.log("File path for saving:", filePath);
+      // console.log("File path for saving:", filePath);
 
       // Convert JSON object to string and add a newline
       const jsonString = JSON.stringify(data) + "\n";
-      console.log("JSON string to append:", jsonString);
+      // console.log("JSON string to append:", jsonString);
 
       const fileExists = await RNFS.exists(filePath);
-      console.log("File exists:", fileExists);
+      // console.log("File exists:", fileExists);
 
       if (fileExists) {
         await RNFS.appendFile(filePath, jsonString, "utf8");
-        console.log("Successfully appended JSON data to file:", filePath);
+        // console.log("Successfully appended JSON data to file:", filePath);
       } else {
         await RNFS.writeFile(filePath, jsonString, "utf8");
-        console.log("File does not exist, created new file:", filePath);
+        // console.log("File does not exist, created new file:", filePath);
       }
 
-      console.log("All message data Session data saved successfully");
+      // console.log("All message data Session data saved successfully");
     } catch (error) {
-      console.error("Failed to save session data:", error);
+      // console.error("Failed to save session data:", error);
     }
   }, [isLogging, message, createDateBasedDirectory, sessionName]);
 
