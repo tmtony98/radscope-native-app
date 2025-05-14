@@ -57,7 +57,7 @@ export default function RootLayout() {
               <Stack.Screen name="spectrum-settings" options={{ headerShown: false }} />
               <Stack.Screen name="dose-history" options={{ headerShown: false }} />
               <Stack.Screen name="dose-history-view" options={{ headerShown: false }} />
-              <Stack.Screen name="SessionView" options={{ headerShown: true }} />
+              <Stack.Screen name="SessionView" options={{ headerShown: false }} />
               <Stack.Screen name="SessionDatas" options={{ headerShown: true }} />
               <Stack.Screen name="+not-found" />
             </Stack>

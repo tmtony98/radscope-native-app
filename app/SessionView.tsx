@@ -18,9 +18,9 @@ import {
 import { useMqttContext } from "@/Provider/MqttContext";
 import StyledTextInput from "@/components/common/StyledTextInput";
 import DateTimePicker from '@react-native-community/datetimepicker';
-import Modal from 'react-native-modal';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Platform } from 'react-native';
+import Header from "@/components/Header";
 
 type Session = {
   id: string;
@@ -74,13 +74,29 @@ export default function SessionView() {
         ...prev,
         [currentDateSelection === 'start' ? 'startDate' : 'endDate']: selectedDate
       }));
+      console.log("tempDateRange",tempDateRange);
+      
+      // If this is the end date and it's before the start date, adjust it
+      if (currentDateSelection === 'end' && selectedDate < tempDateRange.startDate) {
+        setTempDateRange(prev => ({
+          ...prev,
+          startDate: selectedDate
+        }));
+      }
+      
+      // If this is the start date and it's after the end date, adjust it
+      if (currentDateSelection === 'start' && selectedDate > tempDateRange.endDate) {
+        setTempDateRange(prev => ({
+          ...prev,
+          endDate: selectedDate
+        }));
+      }
     }
   };
 
   const applyDateFilter = () => {
     setIsFilterActive(true);
     setDateRange(tempDateRange);
-    setFilterModalVisible(false);
   };
 
   const showDatePicker = (type: 'start' | 'end') => {
@@ -90,19 +106,19 @@ export default function SessionView() {
 
   const queryAndLogSessions = async () => {
     try {
-      console.log("Querying sessions from database...");
-      // Ensure you are querying the correct collection name ('sessions')
-      const sessions = await database.get<Sessions>("sessions").query().fetch();
-      setSessions(sessions);
-      console.log("Fetched sessions count:", sessions.length);
-      // Log details of each session
-      sessions.forEach((session) => {
-        console.log(
-          `Session - ID: ${session.id}, Name: ${
-            session.sessionName
-          }, CreatedAt: ${new Date(session.createdAt)}`
-        );
-      });
+      // console.log("Querying sessions from database...");
+      // // Ensure you are querying the correct collection name ('sessions')
+      // const sessions = await database.get<Sessions>("sessions").query().fetch();
+      // setSessions(sessions);
+      // console.log("Fetched sessions count:", sessions.length);
+      // // Log details of each session
+      // sessions.forEach((session) => {
+      //   console.log(
+      //     `Session - ID: ${session.id}, Name: ${
+      //       session.sessionName
+      //     }, CreatedAt: ${new Date(session.createdAt)}`
+      //   );
+      // });
     } catch (error) {
       console.error("Failed to query sessions:", error);
     }
@@ -170,11 +186,16 @@ export default function SessionView() {
       : true;
     return matchesSearch && matchesDate;
   });
+
+  
   return (
     <View style={styles.container}>
-      <View style={styles.searchContainer}>
+<Header title="Session View" showBackButton={true}  />
+
+      {/* Search Input */}
+      {/* <View style={styles.searchContainer}>
         <StyledTextInput
-        label="Search by session name"
+          label="Search by session name"
           style={[styles.searchInput, { flex: 1 }]}
           placeholder="Search sessions..."
           value={searchText}
@@ -271,16 +292,17 @@ export default function SessionView() {
       
     
       </View>
-      {isFilterActive && (
-        <View style={styles.filterIndicator}>
-          <Text style={styles.filterText}>
-            Filtered: {tempDateRange.startDate.toLocaleDateString()} - {tempDateRange.endDate.toLocaleDateString()}
-          </Text>
-          <TouchableOpacity onPress={resetFilters}>
-            <Ionicons name="close-circle" size={20} color="#666" />
-          </TouchableOpacity>
-        </View>
+
+      {/* Date picker component for selecting dates */}
+      {datePickerVisible && (
+        <DateTimePicker
+          value={currentDateSelection === 'start' ? tempDateRange.startDate : tempDateRange.endDate}
+          mode="date"
+          display="default"
+          onChange={handleDateChange}
+        />
       )}
+      
       <FlatList
       style={styles.listContentContainer}
         data={filteredSessions}
@@ -293,14 +315,6 @@ export default function SessionView() {
           </View>
         }
       />
-      {datePickerVisible && (
-  <DateTimePicker
-    value={currentDateSelection === 'start' ? tempDateRange.startDate : tempDateRange.endDate}
-    mode="date"
-    display="default"
-    onChange={handleDateChange}
-  />
-)}
     </View>
   );
 }
@@ -312,6 +326,59 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
     marginTop: 20,
     paddingHorizontal: SPACING.md,
+  },
+  dateFilterSection: {
+    backgroundColor: COLORS.white,
+     marginHorizontal: SPACING.md,
+    marginBottom: SPACING.md,
+    borderRadius: 8,
+    padding: SPACING.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  dateFilterHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.xs,
+  },
+  dateFilterTitle: {
+    ...TYPOGRAPHY.TitleMedium,
+    color: COLORS.primary,
+  },
+  resetButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.lightGray,
+  },
+  resetButtonText: {
+    ...TYPOGRAPHY.bodyTextSmall,
+    color: COLORS.text,
+  },
+  dateSelectionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.sm,
+  },
+  datePickerContainer: {
+    flex: 1,
+    marginHorizontal: 4,
+  },
+  applyFilterButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginTop: SPACING.xs,
+  },
+  applyFilterButtonText: {
+    color: COLORS.white,
+    fontWeight: '600',
+    fontSize: 16,
   },
   detail: {
     display: 'flex',
@@ -347,153 +414,65 @@ const styles = StyleSheet.create({
   listContentContainer: {
     padding: SPACING.xs,
     width: "100%",
-    
   },
-  dateFilterButton: {
-    paddingVertical: 10,
+  mainText: {
     display: 'flex',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop:6,
-    paddingHorizontal: 15,
-    backgroundColor: COLORS.white,
-    borderRadius: 6,
-    color: COLORS.text,
-    borderColor: COLORS.border,
-    borderWidth: 1,
-  },
-  dateFilterButtonText: {
-    color: COLORS.text,
-    marginLeft:4,
-    fontSize: 14,
-    fontWeight:500
-  },
-  searchInput: {
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    height: 40,
-    marginRight: 8,
-  },
-  itemRow: {
-    flexDirection: "column",
-    justifyContent: "center",
-    // alignItems: "center",
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    // width: "100%",
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.md,
-    marginBottom: SPACING.xs, // Add space between cards
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
+    marginBottom: SPACING.sm,
   },
   detailsContainer: {
-    flex: 1, // Take available space
-    
-    
-    marginRight: SPACING.md, // Add space between details and button
-  },
-  detailText: {
-    marginBottom: 4, // Add small spacing between text lines
-   
+    flex: 1,
+    padding: SPACING.sm,
   },
   detailsButton: {
-
- 
-    paddingHorizontal: SPACING.md,
-    width: "40%",
-    height: "auto", 
+    marginTop: SPACING.xs,
+  },
+  detailText: {
+    marginBottom: 4,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: SPACING.xxl,
+    padding: SPACING.lg,
   },
-  mainText: {
-    display: "flex",
+  searchInput: {
+    marginRight: SPACING.xs,
+  },
+  dateFilterButton: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: SPACING.sm,
-    width: "100%",
+    alignItems: "center",
+    // backgroundColor: COLORS.lightGray,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: 20,
   },
-
-
-
-
-
-
-
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 20,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-  },
-  dateSelectionContainer: {
-    marginBottom: 16,
+  dateFilterButtonText: {
+    marginLeft: 5,
+    color: COLORS.text,
+    fontSize: 14,
   },
   dateSelectionLabel: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 8,
+    color: COLORS.text,
+    marginBottom: 5,
+    fontWeight: '600',
+    opacity: 0.8
   },
   dateSelectionButton: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e1e5eb',
+    borderColor: '#ddd',
     borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    padding: 12,
+    backgroundColor: '#f9f9f9',
   },
   dateSelectionText: {
     fontSize: 16,
     color: '#333',
   },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 24,
-  },
-  modalSecondaryButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    marginRight: 12,
-  },
-  modalSecondaryButtonText: {
-    fontSize: 16,
-    color: '#666',
-    fontWeight: '500',
-  },
-  modalPrimaryButton: {
-    backgroundColor: '#5271ff',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  modalPrimaryButtonText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: '500'}
-
-
-
-  
 });
