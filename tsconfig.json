@@ -3,10 +3,10 @@
   "compilerOptions": {
     "strict": true,
     "paths": {
-      "@/*": [
-        "./*"
-      ]
-    },
+  "@/*": [
+    "./*"
+  ]
+},
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
