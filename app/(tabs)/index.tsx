@@ -3,14 +3,14 @@ import App from "@/App";
 import { useMqttContext } from "@/Provider/MqttContext";
 import { useEffect, useState } from "react";
 import Dashboard from "../../components/Dashboard/Dashboard";
-import Header from "@/components/Header";
+import DashboardHeader from "@/components/common/DashboardHeader";
 
 
 export default function Index( route: any  | null) {
   
   return (
     <SafeAreaView style={styles.container}>
-      <Header title="Dashboard" />
+      <DashboardHeader title="Dashboard" />
      <Dashboard />
     
     </SafeAreaView>
