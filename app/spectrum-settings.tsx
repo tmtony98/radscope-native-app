@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -16,7 +16,6 @@ import Header from "@/components/Header";
 import { useSettingsContext } from "@/Provider/SettingsContext";
 import { spectrumSettings } from "@/Provider/SettingsContext";
 
-// Add scale type data near the top of your file, after imports
 const scaleTypeData = [
   { label: "Linear", value: "linear" },
   { label: "Logarithmic", value: "logarithmic" },
@@ -31,8 +30,7 @@ const scaleTypeData = [
 
 export default function SpectrumSettings() {
   const router = useRouter();
-  const { getSpectrumSettings, storeSpectrumSettings, spectrum_Settings_Key } =
-    useSettingsContext();
+  const { getSpectrumSettings, storeSpectrumSettings, spectrum_Settings_Key } = useSettingsContext();
 
   // Combined state using spectrumSettings type
   const [spectrumSettings, setSpectrumSettings] = useState<spectrumSettings>({
@@ -41,6 +39,11 @@ export default function SpectrumSettings() {
     smoothingType: false,
     smoothingPoints: 50,
   });
+  
+  // Additional state for slider jitter prevention
+  const [displaySmoothingPoints, setDisplaySmoothingPoints] = useState(50);
+  const [isSliding, setIsSliding] = useState(false);
+  const smoothingPointsRef = useRef(50);
 
   console.log("spectrumSettings", spectrumSettings);
 
@@ -68,6 +71,8 @@ export default function SpectrumSettings() {
         const settings = await getSpectrumSettings(spectrum_Settings_Key);
         if (settings) {
           setSpectrumSettings(settings);
+          setDisplaySmoothingPoints(settings.smoothingPoints);
+          smoothingPointsRef.current = settings.smoothingPoints;
         }
       } catch (error) {
         console.error("Error loading settings:", error);
@@ -106,13 +111,18 @@ export default function SpectrumSettings() {
    
   };
 
-  const handleSmoothingPointsChange = (value: number) => {
+  const handleSmoothingPointsSliding = useCallback((value: number) => {
+    smoothingPointsRef.current = value;
+    setDisplaySmoothingPoints(value);
+  }, []);
+
+  const handleSmoothingPointsComplete = useCallback(() => {
     setSpectrumSettings((prev) => ({
       ...prev,
-      smoothingPoints: value,
+      smoothingPoints: smoothingPointsRef.current,
     }));
-   
-  };
+    setIsSliding(false);
+  }, []);
 
   return (
     <View style={{ flex: 1 }}>
@@ -222,19 +232,36 @@ export default function SpectrumSettings() {
           </Text>
           <View style={styles.sliderContainer}>
             <Text style={TYPOGRAPHY.bodyTextMedium}>
-              Selected Points: {spectrumSettings.smoothingPoints}
+              Selected Points: {isSliding ? displaySmoothingPoints : spectrumSettings.smoothingPoints}
             </Text>
-            <Slider
-              style={styles.slider}
-              minimumValue={0}
-              maximumValue={100}
-              step={1}
-              value={spectrumSettings.smoothingPoints}
-              onValueChange={handleSmoothingPointsChange}
-              minimumTrackTintColor={COLORS.primary}
-              maximumTrackTintColor={COLORS.border}
-              thumbTintColor={COLORS.primary}
-            />
+            <View style={styles.sliderWrapper}>
+              <Slider
+                style={styles.sliderControl}
+                minimumValue={0}
+                maximumValue={100}
+                step={1}
+                value={spectrumSettings.smoothingPoints}
+                onValueChange={handleSmoothingPointsSliding}
+                onSlidingStart={() => setIsSliding(true)}
+                onSlidingComplete={handleSmoothingPointsComplete}
+                minimumTrackTintColor={COLORS.primary}
+                maximumTrackTintColor={COLORS.textSecondary}
+                thumbTintColor={COLORS.primary}
+              />
+              {isSliding && (
+                <View
+                  style={[
+                    styles.valueIndicator,
+                    {
+                      left: `${(displaySmoothingPoints / 100) * 100}%`,
+                      transform: [{ translateX: -20 }],
+                    },
+                  ]}
+                >
+                  <Text style={styles.valueIndicatorText}>{displaySmoothingPoints}</Text>
+                </View>
+              )}
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -303,9 +330,29 @@ const styles = StyleSheet.create({
   sliderContainer: {
     padding: SPACING.md,
   },
-  slider: {
+  sliderWrapper: {
     width: "100%",
     height: 40,
+    position: "relative",
+    justifyContent: "center",
+  },
+  sliderControl: {
+    width: "100%",
+    height: 40,
+  },
+  valueIndicator: {
+    position: "absolute",
+    top: -20,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    zIndex: 10,
+  },
+  valueIndicatorText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: "bold",
   },
   sectionTitle: {
     marginBottom: SPACING.md,

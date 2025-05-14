@@ -38,16 +38,13 @@ const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({
   useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: 300,
+      duration: 500,
       useNativeDriver: true
     }).start();
   }, []);
 
   const handleViewDashboard = () => {
-    // Add a slight delay for better visual effect
-    setTimeout(() => {
-      router.push("/");
-    }, 100);
+    router.push("/");
   };
 
   useEffect(() => {
@@ -64,7 +61,7 @@ const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({
       // Navigate after 1 second
       const navigationTimer = setTimeout(() => {
         router.push('/');
-      }, 1500);
+      }, 800);
 
       // Cleanup timer on unmount
       return () => clearTimeout(navigationTimer);

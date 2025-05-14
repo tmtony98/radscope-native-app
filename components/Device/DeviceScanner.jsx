@@ -278,7 +278,7 @@ const DeviceScanner = ({ connectDevice }) => {
                 <View style={{
                   padding: 14,
                   marginVertical: 5,
-                  backgroundColor: '#f5f5f5',
+                  backgroundColor: '#ffffff',
                   borderRadius: 12,
                   borderWidth: 1,
                   borderColor: '#BDC5D1',
