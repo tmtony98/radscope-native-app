@@ -124,12 +124,26 @@ export default function DoseHistoryView({
     }
   };
   
-  // Calculate end time when start time changes
+  // Calculate end time when start time changes - run immediately
   useEffect(() => {
     if (startTime) {
       const calculatedEndTime = calculateEndTime(startTime);
       setEndTime(calculatedEndTime);
     }
+  }, [startTime]);
+  
+  // Force immediate rendering when component mounts
+  useEffect(() => {
+    // Immediately set loading state to ensure UI feedback
+    setIsLoading(true);
+    
+    // Force a re-render after a short delay
+    const renderTimer = setTimeout(() => {
+      // This will trigger a re-render
+      setFormattedData(prevData => prevData.length > 0 ? [...prevData] : []);
+    }, 100);
+    
+    return () => clearTimeout(renderTimer);
   }, []);
 
   useEffect(() => {
@@ -149,22 +163,25 @@ export default function DoseHistoryView({
           if (data.length === 0) {
             console.warn("No data found for the selected date and time");
             setError('No dose rate data found for the selected date and time.');
-          } else {
-            // Log a sample data point to verify format
-            if (data.length > 0) {
-              console.log("Sample data point:", JSON.stringify(data[0]));
-              console.log("Sample time_stamp format:", data[0].time_stamp);
-            }
-            
-            setDoseRateData(data);
-            
-            // Extract dose rate values and format time labels for the chart
-            setDoseRateValues(data.map(item => item.doseRate));
-            setTimeLabels(data.map(item => formatTimeLabel(item.time_stamp)));
-            
-            // Format data for Victory Native CartesianChart
+            setIsLoading(false);
+            return;
+          }
+          
+          // Log a sample data point to verify format
+          if (data.length > 0) {
+            console.log("Sample data point:", JSON.stringify(data[0]));
+            console.log("Sample time_stamp format:", data[0].time_stamp);
+          }
+          
+          setDoseRateData(data);
+          
+          // Extract dose rate values and format time labels for the chart
+          setDoseRateValues(data.map(item => item.doseRate));
+          setTimeLabels(data.map(item => formatTimeLabel(item.time_stamp)));
+          
+          // Process data immediately without batching to avoid rendering issues
+          try {
             const chartData = data.map((item, index) => {
-              // Parse the timestamp from the format "YYYY-MM-DD HH:mm:ss" (local time)
               try {
                 if (!item.time_stamp) {
                   console.warn("Missing time_stamp in data point at index", index);
@@ -196,8 +213,7 @@ export default function DoseHistoryView({
                 console.warn('Error parsing timestamp:', item.time_stamp, error);
                 return null;
               }
-            })
-            .filter(item => item !== null && item.timestamp > 0); // Filter out invalid timestamps
+            }).filter(item => item !== null && (item as any).timestamp > 0);
             
             console.log("Formatted chart data:", chartData);
             console.log("Chart data length:", chartData.length);
@@ -206,15 +222,27 @@ export default function DoseHistoryView({
               console.warn("No valid data points after formatting");
               setError('Could not process the dose rate data. Invalid timestamp format.');
             } else {
-              setFormattedData(chartData.filter((item): item is { timestamp: number; doseRate: number } => item !== null));
-            console.log("Formatted data for chart:", formattedData);
-            
+              // Sort data by timestamp to ensure correct display
+              const validData = chartData.filter((item): item is { timestamp: number; doseRate: number } => item !== null);
+              const sortedData = [...validData].sort((a, b) => a.timestamp - b.timestamp);
+              
+              // Update state directly without animation frame
+              setFormattedData(sortedData);
+              
+              // Delay setting loading to false to ensure UI updates
+              setTimeout(() => {
+                setIsLoading(false);
+              }, 100);
             }
+          } catch (err) {
+            console.error('Error processing data:', err);
+            setError('Failed to process dose rate data. Please try again.');
+            setIsLoading(false);
           }
+          
         } catch (err) {
           console.error('Error fetching dose rate data:', err);
           setError('Failed to load dose rate data. Please try again.');
-        } finally {
           setIsLoading(false);
         }
       }
@@ -273,6 +301,15 @@ export default function DoseHistoryView({
   //   return `${formattedTime}`;
   // };
 
+  // Log render state for debugging
+  console.log("Rendering DoseHistoryView with:", { 
+    date, 
+    startTime, 
+    isLoading, 
+    error, 
+    dataLength: formattedData.length 
+  });
+  
   return (
     <ScrollView style={styles.container}>
       {/* Header */}
@@ -310,7 +347,10 @@ export default function DoseHistoryView({
         </View>
       ) : formattedData.length > 0 ? (
         <View style={styles.graphContainer}>
-          <View style={{ height: 300, width: '100%' }}>
+          {/* Add key to force re-render */}
+          <View 
+            style={{ height: 300, width: '100%' }} 
+            key={`graph-container-${formattedData.length}`}>
             <CartesianChart
               data={formattedData}
               xKey="timestamp"
@@ -320,8 +360,15 @@ export default function DoseHistoryView({
                 lineWidth: 1,
                 lineColor: "#CCCCCC",
                 labelColor: "#333333",
+                formatYLabel: (value: number) => value.toFixed(2) // Format with 2 decimal places
               }}
-              padding={{ top: 15, bottom: 10, left: 10, right: 10 }}
+              padding={{ top: 30, bottom: 30, left: 40, right: 20 }}
+              domain={{
+                y: formattedData.length > 0 ? [
+                  Math.max(0, Math.min(...formattedData.map(d => d.doseRate)) * 0.8),
+                  Math.max(...formattedData.map(d => d.doseRate)) * 1.2
+                ] : [0, 1]
+              }}
               transformState={transformState}
               transformConfig={{
                 pan: { enabled: true, dimensions: ["x"] },
@@ -374,7 +421,7 @@ export default function DoseHistoryView({
         <View style={styles.paramRow}>
           <Text style={TYPOGRAPHY.TitleMedium}>Start Time</Text>
           <Text style={TYPOGRAPHY.TitleMedium}>
-            {startTime ? startTime.toLocaleString() : "-"}
+            {startTime || "-"}
           </Text>
         </View>
         <View style={styles.paramRow}>
@@ -384,7 +431,7 @@ export default function DoseHistoryView({
         <View style={styles.paramRow}>
           <Text style={TYPOGRAPHY.TitleMedium}>Date</Text>
           <Text style={TYPOGRAPHY.TitleMedium}>
-            {date ? date.toLocaleString() : "-"}
+            {date || "-"}
           </Text>
         </View>
 

@@ -4,7 +4,7 @@ import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY, BUTTON_STYLE } from '../../The
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMqttContext } from '../../Provider/MqttContext';
-import { CartesianChart, Line, useChartTransformState } from "victory-native";
+import { Area, CartesianChart, Line, useChartTransformState } from "victory-native";
 import { useFont } from "@shopify/react-native-skia";
 
 import inter from "../../assets/fonts/Inter/static/Inter_18pt-Bold.ttf";
@@ -110,13 +110,22 @@ const SpectrumCard = ({
                 pinch: { enabled: true, dimensions: ["x"] },
               }}
             >
-              {({ points }) => (
-                <Line
-                  points={points.y}
-                  color="#1E88E5"
-                  strokeWidth={2}
-                  curveType="natural"
-                />
+              {({ points, chartBounds }) => (
+                <>
+                  <Area
+                    points={points.y}
+                    y0={chartBounds.bottom}
+                    color="rgba(30, 136, 229, 0.2)" // Light blue with transparency
+                    curveType="natural"
+                    opacity={0.6}
+                  />
+                  <Line
+                    points={points.y}
+                    color="#1E88E5"
+                    strokeWidth={2}
+                    curveType="natural"
+                  />
+                </>
               )}
             </CartesianChart>
           </View>
