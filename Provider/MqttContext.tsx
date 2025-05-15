@@ -27,12 +27,12 @@ interface SensorDataExtract {
 const BROKER_URL = 'ws://192.168.29.39:8083'; //office bbd
 // const BROKER_URL = 'ws://192.168.1.50:8083'; //office kv
 
-
 // const BROKER_URL = 'ws://192.168.1.11:8083'; //hostel
 // const BROKER_URL = 'ws://192.168.74.213:8083'; //tony phone
 const BASE_PATH = RNFS.ExternalStorageDirectoryPath + '/Radscope';
 const DOSERATE_PATH = BASE_PATH + '/Doserate_data';
 const SESSION_PATH = BASE_PATH + '/Sessions_data';
+// const SESSION_PATH = BASE_PATH + '/Sessions_data';
 
 const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -267,8 +267,11 @@ const saveDoserateToExternal = useCallback(async (doserate: number, cps: number,
     const fileName = 'doserate.jsonl';
     const filePath = `${dirPath}/${fileName}`;
 
-    // Format timestamp string in required format: YYYY-MM-DD HH:mm:ss
-    const timeStr = date.toISOString()
+    // Convert UTC to IST (UTC+5:30)
+    const istDate = new Date(date.getTime() + (5 * 60 + 30) * 60 * 1000);
+    
+    // Format timestamp string in required format: YYYY-MM-DD HH:mm:ss in IST
+    const timeStr = istDate.toISOString()
       .replace('T', ' ')    // Replace T with space
       .slice(0, 19);       // Take only YYYY-MM-DD HH:mm:ss part
     
@@ -279,7 +282,7 @@ const saveDoserateToExternal = useCallback(async (doserate: number, cps: number,
         time_stamp: timeStr
       }
     };
-
+    console.log("IST timestamp", timeStr); 
     // Convert to JSON string with newline for JSONL format
     const jsonString = JSON.stringify(doserateData) + '\n';
 
