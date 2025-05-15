@@ -4,26 +4,32 @@ import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY } from '../../Themes/theme';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useMqttContext } from '@/Provider/MqttContext';
 
-
-
 export default function GPSCard() {
-  
   const { gps } = useMqttContext();
 
-  // console.log("gps", gps);
+  console.log("GPS Data:", gps);
+
   return (
     <View style={CARD_STYLE.container}>
       <View style={styles.headerWithActions}>
         <Text style={TYPOGRAPHY.headLineSmall}>GPS</Text>
-    
+        {gps?.Fix === 1 ? (
+          <TouchableOpacity style={styles.iconButton}>
+            <MaterialIcons name="gps-fixed" size={24} color={COLORS.primary} />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity style={styles.iconButton}>
+            <MaterialIcons name="gps-off" size={24} color={COLORS.error} />
+          </TouchableOpacity>
+        )}
       </View>
       <View style={styles.row}>
         <Text style={TYPOGRAPHY.bodyTextLarge}>Latitude</Text>
-        <Text style={TYPOGRAPHY.bodyTextMedium}>{gps?.Lat}</Text>
+        <Text style={TYPOGRAPHY.bodyTextMedium}>{gps?.Lat || "-"}</Text>
       </View>
       <View style={styles.row}>
         <Text style={TYPOGRAPHY.bodyTextLarge}>Longitude</Text>
-        <Text style={TYPOGRAPHY.bodyTextMedium}>{gps?.Lon}</Text>
+        <Text style={TYPOGRAPHY.bodyTextMedium}>{gps?.Lon || "-"}</Text>
       </View>
     </View>
   );
