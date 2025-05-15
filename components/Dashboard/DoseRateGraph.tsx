@@ -1,15 +1,14 @@
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Dimensions } from 'react-native';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY, BUTTON_STYLE } from '../../Themes/theme';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useMqttContext } from '@/Provider/MqttContext';
-import { LineChart } from 'react-native-chart-kit';
-import { CartesianChart,useChartPressState , Line } from "victory-native"
+import { CartesianChart, useChartPressState, Line, Area, useChartTransformState } from "victory-native"
 import { useFont } from "@shopify/react-native-skia";
 import inter from "../../assets/fonts/Inter/static/Inter_18pt-Bold.ttf"
-import { format } from "date-fns"; //
+import { format } from "date-fns";
 
 
 
@@ -23,6 +22,34 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
   const router = useRouter();
 
   const font = useFont(inter, 12);
+  
+  // Create transform state for optimized rendering and pan/zoom functionality
+  const { state: transformState } = useChartTransformState({
+    scaleX: 1.0,
+    scaleY: 1.0,
+  });
+  
+  // Limit data to the last 10 points
+  const limitedData = useMemo(() => {
+    if (doseRateGraphArray.length <= 10) return doseRateGraphArray;
+    return doseRateGraphArray.slice(-10);
+  }, [doseRateGraphArray]);
+  
+  // Calculate min and max values for better domain scaling
+  const yDomain = useMemo(() => {
+    if (limitedData.length === 0) return { min: 0, max: 1 };
+    
+    const values = limitedData.map(point => point.doseRate);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    
+    // Add significant padding to prevent values from being cut off
+    const padding = (max - min) * 0.3;
+    return { 
+      min: Math.max(0, min - padding), // Don't go below zero
+      max: max + padding * 1.5 // Extra padding at the top
+    };
+  }, [limitedData]);
 
   const getLastTimestamp = () => {
     const timestamp = doseRateGraphArray.length > 0 ? doseRateGraphArray[doseRateGraphArray.length - 1].timestamp : 0;
@@ -77,36 +104,56 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
         )}
       </CartesianChart>
     </View> */}
-    <View style={{ height: 300, padding: 10 }}>
+    <View style={{ height: 300, width: '100%', }}>
       <CartesianChart
-        data={doseRateGraphArray}
+        data={limitedData}
         xKey="timestamp"
         yKeys={["doseRate"]}
-        
-        //add font
         axisOptions={{ 
           font,
           lineWidth: 1,
           lineColor: "#CCCCCC",
           labelColor: "#333333",
+          formatYLabel: (value: number) => value.toFixed(2) // Format with 2 decimal places
         }}
-       
-       
-        xAxis={
-          {
-            formatXLabel: (label: number) => new Date(label).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
-            font,
-            labelRotate: 45, 
-          }
-        }
+        // padding={{ top: 40, bottom: 40, left: 50, right: 20 }}
+        domain={{ y: [yDomain.min, yDomain.max] }}
+        transformState={transformState}
+        transformConfig={{
+          pan: { enabled: true, dimensions: ["x"] },
+          pinch: { enabled: true, dimensions: ["x"] },
+        }}
+        xAxis={{
+          formatXLabel: (label: number) => {
+            const date = new Date(label);
+            return date.toLocaleTimeString('en-US', { 
+              hour: '2-digit', 
+              minute: '2-digit',
+              second: '2-digit',
+              hour12: true 
+            });
+          },
+          font,
+          labelRotate: 45,
+          tickCount: 5, // Limit the number of ticks for better readability
+        }}
       >
-        {({ points }) => (
-          <Line 
-            points={points.doseRate} 
-            color="blue" 
-            strokeWidth={2}
-            curveType="natural" // Smooths the line
-          />
+        {({ points, chartBounds }) => (
+          <>
+            <Area
+              points={points.doseRate}
+              y0={chartBounds.bottom}
+              color="rgba(30, 136, 229, 0.2)" // Light blue with transparency (matching line color)
+              curveType="natural"
+              opacity={0.6}
+            />
+            <Line 
+              points={points.doseRate} 
+              color="#1E88E5" 
+              strokeWidth={2.5}
+              curveType="natural" // Smooths the line
+            />
+          </>
         )}
       </CartesianChart>
     </View>
@@ -165,5 +212,6 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     alignItems: 'center',
+    marginTop: SPACING.lg,
   },
 });
