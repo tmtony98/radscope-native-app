@@ -24,9 +24,11 @@ import { useMqttContext } from "@/Provider/MqttContext";
 import StyledTextInput from "@/components/common/StyledTextInput";
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Platform } from 'react-native';
 import { getSessionFilesByDateRange, readSessionFile, groupSessionFilesByName, SessionFile } from "../utils/SessionFileUtils";
 import Share from 'react-native-share';
+import Header from "@/components/Header";
 
 const SessionView = () => {
   const [searchText, setSearchText] = useState("");
@@ -66,10 +68,10 @@ const SessionView = () => {
     }
   };
 
-  // // Initial load
-  // useEffect(() => {
-  //   loadSessionFiles();
-  // }, []);
+  // Initial load
+  useEffect(() => {
+    loadSessionFiles();
+  }, []);
 
   const resetFilters = () => {
     setIsFilterActive(false);
@@ -139,7 +141,7 @@ const SessionView = () => {
     const [sessionName, files] = item;
     const firstFile = files[0]; // Use the first file for display info
     const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-    const formattedSize = (totalSize / 1024).toFixed(2) + " KB";
+    const formattedSize = (totalSize / 1024).toFixed(1) + " MB";
     
     // Share file function
     const shareFile = async (filePath: string) => {
@@ -157,44 +159,45 @@ const SessionView = () => {
     };
     
     return (
+     <>
       <View style={[CARD_STYLE.containerList, { marginVertical: SPACING.xs, marginHorizontal: SPACING.xs}]}>
         <View style={styles.detailsContainer}>
           <View style={styles.mainText}>
-            <Text style={[TYPOGRAPHY.TitleMedium, styles.detailText]}>
+            <Text style={[TYPOGRAPHY.TitleLarge, styles.detailText]}>
               {sessionName}
             </Text>
             <Text style={[TYPOGRAPHY.bodyTextMedium, styles.detailText]}>
-              Files: {files.length} | Size: {formattedSize}
+              {formattedSize}
             </Text>
           </View>
           <View style={styles.timings}>
             <View style={styles.detail}>
               <Text style={styles.detailText}>
-                Date 
-              </Text>
-              <Text style={[TYPOGRAPHY.bodyTextMedium, styles.detailText]}>
                 {firstFile.date.toLocaleDateString()}
               </Text>
+              
             </View>
           </View>
         </View>
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            style={[BUTTON_STYLE.smallButton, styles.actionButton]}
-            onPress={() => handleViewDetails(firstFile)}
+            style={[styles.actionButton, styles.downloadButton]}
+            onPress={() => shareFile(firstFile.path)}
           >
-            <Text style={BUTTON_STYLE.smallButtonText}>View Details</Text>
+            <MaterialIcons name="download" size={16} color={COLORS.primary} style={styles.buttonIcon} />
+            <Text style={styles.downloadButtonText}>Download</Text>
           </TouchableOpacity>
           
           <TouchableOpacity
-            style={[BUTTON_STYLE.smallButton, styles.actionButton, styles.downloadButton]}
-            onPress={() => shareFile(firstFile.path)}
+            style={[BUTTON_STYLE.smallButton, styles.actionButton, styles.viewButton]}
+            onPress={() => handleViewDetails(firstFile)}
           >
-            <Ionicons name="download-outline" size={16} color={COLORS.white} style={styles.buttonIcon} />
-            <Text style={BUTTON_STYLE.smallButtonText}>Download</Text>
+            <Ionicons name="eye-outline" size={16} color={COLORS.white} style={styles.buttonIcon} />
+            <Text style={BUTTON_STYLE.smallButtonText}>View</Text>
           </TouchableOpacity>
         </View>
       </View>
+     </>
     );
   };
 
@@ -225,21 +228,11 @@ const SessionView = () => {
   // Create a header component for the FlatList that includes the search and date filter
   const renderListHeader = () => (
     <>
-      {/* Search Input */}
-      {/* <View style={styles.searchContainer}>
-        <StyledTextInput
-          label="Search by session name"
-          style={[styles.searchInput, { flex: 1 }]}
-          placeholder="Search sessions..."
-          value={searchText}
-          onChangeText={setSearchText}
-          autoCorrect={false}
-          autoCapitalize="none"
-        />
-      </View> */}
+      
+       
       
       {/* Date Filter Section */}
-      <View style={[CARD_STYLE.container, { marginHorizontal: SPACING.md, marginVertical: SPACING.md }]}>
+      <View style={[CARD_STYLE.container, {  marginTop: SPACING.md, marginBottom: SPACING.sm }]}>
         <Text style={[TYPOGRAPHY.TitleLarge, { marginBottom: SPACING.md }]}>Filter by Date Range</Text>
         
         <View style={styles.datePickersRow}>
@@ -256,7 +249,8 @@ const SessionView = () => {
               <Ionicons name="calendar-outline" size={20} color={COLORS.primary} />
             </TouchableOpacity>
           </View>
-          
+        </View>
+        <View style={styles.datePickersRow}>
           {/* End Date Picker */}
           <View style={styles.datePickerWrapper}>
             <Text style={styles.datePickerLabel}>End Date</Text>
@@ -271,6 +265,8 @@ const SessionView = () => {
             </TouchableOpacity>
           </View>
         </View>
+
+
         
         {/* Filter Actions */}
         <View style={styles.filterActions}>
@@ -289,6 +285,19 @@ const SessionView = () => {
           </TouchableOpacity>
         </View>
       </View>
+
+      <View style={styles.searchContainer}>
+        <StyledTextInput
+          label="Search by session name"
+          style={[styles.searchInput, { flex: 1 }]}
+          placeholder="Search sessions..."
+          value={searchText}
+          onChangeText={setSearchText}
+          autoCorrect={false}
+          autoCapitalize="none"
+          leftIcon={<MaterialIcons name="search" size={24} color={COLORS.primary} />}
+        />
+      </View>
       
       {/* Filter Indicator */}
       {isFilterActive && (
@@ -305,6 +314,7 @@ const SessionView = () => {
   );
 
   return (
+    
     <View style={styles.container}>
       {/* Loading Indicator */}
       {isLoading && (
@@ -318,6 +328,7 @@ const SessionView = () => {
       {!isLoading && (
         <FlatList
           style={styles.listContentContainer}
+          contentContainerStyle={{ paddingHorizontal: SPACING.md }}
           data={filteredSessions}
           renderItem={renderSessionGroup}
           keyExtractor={([sessionName]) => sessionName}
@@ -407,8 +418,9 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   searchContainer: {
-    padding: SPACING.md,
+    // paddingHorizontal:SPACING.md,
     backgroundColor: COLORS.background,
+    marginBottom: SPACING.md,
   },
   searchInput: {
     marginBottom: 0,
@@ -422,7 +434,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   mainText: {
-    flex: 3,
+    flex: 0,
   },
   timings: {
     flex: 1,
@@ -437,14 +449,29 @@ const styles = StyleSheet.create({
   buttonContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
+    marginTop: SPACING.sm,
   },
   actionButton: {
-    marginLeft: SPACING.xs,
-  },
-  downloadButton: {
-    backgroundColor: COLORS.success,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 100,
+  },
+  downloadButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginRight: SPACING.sm,
+  },
+  downloadButtonText: {
+    ...TYPOGRAPHY.bodyTextMedium,
+    color: COLORS.primary,
+  },
+  viewButton: {
+    backgroundColor: COLORS.primary,
   },
   buttonIcon: {
     marginRight: 4,
@@ -506,7 +533,8 @@ const styles = StyleSheet.create({
   },
   applyButton: {
     backgroundColor: COLORS.primary,
-    padding: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
     borderRadius: 8,
   },
   applyButtonText: {
@@ -517,7 +545,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.lightBackground,
+    backgroundColor: COLORS.background,
     padding: SPACING.sm,
     marginHorizontal: SPACING.md,
     marginBottom: SPACING.md,

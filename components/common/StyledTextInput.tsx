@@ -1,14 +1,29 @@
 import React from 'react';
 import { StyleSheet } from 'react-native';
-import { TextInput as PaperTextInput, TextInputProps } from 'react-native-paper';
+import { TextInput as PaperTextInput, TextInputProps, DefaultTheme } from 'react-native-paper';
 import { COLORS, SPACING } from '../../Themes/theme'; // Adjust path as needed
 
 // Define props, extending TextInputProps but omitting ones we set internally
 type StyledTextInputProps = Omit<TextInputProps, 'mode' | 'theme'> & {
   // Add any custom props specific to your wrapper if needed
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
 };
 
-export const StyledTextInput = (props: StyledTextInputProps) => {
+// Create a custom theme that extends DefaultTheme
+const inputTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: COLORS.primary,
+    accent: COLORS.primary,
+    background: COLORS.white,
+    text: COLORS.text,
+    placeholder: COLORS.placeholder,
+  },
+};
+
+export const StyledTextInput = ({ leftIcon, rightIcon, ...props }: StyledTextInputProps) => {
   return (
     <PaperTextInput
       mode="outlined" // Default mode
@@ -21,6 +36,9 @@ export const StyledTextInput = (props: StyledTextInputProps) => {
       style={[styles.input, props.style]} // Combine default styles with passed styles
       textColor={COLORS.text} // Default text color
       placeholderTextColor={COLORS.placeholder} // Use theme color for placeholder text
+      theme={inputTheme} // Apply our custom theme
+      left={leftIcon ? <PaperTextInput.Icon icon={() => leftIcon} /> : undefined}
+      right={rightIcon ? <PaperTextInput.Icon icon={() => rightIcon} /> : undefined}
       // Spread the rest of the props
       {...props}
     />
@@ -38,4 +56,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default StyledTextInput; 
+export default StyledTextInput;
