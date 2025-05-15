@@ -362,7 +362,6 @@ export default function DoseHistoryView({
                 labelColor: "#333333",
                 formatYLabel: (value: number) => value.toFixed(2) // Format with 2 decimal places
               }}
-              padding={{ top: 30, bottom: 30, left: 40, right: 20 }}
               domain={{
                 y: formattedData.length > 0 ? [
                   Math.max(0, Math.min(...formattedData.map(d => d.doseRate)) * 0.8),
