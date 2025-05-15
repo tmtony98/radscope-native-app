@@ -77,7 +77,7 @@ export default function DoseHistory() {
     // After date is selected, show time picker
     setTimeout(() => {
       showTimePicker();
-    }, 500);
+    }, 50);
   };
 
   // Handle time change
@@ -118,7 +118,7 @@ export default function DoseHistory() {
           // endTime: formatTime(updatedDateTime)
         }
       });
-    }, 500);
+    }, 100);
   };
 
   return (
@@ -130,23 +130,25 @@ export default function DoseHistory() {
       <ScrollView style={styles.content}>
         <View style={styles.card}>
           <View style={styles.datePickerContainer}>
-            <Text  style={TYPOGRAPHY.TitleMedium}>Select Date:</Text>
-            <TouchableOpacity style={styles.datePicker} onPress={showDatePicker}>
+            <Text style={TYPOGRAPHY.TitleLarge}>Select Date & Time</Text>
+            
+          </View>
+          <TouchableOpacity style={styles.datePicker} onPress={showDatePicker}>
               <Text  style={styles.datePickerText}>
                 {formattedDateTime || 'Select custom date & time'}
               </Text>
               <MaterialIcons name="keyboard-arrow-down" size={24} color="#666" />
             </TouchableOpacity>
-          </View>
-        </View>
-        {/* Empty state message */}
-        <View style={styles.emptyStateCard}>
+          <View style={styles.emptyStateCard}>
           <View style={styles.emptyStateContainer}>
             <Text style={styles.emptyStateText}>
-              Select date day-wise to see custom Data
+            "Select a custom date and time to view corresponding graphs and data."
             </Text>
           </View>
         </View>
+        </View>
+        {/* Empty state message */}
+       
       </ScrollView>
 
       {/* Date Picker Modal */}
@@ -228,13 +230,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#D1D5DB',
     borderRadius: 8,
-    width: '65%',
+    width: '100%',
     padding: 12,
     backgroundColor: '#FFFFFF',
   },
   datePickerText: {
     color: '#666',
-    textAlign: 'right',
+    textAlign: 'left',
     flex: 1,
    
   },
@@ -246,9 +248,9 @@ const styles = StyleSheet.create({
   emptyStateContainer: {
     paddingVertical: 48,
     alignItems: 'center',
-    borderStyle: 'dashed',
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    // borderStyle: 'dashed',
+    // borderWidth: 1,
+    // borderColor: COLORS.border,
     borderRadius: 8,
   },
   emptyStateText: {

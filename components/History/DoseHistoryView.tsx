@@ -1,4 +1,4 @@
-import { View, StyleSheet, ScrollView, Dimensions, Image } from "react-native";
+import { View, StyleSheet, ScrollView, Dimensions, Image, ActivityIndicator } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "expo-router";
 import { COLORS, SPACING, TYPOGRAPHY, CARD_STYLE } from "../../Themes/theme";
@@ -10,9 +10,10 @@ import {
   Divider,
   MD3Colors,
 } from "react-native-paper";
-import { LineChart } from "react-native-chart-kit";
-import { Q } from "@nozbe/watermelondb";
-import database from "@/index.native";
+import { CartesianChart, Line, Area, useChartTransformState } from "victory-native";
+import { useFont } from "@shopify/react-native-skia";
+import inter from "../../assets/fonts/Inter/static/Inter_18pt-Bold.ttf";
+import { getDoseRateDataByDateTime, DoseRateDataPoint } from "../../utils/DoseRateFileUtils";
 
 type DoseHistoryViewProps = {
   date?: string;
@@ -21,90 +22,205 @@ type DoseHistoryViewProps = {
   // selectedDateTime?: Date;
 };
 
-// const doseRateArray = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-// const timestampArray = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-
 export default function DoseHistoryView({
   date,
   startTime,
 }: DoseHistoryViewProps) {
-  // console.log("dateeeee", date);
-  // console.log("startTimeeeeeeee", startTime);
-  // console.log("Raw startTime string received:", startTime);
-
-  // const date = "16/4/2025";
-  // const time = "7:10 PM";
-
   const router = useRouter();
 
-  const [doseRateGraphArray, setDoseRateGraphArray] = useState<any[]>([]);
-  const [doseRateValues, setDoseRateValues] = useState<any[]>([]);
-  const [timeLabels, setTimeLabels] = useState<any[]>([]);
+  console.log("startTimeeeeee", startTime);
+  
+  const [doseRateData, setDoseRateData] = useState<DoseRateDataPoint[]>([]);
+  const [doseRateValues, setDoseRateValues] = useState<number[]>([]);
+  const [timeLabels, setTimeLabels] = useState<string[]>([]);
+  const [formattedData, setFormattedData] = useState<Array<{ timestamp: number; doseRate: number }>>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [endTime, setEndTime] = useState<string | null>(null);
 
-  const getDoseRateArray = async (startDate: string, startTime: string) => {
-    const [day, month, year] = startDate.split("/").map(Number); // e.g., "18/04/2025"
+  // Create transform state for optimized rendering and pan/zoom functionality
+  const { state: transformState } = useChartTransformState({
+    scaleX: 1.0,
+    scaleY: 1.0,
+  });
 
-    if (!startTime) {
-      console.warn("startTime is undefined");
-      return [];
+  // Load the font for the chart
+  const font = useFont(inter, 12);
+
+  // Format time labels for display on the chart
+  const formatTimeLabel = (timestamp: string): string => {
+    try {
+      // Parse the timestamp from the format "YYYY-MM-DD HH:mm:ss" (local time)
+      const [datePart, timePart] = timestamp.split(' ');
+      if (!datePart || !timePart) return timestamp;
+      
+      const [hours, minutes] = timePart.split(':');
+      if (!hours || !minutes) return timestamp;
+      
+      // Convert to 12-hour format with AM/PM for better readability
+      const hourNum = parseInt(hours, 10);
+      if (isNaN(hourNum)) return timestamp;
+      
+      const ampm = hourNum >= 12 ? 'PM' : 'AM';
+      const hour12 = hourNum % 12 || 12; // Convert 0 to 12 for 12 AM
+      
+      return `${hour12}:${minutes} ${ampm}`;
+    } catch (error) {
+      console.warn('Error formatting time label:', error);
+      return timestamp;
     }
-
-    // Parse time (handling AM/PM format)
-    let [timePart, modifier] = startTime.split(" ");
-    let [hours, minutes] = timePart.split(":").map(Number);
-
-    if (modifier === "PM" && hours < 12) hours += 12;
-    if (modifier === "AM" && hours === 12) hours = 0;
-
-    // Create the Date object using the parsed date and time (no UTC conversion)
-    const dateObj = new Date(year, month - 1, day, hours, minutes); // Local time, no offset
-
-    // Log the start timestamp in unix format
-    const startTimestamp = dateObj.getTime();
-
-    // console.log("startTimestamp converted to unix timestamp", startTimestamp);
-    // console.log("startTimestamp converting before to unix", "startDate: " + startDate + " startTime: " + startTime);
-
-    // Check for invalid timestamps
-    if (isNaN(startTimestamp)) {
-      console.warn("Invalid date/time format");
-      return [];
-    }
-
-    const endTimestamp = startTimestamp + 10 * 60 * 1000; // 10 minutes later
-
-    const doseRateArray = await database
-      .get("doserate")
-      .query(
-        Q.where("createdAt", Q.gte(startTimestamp)),
-        Q.where("createdAt", Q.lte(endTimestamp)),
-        Q.sortBy("createdAt", Q.desc)
-      )
-      .fetch();
-
-    console.log(
-      "graphArray:",
-      doseRateArray,
-      "startDate:",
-      new Date(startTimestamp).toLocaleString(),
-      "endDate:",
-      new Date(endTimestamp).toLocaleString()
-    );
-
-    return doseRateArray;
   };
+  
+  // Calculate end time by adding 10 minutes to start time (in 12-hour format)
+  const calculateEndTime = (startTimeStr: string | undefined): string => {
+    if (!startTimeStr) return "-";
+    
+    try {
+      
+      // Parse the 12-hour format time (e.g., "10:25 PM")
+      const timeRegex = /^(\d{1,2}):(\d{2})\s?(AM|PM)$/i;
+      const match = startTimeStr.match(timeRegex);
+      
+      if (!match) {
+        console.error('Start time is not in expected format:', startTimeStr);
+        return "-";
+      }
+      
+      let hours = parseInt(match[1], 10);
+      const minutes = parseInt(match[2], 10);
+      const period = match[3].toUpperCase();
+      
+      // Convert to 24-hour format
+      if (period === 'PM' && hours < 12) {
+        hours += 12;
+      } else if (period === 'AM' && hours === 12) {
+        hours = 0;
+      }
+      
+      // Create date objects for calculation
+      const now = new Date();
+      const startDate = new Date();
+      startDate.setHours(hours, minutes, 0, 0);
+      
+      // Add 10 minutes to start time
+      const endDate = new Date(startDate);
+      endDate.setMinutes(endDate.getMinutes() + 10);
+      
+      // If end time exceeds current time, use current time
+      const finalEndDate = endDate > now ? now : endDate;
+      
+      // Format back to 12-hour format
+      let endHours = finalEndDate.getHours();
+      const endMinutes = finalEndDate.getMinutes();
+      const endPeriod = endHours >= 12 ? 'PM' : 'AM';
+      
+      // Convert hours back to 12-hour format
+      endHours = endHours % 12 || 12;
+      
+      return `${endHours}:${endMinutes.toString().padStart(2, '0')} ${endPeriod}`;
+    } catch (error) {
+      console.error('Error calculating end time:', error);
+      return "-";
+    }
+  };
+  
+  // Calculate end time when start time changes
+  useEffect(() => {
+    if (startTime) {
+      const calculatedEndTime = calculateEndTime(startTime);
+      setEndTime(calculatedEndTime);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchDoseRateArray = async () => {
+    const fetchDoseRateData = async () => {
       if (date && startTime) {
-        const data = await getDoseRateArray(date, startTime);
-        const graphArray = data.map((item) => item._raw);
-        setDoseRateGraphArray(graphArray);
-        setDoseRateValues(graphArray.map((item) => item.doserate));
-        setTimeLabels(graphArray.map((item) => item.createdAt));
+        try {
+          setIsLoading(true);
+          setError(null);
+          
+          console.log("Fetching data for date:", date, "startTime:", startTime);
+          
+          // Fetch dose rate data for the selected date and time
+          const data = await getDoseRateDataByDateTime(date, startTime, 10);
+          console.log("Raw data received:", data);
+          console.log("Data length:", data.length);
+          
+          if (data.length === 0) {
+            console.warn("No data found for the selected date and time");
+            setError('No dose rate data found for the selected date and time.');
+          } else {
+            // Log a sample data point to verify format
+            if (data.length > 0) {
+              console.log("Sample data point:", JSON.stringify(data[0]));
+              console.log("Sample time_stamp format:", data[0].time_stamp);
+            }
+            
+            setDoseRateData(data);
+            
+            // Extract dose rate values and format time labels for the chart
+            setDoseRateValues(data.map(item => item.doseRate));
+            setTimeLabels(data.map(item => formatTimeLabel(item.time_stamp)));
+            
+            // Format data for Victory Native CartesianChart
+            const chartData = data.map((item, index) => {
+              // Parse the timestamp from the format "YYYY-MM-DD HH:mm:ss" (local time)
+              try {
+                if (!item.time_stamp) {
+                  console.warn("Missing time_stamp in data point at index", index);
+                  return null;
+                }
+                
+                const [datePart, timePart] = item.time_stamp.split(' ');
+                if (!datePart || !timePart) {
+                  console.warn("Invalid time_stamp format at index", index, item.time_stamp);
+                  return null;
+                }
+                
+                const [year, month, day] = datePart.split('-').map(Number);
+                const [hours, minutes, seconds] = timePart.split(':').map(Number);
+                
+                // Create a date object in local time
+                const timestamp = new Date(year, month - 1, day, hours, minutes, seconds).getTime();
+                
+                if (isNaN(timestamp)) {
+                  console.warn("Invalid timestamp created at index", index, item.time_stamp);
+                  return null;
+                }
+                
+                return {
+                  timestamp,
+                  doseRate: item.doseRate
+                };
+              } catch (error) {
+                console.warn('Error parsing timestamp:', item.time_stamp, error);
+                return null;
+              }
+            })
+            .filter(item => item !== null && item.timestamp > 0); // Filter out invalid timestamps
+            
+            console.log("Formatted chart data:", chartData);
+            console.log("Chart data length:", chartData.length);
+            
+            if (chartData.length === 0) {
+              console.warn("No valid data points after formatting");
+              setError('Could not process the dose rate data. Invalid timestamp format.');
+            } else {
+              setFormattedData(chartData.filter((item): item is { timestamp: number; doseRate: number } => item !== null));
+            console.log("Formatted data for chart:", formattedData);
+            
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching dose rate data:', err);
+          setError('Failed to load dose rate data. Please try again.');
+        } finally {
+          setIsLoading(false);
+        }
       }
     };
-    fetchDoseRateArray();
+    
+    fetchDoseRateData();
   }, [date, startTime]);
 
   //get the latest 10 values
@@ -163,7 +279,7 @@ export default function DoseHistoryView({
       {/* Date Selection */}
       <View style={styles.card}>
         <View style={styles.dateContainer}>
-          <Text style={TYPOGRAPHY.TitleMedium}>Select Date</Text>
+          <Text style={TYPOGRAPHY.TitleMedium}>Select Another Date</Text>
           <View style={styles.dateValue}>
             <Text style={styles.dateText}>
               {startTime} - {date}
@@ -179,54 +295,78 @@ export default function DoseHistoryView({
       </View>
 
       {/* Dose Rate Graph */}
-
-      {doseRateValues.length > 0 && timeLabels.length > 0 ? (
-        <View>
-          <LineChart
-            data={{
-              labels: timeLabels,
-              datasets: [
-                {
-                  data: doseRateValues,
-                },
-              ],
-            }}
-            width={Dimensions.get("window").width - 60}
-            height={220}
-            yAxisLabel=""
-            yAxisSuffix=""
-            yAxisInterval={1}
-            chartConfig={{
-              backgroundColor: "#ffffff",
-              backgroundGradientFrom: "#ffffff",
-              backgroundGradientTo: "#ffffff",
-              decimalPlaces: 2,
-              color: (opacity = 1) => `rgba(14, 23, 37, ${opacity})`,
-              labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-              style: {
-                borderRadius: 16,
-              },
-              propsForDots: {
-                r: "6",
-                strokeWidth: "2",
-                stroke: "#ffa726",
-              },
-            }}
-            bezier
-            style={{
-              marginVertical: 0,
-              borderRadius: 10,
-            }}
-          />
-        </View>
-      ) : (
-        <View style={CARD_STYLE.container}>
-          <Text style={TYPOGRAPHY.smallText} >No data on selected Date And Time</Text>
-        </View>
-      )}
+      
 
       {/* Graph Parameters */}
       <View style={CARD_STYLE.container}>
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>Loading dose rate data...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
+      ) : formattedData.length > 0 ? (
+        <View style={styles.graphContainer}>
+          <View style={{ height: 300, width: '100%' }}>
+            <CartesianChart
+              data={formattedData}
+              xKey="timestamp"
+              yKeys={["doseRate"]}
+              axisOptions={{ 
+                font,
+                lineWidth: 1,
+                lineColor: "#CCCCCC",
+                labelColor: "#333333",
+              }}
+              padding={{ top: 15, bottom: 10, left: 10, right: 10 }}
+              transformState={transformState}
+              transformConfig={{
+                pan: { enabled: true, dimensions: ["x"] },
+                pinch: { enabled: true, dimensions: ["x"] },
+              }}
+              xAxis={{
+                formatXLabel: (label: number) => {
+                  const date = new Date(label);
+                  return date.toLocaleTimeString('en-US', { 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    hour12: true 
+                  });
+                },
+                font,
+                labelRotate: 45,
+                tickCount: 5, // Limit the number of ticks for better readability
+              }}
+              // Y-axis will use default formatting
+            >
+              {({ points, chartBounds }) => (
+                <>
+                  <Area
+                    points={points.doseRate}
+                    y0={chartBounds.bottom}
+                    color="rgba(30, 136, 229, 0.2)" // Light blue with transparency
+                    curveType="natural"
+                  />
+                  <Line 
+                    points={points.doseRate} 
+                    color="#1E88E5" 
+                    strokeWidth={2}
+                    curveType="natural" // Smooths the line
+                  />
+                </>
+              )}
+            </CartesianChart>
+          </View>
+        </View>
+      ) : (
+        <View style={styles.noDataContainer}>
+          <Text style={styles.noDataText}>No data available for this time.</Text>
+        </View>
+      )}
+      <Divider style={styles.divider} />
         <Text  style={TYPOGRAPHY.headLineSmall}>
           Graph Parameters
         </Text>
@@ -237,7 +377,10 @@ export default function DoseHistoryView({
             {startTime ? startTime.toLocaleString() : "-"}
           </Text>
         </View>
-
+        <View style={styles.paramRow}>
+          <Text style={TYPOGRAPHY.TitleMedium}>End Time</Text>
+          <Text style={TYPOGRAPHY.TitleMedium}>{endTime || "-"}</Text>
+        </View>
         <View style={styles.paramRow}>
           <Text style={TYPOGRAPHY.TitleMedium}>Date</Text>
           <Text style={TYPOGRAPHY.TitleMedium}>
@@ -247,10 +390,7 @@ export default function DoseHistoryView({
 
        
         
-        <View style={styles.paramRow}>
-          <Text style={TYPOGRAPHY.TitleMedium}>End Time</Text>
-          {/* <Text style={styles.paramValue}>{endTime}</Text> */}
-        </View>
+       
       </View>
     </ScrollView>
   );
@@ -283,7 +423,7 @@ const styles = StyleSheet.create({
     width: 48,
   },
   card: {
-    marginHorizontal: 8,
+    // marginHorizontal: 8,
     marginVertical: 8,
     borderRadius: 12,
   },
@@ -325,16 +465,46 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     borderRadius: 16,
   },
-  graphSubtitle: {
+  loadingText: {
     textAlign: "center",
-    fontSize: 12,
-    color: "#666",
     marginTop: 8,
+    color: COLORS.text,
+  },
+  loadingContainer: {
+    padding: SPACING.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  errorContainer: {
+    padding: SPACING.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f5f5f5', // Light grey color
+    borderRadius: 8,
+    marginHorizontal: SPACING.md,
+  },
+  errorText: {
+    color: COLORS.error,
+    ...TYPOGRAPHY.bodyTextMedium,
+    textAlign: 'center'
+  },
+  noDataContainer: {
+    padding: SPACING.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f5f5f5', // Light grey color
+    borderRadius: 8,
+    marginHorizontal: SPACING.md,
+  },
+  noDataText: {
+    color: COLORS.text,
+    ...TYPOGRAPHY.bodyTextMedium,
+    textAlign: 'center'
   },
   paramRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 12,
+    paddingVertical: SPACING.xs,
   },
   paramLabel: {
     fontSize: 16,
@@ -347,6 +517,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     backgroundColor: "#E5E5E5",
+    marginVertical: SPACING.md,
   },
   chartPlaceholder: {
     height: 250,
