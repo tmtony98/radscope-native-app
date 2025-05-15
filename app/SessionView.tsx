@@ -154,7 +154,7 @@ const SessionView = () => {
         await Share.open(options);
       } catch (error) {
         console.log('Error sharing file:', error);
-        Alert.alert('Error', 'Failed to share file');
+        // Alert.alert('Error', 'Failed to share file');
       }
     };
     
@@ -163,6 +163,8 @@ const SessionView = () => {
       <View style={[CARD_STYLE.containerList, { marginVertical: SPACING.xs, marginHorizontal: SPACING.xs}]}>
         <View style={styles.detailsContainer}>
           <View style={styles.mainText}>
+            <Text style={[TYPOGRAPHY.smallText, ]}>
+              Session Name</Text>
             <Text style={[TYPOGRAPHY.TitleLarge, styles.detailText]}>
               {sessionName}
             </Text>
