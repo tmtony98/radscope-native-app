@@ -141,7 +141,7 @@ const SessionView = () => {
     const [sessionName, files] = item;
     const firstFile = files[0]; // Use the first file for display info
     const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-    const formattedSize = (totalSize / 1024).toFixed(1) + " MB";
+    const formattedSize = (totalSize / 1024).toFixed(1) + " KB";
     
     // Share file function
     const shareFile = async (filePath: string) => {
@@ -163,12 +163,14 @@ const SessionView = () => {
       <View style={[CARD_STYLE.containerList, { marginVertical: SPACING.xs, marginHorizontal: SPACING.xs}]}>
         <View style={styles.detailsContainer}>
           <View style={styles.mainText}>
-            <Text style={[TYPOGRAPHY.smallText, ]}>
-              Session Name</Text>
+      
             <Text style={[TYPOGRAPHY.TitleLarge, styles.detailText]}>
               {sessionName}
             </Text>
-            <Text style={[TYPOGRAPHY.bodyTextMedium, styles.detailText]}>
+            {/* <Text style={[TYPOGRAPHY.smallText ]}>
+              File Size
+            </Text> */}
+            <Text style={[TYPOGRAPHY.smallText ]}>
               {formattedSize}
             </Text>
           </View>
