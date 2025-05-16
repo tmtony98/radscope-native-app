@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Platform, Pressable, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import ScanningAnimation from '../ScanningAnimation';
 import Zeroconf, { ImplType, Service } from 'react-native-zeroconf';
 import Button from '../Button';
 import { useRouter } from 'expo-router';
 import { z } from 'zod';
 import { COLORS , TYPOGRAPHY , BUTTON_STYLE } from '@/Themes/theme';
-
+import RippleLoader from '../common/RippleLoader';
 
 const zeroconf = new Zeroconf();
 const ip = z.string().ip();
@@ -216,7 +217,7 @@ const DeviceScanner = ({ connectDevice }) => {
 
 
   return (
-    <View style={{ flex: 1, padding: 20, backgroundColor: COLORS.background }}>
+    <View style={styles.container}>
       <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10 }}>
         {
           isRefreshing ? (
@@ -249,69 +250,57 @@ const DeviceScanner = ({ connectDevice }) => {
           )}
         </View>
       ) : (
-        <>
+        <View style={styles.contentContainer}>
           {/* Always show the loader when refreshing/scanning */}
           {isRefreshing && (
             <View style={styles.loaderContainer}>
-              <ActivityIndicator size="large" color="#007AFF" />
-              <Text style={styles.refreshingText}>Scanning for new devices...</Text>
+              <ScanningAnimation size={120} color={COLORS.primary} />
+              {/* <RippleLoader size={75} color={COLORS.primary} /> */}
+              {/* <Text style={{ marginTop: 12, color: COLORS.textSecondary }}>
+                Scanning for new devices...
+              </Text> */}
             </View>
           )}
           
-          {/* Always show discovered devices section */}
-          <View style={styles.devicesContainer}>
-            {isRefreshing ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-                <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Scanning </Text>
-                {/* <ActivityIndicator size="small" color="#007AFF" /> */}
+          {/* Header for devices section */}
+          {!isRefreshing && (
+            <Text style={styles.sectionHeader}>
+              Available Devices
+            </Text>
+          )}
+          
+          {/* Use FlatList as the main scrollable container */}
+          <FlatList
+            data={Platform.OS === 'web' ? mockServices : services}
+            keyExtractor={(item, index) => `${item.name || 'Unknown'}-${index}`}
+            renderItem={({ item }) => (
+              <View style={styles.deviceItem}>
+                <View style={{ flex: 0.7 }}>
+                  <Text style={styles.deviceName}>{item.name || 'Unknown'}</Text>
+                  <Text>Type: {item.type || 'N/A'}</Text>
+                  <Text>Host: {item.host || 'N/A'}</Text>
+                  <Text>Port: {item.port || 'N/A'}</Text>
+                </View>
+                <View style={styles.buttonContainer}>
+                  <Button
+                    title="Connect"
+                    onPress={() => handleConnect(item)}
+                  />
+                </View>
               </View>
-            ) : (
-              <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 10 }}>
-                Available Devices
+            )}
+            ListEmptyComponent={() => (
+              <Text style={styles.emptyListText}>
+                {isScanning ? '' : 'No devices found'}
               </Text>
             )}
-            
-            <FlatList
-              data={Platform.OS === 'web' ? mockServices : services}
-              keyExtractor={(item, index) => `${item.name || 'Unknown'}-${index}`}
-              renderItem={({ item }) => (
-                <View style={{
-                  padding: 14,
-                  marginVertical: 5,
-                  backgroundColor: '#ffffff',
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: '#BDC5D1',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}>
-                  <View style={{ flex: 0.7 }}>
-                    <Text style={{ 
-                      fontWeight: 'bold',
-                      flexWrap: 'wrap',
-                      width: '100%'
-                    }}>{item.name || 'Unknown'}</Text>
-                    <Text>Type: {item.type || 'N/A'}</Text>
-                    <Text>Host: {item.host || 'N/A'}</Text>
-                    <Text>Port: {item.port || 'N/A'}</Text>
-                  </View>
-                  <View style={styles.buttonContainer}>
-                    <Button
-                      title="Connect"
-                      onPress={() => handleConnect(item)}
-                    />
-                  </View>
-                </View>
-              )}
-              ListEmptyComponent={() => (
-                <Text style={{ textAlign: 'center', marginTop: 20, color: '#666' }}>
-                  {isScanning ? 'Searching for services...' : 'No devices found'}
-                </Text>
-              )}
-            />
-          </View>
-        </>
+            ListHeaderComponent={() => (
+              <View style={{ marginBottom: isRefreshing ? 0 : 10 }} />
+            )}
+            contentContainerStyle={styles.flatListContent}
+            style={styles.flatList}
+          />
+        </View>
       )}
     </View>
   );
@@ -323,23 +312,53 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+    padding: 20,
+  },
+  contentContainer: {
+    flex: 1,
+  },
+  flatList: {
+    flex: 1,
+  },
+  flatListContent: {
+    flexGrow: 1,
+    paddingBottom: 20,
+  },
+  deviceItem: {
+    padding: 14,
+    marginVertical: 5,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#BDC5D1',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  deviceName: {
+    fontWeight: 'bold',
+    flexWrap: 'wrap',
+    width: '100%'
+  },
+  sectionHeader: {
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    marginBottom: 10
+  },
+  emptyListText: {
+    textAlign: 'center', 
+    marginTop: 20, 
+    color: '#666'
   },
   buttonContainer: {
     marginTop: 10,
   },
   loaderContainer: {
-    padding: 20,
+    paddingVertical: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f8f9fa',
     borderRadius: 8,
     marginBottom: 20,
-  },
-  refreshingText: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginTop: 10,
-    color: '#333',
   },
   devicesContainer: {
     flex: 1,

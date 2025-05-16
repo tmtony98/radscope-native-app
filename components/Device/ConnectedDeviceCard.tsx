@@ -61,7 +61,7 @@ const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({
       // Navigate after 1 second
       const navigationTimer = setTimeout(() => {
         router.push('/');
-      }, 800);
+      }, 500);
 
       // Cleanup timer on unmount
       return () => clearTimeout(navigationTimer);
@@ -119,16 +119,16 @@ const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({
 
             <View style={styles.btnRow}>
               <TouchableOpacity
-                style={styles.disconnectBtn}
+                style={[styles.buttonCommon, styles.buttonBase, styles.disconnectBtn]}
                 onPress={handleDisconnect}
               >
-                <Text style={styles.disconnectText}>Disconnect</Text>
+                <Text style={styles.buttonText}>Disconnect</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={BUTTON_STYLE.mediumButtonWithIconLeft}
+                style={[styles.buttonCommon, styles.buttonBase, styles.dashboardBtn]}
                 onPress={handleViewDashboard}
               >
-                <Text style={styles.viewDashboardText}>View Dashboard</Text>
+                <Text style={styles.buttonText}>Dashboard</Text>
                 <MaterialIcons
                   name="chevron-right"
                   size={20}
@@ -144,18 +144,21 @@ const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({
 };
 
 const styles = StyleSheet.create({
-  disconnectBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.error,
+  buttonCommon: {
     paddingVertical: 12,
-    paddingLeft: 16, // 24px padding left
-    paddingRight: 16, // 30px padding right
-    borderRadius: 10,
-    borderStyle: "solid",
+    paddingHorizontal: 16,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
   },
-  disconnectText: {
+  disconnectBtn: {
+    backgroundColor: COLORS.error,
+  },
+  dashboardBtn: {
+    backgroundColor: COLORS.primary,
+  },
+  buttonText: {
     color: COLORS.white,
     fontFamily: "Poppins-Medium",
     fontWeight: "600",
@@ -165,6 +168,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    gap: SPACING.sm,
+  },
+  buttonBase: {
+    flex: 1,
+    minWidth: '48%',
   },
   container: {
     marginHorizontal: SPACING.md,
@@ -238,20 +246,7 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-Regular",
   },
 
-  viewDashboardButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.primary,
-    paddingVertical: SPACING.md,
-    borderRadius: 12,
-  },
-  viewDashboardText: {
-    color: COLORS.white,
-    fontFamily: "Poppins-Medium",
-    fontSize: 16,
-    marginRight: SPACING.xs,
-  },
+
 });
 
 export default ConnectedDeviceCard;

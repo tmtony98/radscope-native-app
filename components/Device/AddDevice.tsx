@@ -83,14 +83,17 @@ const AddDevice: React.FC<AddDeviceProps> = ({ connectDevice }) => {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={[TYPOGRAPHY.headLineSmall, {textAlign: 'center' ,paddingVertical: SPACING.sm}]}>Connect Device</Text>
+    <ScrollView 
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+      showsVerticalScrollIndicator={true}
+    >
+      <Text style={[TYPOGRAPHY.headLineSmall, {textAlign: 'center', paddingVertical: SPACING.sm}]}>Connect Device</Text>
       <Text style={styles.instructions}>
         Find the IP address of the device to be connected by heading over to settings {'>'} network {'>'} Device Ip adress
       </Text>
 
       <View style={styles.inputContainer}>
-        {/* <Text style={styles.inputLabel}>Enter device name</Text> */}
         <StyledTextInput
           label="Enter Device Name"
           placeholder="Enter Device name"
@@ -100,7 +103,6 @@ const AddDevice: React.FC<AddDeviceProps> = ({ connectDevice }) => {
         /> 
       </View>
       <View style={styles.inputContainer}>
-        {/* <Text style={styles.inputLabel}>Enter IP address</Text> */}
         <StyledTextInput
           label="Enter IP Address"
           placeholder="Enter IP Address"
@@ -125,7 +127,7 @@ const AddDevice: React.FC<AddDeviceProps> = ({ connectDevice }) => {
           // disabled={isConnecting}
         >
           <Text style={styles.connectButtonText}>
-            {isConnecting ? 'Connecting...' : 'Connect'}
+            Connect
           </Text>
         </TouchableOpacity>
       </View>
@@ -138,6 +140,9 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: SPACING.md,
     backgroundColor: COLORS.background,
+  },
+  contentContainer: {
+    paddingBottom: 80, // Add extra padding at the bottom to ensure content is visible above bottom nav
   },
   title: {
     ...TYPOGRAPHY.headLineMedium,
@@ -168,6 +173,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     marginTop: SPACING.md,
+    marginBottom: SPACING.lg, // Add extra margin at the bottom
   },
   cancelButton: {
     ...BUTTON_STYLE.mediumButton,
@@ -176,15 +182,21 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.error,
   },
   cancelButtonText: {
-    ...BUTTON_STYLE.mediumButtonText,
     color: COLORS.white,
+      fontFamily: 'Poppins-Medium',
+      fontSize: 16,
+      marginLeft: SPACING.sm,
   },
   connectButton: {
     ...BUTTON_STYLE.mediumButton,
     flex: 1,
   },
   connectButtonText: {
-    ...BUTTON_STYLE.mediumButtonText,
+   
+      color: COLORS.white,
+      fontFamily: 'Poppins-Medium',
+      fontSize: 16,
+      marginLeft: SPACING.sm,
   },
 });
 

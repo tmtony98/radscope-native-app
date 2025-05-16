@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated } from "react-native";
 import React, { useCallback, useState, useRef, useEffect } from "react";
 import {
   CARD_STYLE,
@@ -13,6 +13,7 @@ import database from "@/index.native";
 import Sessions from "@/model/Sessions";
 import { red } from "react-native-reanimated/lib/typescript/Colors";
 import { router } from "expo-router";
+import Toast from 'react-native-toast-message';
 
 type SessionLoggingCardProps = {
   onDownload?: () => void;
@@ -41,6 +42,7 @@ export const SessionLoggingCard = ({
   const [displayTimeInterval, setDisplayTimeInterval] = useState(timeInterval);
   const [isTimeLimitSliding, setIsTimeLimitSliding] = useState(false);
   const [isTimeIntervalSliding, setIsTimeIntervalSliding] = useState(false);
+  const pulseAnimation = useRef(new Animated.Value(1)).current;
   const timeLimitRef = useRef(timeLimit);
   const timeIntervalRef = useRef(timeInterval);
 
@@ -50,6 +52,44 @@ export const SessionLoggingCard = ({
     setDisplayTimeLimit(timeLimit);
     setDisplayTimeInterval(timeInterval);
   }, [timeLimit, timeInterval]);
+
+  useEffect(() => {
+    let pulseSequence: Animated.CompositeAnimation | undefined;
+    
+    if (isLogging) {
+      pulseSequence = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnimation, {
+            toValue: 1.2,
+            duration: 800,
+            useNativeDriver: true
+          }),
+          Animated.timing(pulseAnimation, {
+            toValue: 0.9,
+            duration: 800,
+            useNativeDriver: true
+          })
+        ])
+      );
+      
+      pulseSequence.start();
+      Toast.show({
+        type: 'success',
+        text1: 'Session Started',
+        text2: 'Your logging session has begun',
+        position: 'bottom',
+        visibilityTime: 3000
+      });
+    } else {
+      pulseAnimation.setValue(1);
+    }
+    
+    return () => {
+      if (pulseSequence) {
+        pulseSequence.stop();
+      }
+    };
+  }, [isLogging, pulseAnimation]);
 
   const handleTimeLimitSliding = useCallback((value: number) => {
     timeLimitRef.current = value;
@@ -81,14 +121,41 @@ export const SessionLoggingCard = ({
     try {
       console.log("Session stopped successfully.");
       onStopSuccess();
+      Toast.show({
+        type: 'success',
+        text1: 'Session Stopped',
+        text2: 'Your logging session has been stopped successfully',
+        position: 'bottom',
+        visibilityTime: 3000
+      });
     } catch (error) {
       console.error("Failed to stop session:", error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to stop session',
+        position: 'bottom',
+        visibilityTime: 3000
+      });
     }
-  }, [activeSessionId, onStopSuccess]);
-
+  }, [onStopSuccess]);
+  
   return (
     <View style={CARD_STYLE.container}>
-      <Text style={[TYPOGRAPHY.headLineSmall, { marginBottom: 16 }]}>Session Logging</Text>
+      <View style={styles.headerContainer}>
+        <Text style={[TYPOGRAPHY.headLineSmall, { marginBottom: 16 }]}>Session Logging</Text>
+        {isLogging && (
+          <View style={styles.loggingIndicatorContainer}>
+            <Animated.View 
+              style={[
+                styles.pulseCircle,
+                { transform: [{ scale: pulseAnimation }] }
+              ]}
+            />
+            <Text style={styles.loggingText}>Recording...</Text>
+          </View>
+        )}
+      </View>
       <View style={styles.sliderContainer}>
         <Text style={[TYPOGRAPHY.bodyTextLarge, { textAlign: "left" }]}>
           Logging Time Limit (hrs): {displayTimeLimit}
@@ -179,7 +246,7 @@ export const SessionLoggingCard = ({
             ]}
             onPress={handleStopSession}
           >
-            <MaterialIcons name="play-arrow" size={24} color={COLORS.white} />
+            <MaterialIcons name="stop" size={24} color={COLORS.white} />
             <Text style={styles.startButtonText}>Stop</Text>
           </TouchableOpacity>
         ) : (
@@ -197,6 +264,33 @@ export const SessionLoggingCard = ({
 };
 
 const styles = StyleSheet.create({
+  headerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+  },
+  loggingIndicatorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255, 0, 0, 0.1)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: -12,
+  },
+  pulseCircle: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "red",
+    marginRight: 6,
+  },
+  loggingText: {
+    fontSize: 12,
+    color: "red",
+    fontFamily: "Poppins-Medium",
+  },
   sliderContainer: {
     marginVertical: SPACING.sm,
   },

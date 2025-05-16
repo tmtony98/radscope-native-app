@@ -109,8 +109,8 @@ export const BUTTON_STYLE = StyleSheet.create({
     backgroundColor: COLORS.buttonPrimary,
     paddingVertical: 10,
     paddingLeft: 25, // 25px padding left
-    paddingRight: 25, // 25px padding right
-    borderRadius: 12,
+    paddingRight: 20, // 25px padding right
+    borderRadius: 9,
     // height: 49,
     alignItems: 'center',
     justifyContent: 'center',

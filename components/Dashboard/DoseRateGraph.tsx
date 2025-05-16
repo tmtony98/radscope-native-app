@@ -90,20 +90,6 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
         </View>
       </View>
 
-      {/* <View style={{ height: 300 }}>
-      <CartesianChart
-       chartPressState={state}
-        data={doseRateGraphArray}
-        xKey="timestamp"
-        yKeys={["doseRate"]}
-        // 👇 pass the font, opting in to axes.
-        // axisOptions={{ font }}
-      >
-        {({ points }) => (
-          <Line points={points.doseRate} color="red" strokeWidth={3} />
-        )}
-      </CartesianChart>
-    </View> */}
     <View style={{ height: 300, width: '100%', }}>
       <CartesianChart
         data={limitedData}
@@ -114,9 +100,8 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
           lineWidth: 1,
           lineColor: "#CCCCCC",
           labelColor: "#333333",
-          formatYLabel: (value: number) => value.toFixed(2) // Format with 2 decimal places
+          formatYLabel: (value: number) => value.toFixed(2)
         }}
-        // padding={{ top: 40, bottom: 40, left: 50, right: 20 }}
         domain={{ y: [yDomain.min, yDomain.max] }}
         transformState={transformState}
         transformConfig={{
@@ -126,16 +111,17 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
         xAxis={{
           formatXLabel: (label: number) => {
             const date = new Date(label);
+            // 24-hour format, no AM/PM
             return date.toLocaleTimeString('en-US', { 
               hour: '2-digit', 
               minute: '2-digit',
               second: '2-digit',
-              hour12: true 
+              hour12: false
             });
           },
           font,
           labelRotate: 45,
-          tickCount: 5, // Limit the number of ticks for better readability
+          tickCount: 5,
         }}
       >
         {({ points, chartBounds }) => (
@@ -143,7 +129,7 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
             <Area
               points={points.doseRate}
               y0={chartBounds.bottom}
-              color="rgba(30, 136, 229, 0.2)" // Light blue with transparency (matching line color)
+              color="rgba(30, 136, 229, 0.2)"
               curveType="natural"
               opacity={0.6}
             />
@@ -151,13 +137,27 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
               points={points.doseRate} 
               color="#1E88E5" 
               strokeWidth={2.5}
-              curveType="natural" // Smooths the line
+              curveType="natural"
             />
           </>
         )}
       </CartesianChart>
     </View>
 
+    {/* Add the label just below the graph */}
+    <Text
+      style={{
+        textAlign: 'center',
+        marginTop: 8,
+        marginBottom: 4,
+        color: COLORS.textSecondary,
+        fontSize: 14,
+        fontWeight: '500',
+        letterSpacing: 0.2,
+      }}
+    >
+      Dose Rate (uSv/h) vs Time (HH:MM:SS)
+    </Text>
      
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={BUTTON_STYLE.mediumButtonWithIconLeft} onPress={handleGetHistory}>

@@ -231,10 +231,7 @@ const SessionView = () => {
 
   // Create a header component for the FlatList that includes the search and date filter
   const renderListHeader = () => (
-    <>
-      
-       
-      
+    <> 
       {/* Date Filter Section */}
       <View style={[CARD_STYLE.container, {  marginTop: SPACING.md, marginBottom: SPACING.sm }]}>
         <Text style={[TYPOGRAPHY.TitleLarge, { marginBottom: SPACING.md }]}>Filter by Date Range</Text>

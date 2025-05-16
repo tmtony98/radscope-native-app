@@ -1,4 +1,5 @@
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, ScrollView } from 'react-native';
+import Toast from 'react-native-toast-message';
 import React, { useState, useEffect } from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
 import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY , BUTTON_STYLE } from '../../Themes/theme';
@@ -35,8 +36,26 @@ console.log('generalSettings', generalSettings);
       const res = await storeGeneralSettings(generalSettings);
       console.log('Settings saved successfully:', res);
       setHasChanges(false);
+      
+      // Show success toast
+      Toast.show({
+        type: 'success',
+        text1: 'Settings Saved',
+        text2: 'Your general settings have been saved successfully',
+        position: 'bottom',
+        visibilityTime: 3000
+      });
     } catch (error) {
       console.error('Error saving settings:', error);
+      
+      // Show error toast
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to save settings',
+        position: 'bottom',
+        visibilityTime: 3000
+      });
     }
   };
 
@@ -102,6 +121,8 @@ console.log('generalSettings', generalSettings);
     }));
     setHasChanges(true);
   };
+
+
 
   return (
     <View style={{flex:1}}>
@@ -218,8 +239,8 @@ const styles = StyleSheet.create({
   },
   cancelBtn:{
     backgroundColor: COLORS.error,
-    paddingVertical: 14,
-    borderRadius: 8,
+    paddingVertical: 12,
+    borderRadius: 10,
     alignItems: 'center',
     marginTop: SPACING.md,
     marginBottom: SPACING.md,
@@ -273,8 +294,8 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     backgroundColor: COLORS.primary,
-    paddingVertical: 14,
-    borderRadius: 8,
+    paddingVertical: 12,
+    borderRadius: 10,
     alignItems: 'center',
     marginLeft: SPACING.sm,
     marginBottom: SPACING.md,
