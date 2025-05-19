@@ -265,7 +265,7 @@ export const TYPOGRAPHY = StyleSheet.create({
     color: COLORS.text,
   },
   bodyTextMedium: {
-   fontWeight:600  ,
+    fontWeight:500  ,
     fontSize: 14,
     lineHeight: 22,
     textAlign: 'center',

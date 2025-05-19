@@ -22,13 +22,23 @@ import {
 } from "@/Themes/theme"; // Import theme styles
 import { useMqttContext } from "@/Provider/MqttContext";
 import StyledTextInput from "@/components/common/StyledTextInput";
-import DateTimePicker from '@react-native-community/datetimepicker';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { Platform } from 'react-native';
-import { getSessionFilesByDateRange, readSessionFile, groupSessionFilesByName, SessionFile } from "../utils/SessionFileUtils";
-import Share from 'react-native-share';
+import DateTimePicker from "@react-native-community/datetimepicker";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { Platform } from "react-native";
+import {
+  getSessionFilesByDateRange,
+  readSessionFile,
+  groupSessionFilesByName,
+  SessionFile,
+} from "../utils/SessionFileUtils";
+import Share from "react-native-share";
 import Header from "@/components/Header";
+import Button from "@/components/Button";
+import FileViewer from "react-native-file-viewer";
+import Toast from "react-native-toast-message";
+import { text } from "@nozbe/watermelondb/decorators";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const SessionView = () => {
   const [searchText, setSearchText] = useState("");
@@ -49,6 +59,8 @@ const SessionView = () => {
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
   const [isFilterActive, setIsFilterActive] = useState(false);
+
+  const insets = useSafeAreaInsets();
 
   // Load session files based on current date range
   const loadSessionFiles = async () => {
@@ -82,7 +94,7 @@ const SessionView = () => {
     // Clear the session files and grouped sessions instead of loading new ones
     setSessionFiles([]);
     setGroupedSessions({});
-    setSearchText('');
+    setSearchText("");
     loadSessionFiles();
   };
 
@@ -104,7 +116,7 @@ const SessionView = () => {
     setShowEndDatePicker(false); // Always hide picker after selection
     
     if (selectedDate) {
-      setDateRange(prev => ({
+      setDateRange((prev) => ({
         ...prev,
         endDate: selectedDate
       }));
@@ -121,20 +133,33 @@ const SessionView = () => {
   const handleViewDetails = async (sessionFile: SessionFile) => {
     try {
       setIsLoading(true);
-      const sessionData = await readSessionFile(sessionFile.path);
-      console.log("Session data:", sessionData);
-      
-      // Set the data and show the modal
-      setCurrentSessionData(sessionData);
-      setCurrentSessionName(sessionFile.name.replace('.jsonl', ''));
-      setModalVisible(true);
+
+      // Open the file with the device's default app instead of reading it in-app
+      await FileViewer.open(sessionFile.path, {
+        showOpenWithDialog: true, // Show the "Open with" dialog on Android
+        showAppsSuggestions: true, // Show app suggestions on iOS
+      });
+
+      console.log("Opening file in external viewer:", sessionFile.path);
+
+      // We're not using the modal anymore, so no need to update related state
     } catch (error) {
-      console.error("Error reading session file:", error);
-      Alert.alert("Error", "Failed to read session file");
+      console.log(
+        "Error opening session file, maybe jsonl its unsupported in certan devices:",
+        error
+      );
+      Toast.show( { 
+        type:"error",
+        text1: "Failed to open",
+        text2:"The file may be too large or in an unsupported format",
+       
+         position: "bottom", visibilityTime: 3000 });
+      // Alert.alert("Error", "Failed to open session file. The file may be too large or in an unsupported format.");
     } finally {
       setIsLoading(false);
     }
   };
+
 
   // Render a session group (all files for a single session name)
   const renderSessionGroup = ({ item }: { item: [string, SessionFile[]] }) => {
@@ -157,97 +182,99 @@ const SessionView = () => {
         // Alert.alert('Error', 'Failed to share file');
       }
     };
-    
+
     return (
-     <>
-      <View style={[CARD_STYLE.containerList, { marginVertical: SPACING.xs, marginHorizontal: SPACING.xs}]}>
-        <View style={styles.detailsContainer}>
-          <View style={styles.mainText}>
-      
-            <Text style={[TYPOGRAPHY.TitleLarge, styles.detailText]}>
-              {sessionName}
-            </Text>
-            {/* <Text style={[TYPOGRAPHY.smallText ]}>
+      <>
+        <View
+          style={[
+            CARD_STYLE.containerList,
+            { marginVertical: SPACING.xs, marginHorizontal: SPACING.xs },
+          ]}
+        >
+          <View style={styles.detailsContainer}>
+            <View style={styles.mainText}>
+              <Text style={[TYPOGRAPHY.TitleLarge, styles.detailText]}>
+                {sessionName}
+              </Text>
+              {/* <Text style={[TYPOGRAPHY.smallText ]}>
               File Size
             </Text> */}
-            <Text style={[TYPOGRAPHY.smallText ]}>
-              {formattedSize}
-            </Text>
-          </View>
-          <View style={styles.timings}>
-            <View style={styles.detail}>
-              <Text style={styles.detailText}>
-                {firstFile.date.toLocaleDateString()}
-              </Text>
-              
+              <Text style={[TYPOGRAPHY.smallText]}>{formattedSize}</Text>
+            </View>
+            <View style={styles.timings}>
+              <View style={styles.detail}>
+                <Text style={styles.detailText}>
+                  {firstFile.date.toLocaleDateString()}
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.downloadButton]}
-            onPress={() => shareFile(firstFile.path)}
-          >
-            <MaterialIcons name="download" size={16} color={COLORS.primary} style={styles.buttonIcon} />
-            <Text style={styles.downloadButtonText}>Download</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[BUTTON_STYLE.smallButton, styles.actionButton, styles.viewButton]}
-            onPress={() => handleViewDetails(firstFile)}
-          >
-            <Ionicons name="eye-outline" size={16} color={COLORS.white} style={styles.buttonIcon} />
-            <Text style={BUTTON_STYLE.smallButtonText}>View</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-     </>
-    );
-  };
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={BUTTON_STYLE.outLinedBtn}
+              onPress={() => shareFile(firstFile.path)}
+            >
+              <MaterialIcons
+                name="download"
+                size={20}
+                color={COLORS.primary}
+                style={styles.buttonIcon}
+              />
+              <Text style={styles.downloadButtonText}>Download</Text>
+            </TouchableOpacity>
 
-  // Render a single data item in the modal
-  const renderDataItem = ({ item, index }: { item: any; index: number }) => {
-    return (
-      <View style={styles.dataItem}>
-        <Text style={styles.dataItemHeader}>Entry #{index + 1}</Text>
-        {Object.entries(item).map(([key, value]) => (
-          <View key={key} style={styles.dataProperty}>
-            <Text style={styles.propertyKey}>{key}:</Text>
-            <Text style={styles.propertyValue}>
-              {typeof value === 'object' 
-                ? JSON.stringify(value) 
-                : String(value)}
-            </Text>
+            <TouchableOpacity
+              style={BUTTON_STYLE.mediumButton}
+              onPress={() => handleViewDetails(firstFile)}
+            >
+              <MaterialIcons
+                name="visibility"
+                size={20}
+                color={COLORS.white}
+                style={styles.buttonIcon}
+              />
+
+              {/* <Ionicons name="eye-outline" size={16} color={COLORS.white} style={styles.buttonIcon} /> */}
+              <Text style={BUTTON_STYLE.smallButtonText}>View</Text>
+            </TouchableOpacity>
           </View>
-        ))}
-      </View>
+        </View>
+      </>
     );
   };
 
   // Filter sessions by search text
-  const filteredSessions = Object.entries(groupedSessions).filter(([sessionName, _]) => 
-    sessionName.toLowerCase().includes(searchText.toLowerCase())
+  const filteredSessions = Object.entries(groupedSessions).filter(
+    ([sessionName, _]) =>
+      sessionName.toLowerCase().includes(searchText.toLowerCase())
   );
 
   // Create a header component for the FlatList that includes the search and date filter
   const renderListHeader = () => (
-    <> 
+    <>
       {/* Date Filter Section */}
-      <View style={[CARD_STYLE.container, {  marginTop: SPACING.md, marginBottom: SPACING.sm }]}>
-        <Text style={[TYPOGRAPHY.TitleLarge, { marginBottom: SPACING.md }]}>Filter by Date Range</Text>
-        
+      <SafeAreaView
+        style={[
+          CARD_STYLE.container,
+          { marginTop: SPACING.md, marginBottom: SPACING.sm },
+        ]}
+      >
+        <Text style={[TYPOGRAPHY.headLineSmall, { marginBottom: SPACING.md }]}>
+          Filter by Date Range
+        </Text>
+
         <View style={styles.datePickersRow}>
           {/* Start Date Picker */}
           <View style={styles.datePickerWrapper}>
             <Text style={styles.datePickerLabel}>Start Date</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.datePickerButton}
               onPress={() => setShowStartDatePicker(true)}
             >
               <Text style={styles.datePickerText}>
                 {dateRange.startDate.toLocaleDateString()}
               </Text>
-              <Ionicons name="calendar-outline" size={20} color={COLORS.primary} />
+              <MaterialIcons name="event" size={20} color={COLORS.primary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -255,37 +282,35 @@ const SessionView = () => {
           {/* End Date Picker */}
           <View style={styles.datePickerWrapper}>
             <Text style={styles.datePickerLabel}>End Date</Text>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.datePickerButton}
               onPress={() => setShowEndDatePicker(true)}
             >
               <Text style={styles.datePickerText}>
                 {dateRange.endDate.toLocaleDateString()}
               </Text>
-              <Ionicons name="calendar-outline" size={20} color={COLORS.primary} />
+              <MaterialIcons name="event" size={20} color={COLORS.primary} />
             </TouchableOpacity>
           </View>
         </View>
 
-
-        
         {/* Filter Actions */}
         <View style={styles.filterActions}>
-          <TouchableOpacity 
-            style={styles.resetButton}
+          <TouchableOpacity
+            style={BUTTON_STYLE.outLinedBtn}
             onPress={resetFilters}
           >
             <Text style={styles.resetButtonText}>Reset</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.applyButton}
+
+          <TouchableOpacity
+            style={BUTTON_STYLE.mediumButton}
             onPress={applyDateFilter}
           >
             <Text style={styles.applyButtonText}>Apply Filter</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </SafeAreaView>
 
       <View style={styles.searchContainer}>
         <StyledTextInput
@@ -296,15 +321,18 @@ const SessionView = () => {
           onChangeText={setSearchText}
           autoCorrect={false}
           autoCapitalize="none"
-          leftIcon={<MaterialIcons name="search" size={24} color={COLORS.primary} />}
+          leftIcon={
+            <MaterialIcons name="search" size={24} color={COLORS.primary} />
+          }
         />
       </View>
-      
+
       {/* Filter Indicator */}
       {isFilterActive && (
         <View style={styles.filterIndicator}>
           <Text style={styles.filterText}>
-            Filtered: {dateRange.startDate.toLocaleDateString()} - {dateRange.endDate.toLocaleDateString()}
+            Filtered: {dateRange.startDate.toLocaleDateString()} -{" "}
+            {dateRange.endDate.toLocaleDateString()}
           </Text>
           <TouchableOpacity onPress={resetFilters}>
             <Ionicons name="close-circle" size={20} color="#666" />
@@ -315,8 +343,7 @@ const SessionView = () => {
   );
 
   return (
-    
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Loading Indicator */}
       {isLoading && (
         <View style={styles.loadingContainer}>
@@ -324,12 +351,16 @@ const SessionView = () => {
           <Text style={styles.loadingText}>Loading sessions...</Text>
         </View>
       )}
-      
+
       {/* Sessions List with Header Components */}
       {!isLoading && (
         <FlatList
           style={styles.listContentContainer}
-          contentContainerStyle={{ paddingHorizontal: SPACING.md }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingHorizontal: SPACING.md,
+            paddingBottom: insets.bottom, // Dynamic bottom padding
+          }}
           data={filteredSessions}
           renderItem={renderSessionGroup}
           keyExtractor={([sessionName]) => sessionName}
@@ -337,15 +368,15 @@ const SessionView = () => {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Text style={TYPOGRAPHY.bodyTextMedium}>
-                {isFilterActive 
-                  ? "No sessions found for the selected date range." 
+                {isFilterActive
+                  ? "No sessions found for the selected date range."
                   : "No sessions found. Try adjusting your search or filters."}
               </Text>
             </View>
           }
         />
       )}
-      
+
       {/* Date Pickers - Separate implementation for each picker */}
       {showStartDatePicker && (
         <DateTimePicker
@@ -353,61 +384,22 @@ const SessionView = () => {
           value={dateRange.startDate}
           mode="date"
           is24Hour={true}
-          display={Platform.OS === 'ios' ? "spinner" : "default"}
+          display={Platform.OS === "ios" ? "spinner" : "default"}
           onChange={handleStartDateChange}
         />
       )}
-      
+
       {showEndDatePicker && (
         <DateTimePicker
           testID="endDatePicker"
           value={dateRange.endDate}
           mode="date"
           is24Hour={true}
-          display={Platform.OS === 'ios' ? "spinner" : "default"}
+          display={Platform.OS === "ios" ? "spinner" : "default"}
           onChange={handleEndDateChange}
         />
       )}
-      
-      {/* Session Data Modal */}
-      <Modal
-        animationType="slide"
-        transparent={false}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{currentSessionName}</Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setModalVisible(false)}
-            >
-              <Ionicons name="close" size={24} color={COLORS.text} />
-            </TouchableOpacity>
-          </View>
-          
-          <Text style={styles.dataCount}>
-            {currentSessionData.length} data points found
-          </Text>
-          
-          {currentSessionData.length > 0 ? (
-            <FlatList
-              data={currentSessionData}
-              renderItem={renderDataItem}
-              keyExtractor={(_, index) => `data-${index}`}
-              contentContainerStyle={styles.dataList}
-            />
-          ) : (
-            <View style={styles.emptyDataContainer}>
-              <Text style={TYPOGRAPHY.bodyTextMedium}>
-                No data found in this session file.
-              </Text>
-            </View>
-          )}
-        </SafeAreaView>
-      </Modal>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -417,6 +409,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+     paddingBottom: 50 
   },
   searchContainer: {
     // paddingHorizontal:SPACING.md,
@@ -430,8 +423,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   detailsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: SPACING.sm,
   },
   mainText: {
@@ -439,30 +432,30 @@ const styles = StyleSheet.create({
   },
   timings: {
     flex: 1,
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   detail: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   detailText: {
     color: COLORS.text,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "flex-end",
     marginTop: SPACING.sm,
   },
   actionButton: {
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     minWidth: 100,
   },
   downloadButton: {
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
     borderWidth: 1,
     borderColor: COLORS.border,
     marginRight: SPACING.sm,
@@ -475,12 +468,12 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
   },
   buttonIcon: {
-    marginRight: 4,
+    marginRight: 6,
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
     marginTop: SPACING.md,
@@ -488,12 +481,12 @@ const styles = StyleSheet.create({
   },
   emptyContainer: {
     padding: SPACING.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   datePickersRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     marginBottom: SPACING.md,
   },
   datePickerWrapper: {
@@ -501,32 +494,35 @@ const styles = StyleSheet.create({
     marginHorizontal: SPACING.xs,
   },
   datePickerLabel: {
-    ...TYPOGRAPHY.bodyTextSmall,
+    ...TYPOGRAPHY.TitleMedium,
     color: COLORS.text,
     marginBottom: 4,
-
   },
   datePickerButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: 8,
-    padding: SPACING.sm,
-    backgroundColor: COLORS.cardBackground,
+    padding: 12,
+    backgroundColor: COLORS.white,
   },
   datePickerText: {
     ...TYPOGRAPHY.bodyTextMedium,
     color: COLORS.text,
   },
   filterActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    flexDirection: "row",
+    justifyContent: "flex-end",
   },
   resetButton: {
     padding: SPACING.sm,
-    marginRight: SPACING.md,
+    marginRight: 6,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 8,
+    minWidth: 100,
   },
   resetButtonText: {
     ...TYPOGRAPHY.bodyTextMedium,
@@ -543,75 +539,16 @@ const styles = StyleSheet.create({
     color: COLORS.white,
   },
   filterIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: COLORS.background,
-    padding: SPACING.sm,
-    marginHorizontal: SPACING.md,
-    marginBottom: SPACING.md,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: COLORS.white,
+    padding: 8,
+    marginBottom: SPACING.sm,
     borderRadius: 8,
   },
   filterText: {
-    ...TYPOGRAPHY.bodyTextSmall,
+    ...TYPOGRAPHY.smallText,
     color: COLORS.text,
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  modalTitle: {
-    ...TYPOGRAPHY.TitleLarge,
-    color: COLORS.text,
-  },
-  closeButton: {
-    padding: SPACING.xs,
-  },
-  dataCount: {
-    ...TYPOGRAPHY.bodyTextMedium,
-    color: COLORS.text,
-    padding: SPACING.md,
-  },
-  dataList: {
-    padding: SPACING.md,
-  },
-  dataItem: {
-    backgroundColor: COLORS.cardBackground,
-    borderRadius: 8,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-  },
-  dataItemHeader: {
-    ...TYPOGRAPHY.TitleMedium,
-    color: COLORS.text,
-    marginBottom: SPACING.sm,
-  },
-  dataProperty: {
-    flexDirection: 'row',
-    marginBottom: 4,
-  },
-  propertyKey: {
-    ...TYPOGRAPHY.bodyTextMedium,
-    fontWeight: 'bold',
-    color: COLORS.text,
-    marginRight: SPACING.xs,
-  },
-  propertyValue: {
-    ...TYPOGRAPHY.bodyTextMedium,
-    color: COLORS.text,
-    flex: 1,
-  },
-  emptyDataContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });
