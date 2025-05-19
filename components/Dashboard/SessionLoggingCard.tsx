@@ -237,12 +237,13 @@ export const SessionLoggingCard = ({
           <MaterialIcons name="visibility" size={24} color={COLORS.primary} />
           <Text style={styles.downloadButtonText}>View Log Files</Text>
         </TouchableOpacity>
-
+        
         {isLogging ? (
           <TouchableOpacity
             style={[
               BUTTON_STYLE.mediumButtonWithIconLeft,
-              { backgroundColor: "red" },
+              { backgroundColor: COLORS.error , flex: 1,
+                maxWidth: '48%', },
             ]}
             onPress={handleStopSession}
           >
@@ -251,7 +252,11 @@ export const SessionLoggingCard = ({
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            style={BUTTON_STYLE.mediumButtonWithIconLeft}
+            style={[
+              BUTTON_STYLE.mediumButtonWithIconLeft,
+              { backgroundColor: COLORS.primary , flex: 1,
+                maxWidth: '48%', },
+            ]}
             onPress={onStart}
           >
             <MaterialIcons name="play-arrow" size={24} color={COLORS.white} />
@@ -354,11 +359,13 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
     borderStyle: "solid",
     paddingVertical: 10,
+    flex: 1,
+    maxWidth: '50%',
   },
   downloadButtonText: {
     color: COLORS.primary,
-    fontFamily: "Poppins-Medium",
     fontSize: 16,
+    fontWeight: "500",
     marginLeft: SPACING.sm,
   },
   startButtonText: {
