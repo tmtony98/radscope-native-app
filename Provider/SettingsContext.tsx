@@ -1,72 +1,68 @@
-import React, { createContext, useContext, useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import * as SecureStore from 'expo-secure-store';
 
-export type generalSettings = {
+// Use consistent naming conventions (camelCase)
+export type GeneralSettings = {
   discoveryType: string;
-  Alarm: number;
-  serverCredentials: serverCredentials;
+  alarm: number;
+  serverCredentials: ServerCredentials;
 };
 
-export type spectrumSettings = {
+export type SpectrumSettings = {
   energyAxis: string;
   scaleType: string;
   smoothingType: boolean;
   smoothingPoints: number;
 };
-export type serverCredentials = {
-  IP_Address: string;
+
+export type ServerCredentials = {
+  ipAddress: string;
   port: number;
 };
 
-const general_Settings_Key = 'generalSettingsKey';
-const spectrum_Settings_Key = 'spectrumSettingsKey';
+// Storage keys
+const GENERAL_SETTINGS_KEY = 'generalSettingsKey';
+const SPECTRUM_SETTINGS_KEY = 'spectrumSettingsKey';
+
+// Default settings
+const DEFAULT_GENERAL_SETTINGS: GeneralSettings = {
+  discoveryType: 'Local',
+  alarm: 0,
+  serverCredentials: {
+    ipAddress: '',
+    port: 0,
+  },
+};
+
+const DEFAULT_SPECTRUM_SETTINGS: SpectrumSettings = {
+  energyAxis: 'Energy Axis',
+  scaleType: 'smoothy',
+  smoothingType: false,
+  smoothingPoints: 0,
+};
 
 // Define the context type
 type SettingsContextType = {
-  general_Settings_Key : string;
-  spectrum_Settings_Key : string;
-  generalSettings: generalSettings;
-  spectrumSettings: spectrumSettings;
-  storeGeneralSettings: (settings: generalSettings) => Promise<void>;
-  storeSpectrumSettings: (settings: spectrumSettings) => Promise<void>;
-  getGeneralSettings: (general_Settings_Key: string) => Promise<generalSettings>;
-  getSpectrumSettings: (spectrum_Settings_Key: string) => Promise<spectrumSettings>;
+  generalSettingsKey: string;
+  spectrumSettingsKey: string;
+  generalSettings: GeneralSettings;
+  spectrumSettings: SpectrumSettings;
+  storeGeneralSettings: (settings: GeneralSettings) => Promise<void>;
+  storeSpectrumSettings: (settings: SpectrumSettings) => Promise<void>;
+  getGeneralSettings: () => Promise<GeneralSettings>;
+  getSpectrumSettings: () => Promise<SpectrumSettings>;
 };
 
-// Create the context with the proper type
+// Create the context with default values
 const SettingsContext = createContext<SettingsContextType>({
-    general_Settings_Key: '',
-    spectrum_Settings_Key: '',
-    generalSettings: {
-    discoveryType: 'Local',
-    Alarm: 0,
-    serverCredentials: {
-      IP_Address: '',
-      port: 0,
-    },
-  },
-  spectrumSettings: {
-    energyAxis: 'Energy Axis',
-    scaleType: 'smoothy',
-    smoothingType: false,
-    smoothingPoints: 0,
-  },
+  generalSettingsKey: GENERAL_SETTINGS_KEY,
+  spectrumSettingsKey: SPECTRUM_SETTINGS_KEY,
+  generalSettings: DEFAULT_GENERAL_SETTINGS,
+  spectrumSettings: DEFAULT_SPECTRUM_SETTINGS,
   storeGeneralSettings: async () => {},
   storeSpectrumSettings: async () => {},
-  getGeneralSettings: async () => ({
-    discoveryType: 'Local',
-    Alarm: 0,
-    serverCredentials: {
-      IP_Address: '',
-      port: 0,
-    },
-  }),
-  getSpectrumSettings: async () => ({
-    energyAxis: 'Energy Axis',
-    scaleType: 'smoothy',
-    smoothingType: false,
-    smoothingPoints: 0,
-  }),
+  getGeneralSettings: async () => DEFAULT_GENERAL_SETTINGS,
+  getSpectrumSettings: async () => DEFAULT_SPECTRUM_SETTINGS,
 });
 
 // Create a custom hook to use the SettingsContext
@@ -83,123 +79,100 @@ interface SettingsProviderProps {
   children: React.ReactNode;
 }
 
-// Properly typed provider component
-export function SettingsProvider({ children }: SettingsProviderProps) {
+// Provider component
+export const SettingsProvider = ({ children }: SettingsProviderProps) => {
+  // State to store settings
+  const [generalSettings, setGeneralSettings] = useState<GeneralSettings>(DEFAULT_GENERAL_SETTINGS);
+  const [spectrumSettings, setSpectrumSettings] = useState<SpectrumSettings>(DEFAULT_SPECTRUM_SETTINGS);
+  
   // Function to store general settings in secure storage
-  const storeGeneralSettings = async (settings: generalSettings) => {
+  const storeGeneralSettings = useCallback(async (settings: GeneralSettings) => {
     try {
-      await SecureStore.setItemAsync(general_Settings_Key, JSON.stringify(settings));
+      await SecureStore.setItemAsync(GENERAL_SETTINGS_KEY, JSON.stringify(settings));
+      setGeneralSettings(settings);
       console.log('General settings stored successfully');
     } catch (error) {
       console.error('Failed to store general settings:', error);
     }
-  };
+  }, []);
 
   // Function to store spectrum settings in secure storage
-  const storeSpectrumSettings = async (settings: spectrumSettings) => {
+  const storeSpectrumSettings = useCallback(async (settings: SpectrumSettings) => {
     try {
-      await SecureStore.setItemAsync(spectrum_Settings_Key, JSON.stringify(settings));
+      await SecureStore.setItemAsync(SPECTRUM_SETTINGS_KEY, JSON.stringify(settings));
+      setSpectrumSettings(settings);
       console.log('Spectrum settings stored successfully');
     } catch (error) {
       console.error('Failed to store spectrum settings:', error);
     }
-  };
-
-  // Helper function for default settings
-  const getDefaultGeneralSettings = (): generalSettings => ({
-    discoveryType: 'Local',
-    Alarm: 0,
-    serverCredentials: {
-      IP_Address: '',
-      port: 0,
-    },
-  });
+  }, []);
 
   // Get the general settings from the secure store
   const getGeneralSettings = useCallback(async () => {
     try {
-      const storedSettings = await SecureStore.getItemAsync(general_Settings_Key);
+      const storedSettings = await SecureStore.getItemAsync(GENERAL_SETTINGS_KEY);
       if (storedSettings) {
-        const parsedSettings = JSON.parse(storedSettings);
-        console.log('General settings loaded successfully:', parsedSettings);
+        const parsedSettings = JSON.parse(storedSettings) as GeneralSettings;
+        setGeneralSettings(parsedSettings);
         return parsedSettings;
-      } else {
-        console.log('No general settings found, returning default values');
-        return getDefaultGeneralSettings();
       }
+      return DEFAULT_GENERAL_SETTINGS;
     } catch (error) {
       console.error('Failed to load general settings:', error);
-      return getDefaultGeneralSettings();
+      return DEFAULT_GENERAL_SETTINGS;
     }
-  }, []);  // Empty dependency array since it doesn't depend on any props or state
-
-  // Helper function for default settings
-  const getDefaultSpectrumSettings = (): spectrumSettings => ({
-    energyAxis: 'eV',
-    scaleType: 'linear',
-    smoothingType: false,
-    smoothingPoints: 0,
-  });
+  }, []);
 
   // Get the spectrum settings from the secure store
-  const getSpectrumSettings = async () => {
+  const getSpectrumSettings = useCallback(async () => {
     try {
-      const storedSettings = await SecureStore.getItemAsync(spectrum_Settings_Key);
+      const storedSettings = await SecureStore.getItemAsync(SPECTRUM_SETTINGS_KEY);
       if (storedSettings) {
-        const parsedSettings = JSON.parse(storedSettings);
-        console.log('Spectrum settings loaded successfully:', parsedSettings);
+        const parsedSettings = JSON.parse(storedSettings) as SpectrumSettings;
+        setSpectrumSettings(parsedSettings);
         return parsedSettings;
-      } else {
-        console.log('No spectrum settings found, returning default values');
-        return getDefaultSpectrumSettings();
       }
+      return DEFAULT_SPECTRUM_SETTINGS;
     } catch (error) {
       console.error('Failed to load spectrum settings:', error);
-      return getDefaultSpectrumSettings();
+      return DEFAULT_SPECTRUM_SETTINGS;
     }
-  };
-
-  const loadSettings = async () => {
-    const generalSettings = await getGeneralSettings();
-    const spectrumSettings = await getSpectrumSettings();
-    console.log('Loaded settings:', { generalSettings, spectrumSettings });
-  };
+  }, []);
 
   // Load settings on mount
   useEffect(() => {
+    const loadSettings = async () => {
+      await Promise.all([
+        getGeneralSettings(),
+        getSpectrumSettings()
+      ]);
+    };
     loadSettings();
-  }, []);
+  }, [getGeneralSettings, getSpectrumSettings]);
 
-  const contextValue = useMemo(
-    () => ({
-        general_Settings_Key,
-        spectrum_Settings_Key,
-      generalSettings: {
-        discoveryType: 'Local',
-        Alarm: 0,
-        serverCredentials: {
-          IP_Address: '',
-          port: 0,
-        },
-      },
-      spectrumSettings: {
-        energyAxis: 'Energy Axis',
-        scaleType: 'smoothy',
-        smoothingType: false,
-        smoothingPoints: 0,
-      },
-      storeGeneralSettings,
-      storeSpectrumSettings,
-      getGeneralSettings,
-      getSpectrumSettings,
-    }),
-    []
-  );
+  // Create memoized context value
+  const contextValue = useMemo(() => ({
+    generalSettingsKey: GENERAL_SETTINGS_KEY,
+    spectrumSettingsKey: SPECTRUM_SETTINGS_KEY,
+    generalSettings,
+    spectrumSettings,
+    storeGeneralSettings,
+    storeSpectrumSettings,
+    getGeneralSettings,
+    getSpectrumSettings,
+  }), [
+    generalSettings,
+    spectrumSettings,
+    storeGeneralSettings,
+    storeSpectrumSettings,
+    getGeneralSettings,
+    getSpectrumSettings
+  ]);
 
   return (
     <SettingsContext.Provider value={contextValue}>
       {children}
     </SettingsContext.Provider>
   );
-}
+};
 

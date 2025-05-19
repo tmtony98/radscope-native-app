@@ -14,7 +14,7 @@ import { Dropdown } from "react-native-element-dropdown";
 import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY } from "../Themes/theme";
 import Header from "@/components/Header";
 import { useSettingsContext } from "@/Provider/SettingsContext";
-import { spectrumSettings } from "@/Provider/SettingsContext";
+import { SpectrumSettings as SpectrumSettingsType } from "@/Provider/SettingsContext";
 import Toast from 'react-native-toast-message';
 
 const scaleTypeData = [
@@ -23,20 +23,13 @@ const scaleTypeData = [
   { label: "Square Root", value: "square-root" },
 ];
 
-// const defaultSettings = {
-//   energyAxis: 'Energy Axis',
-//   scaleType: 'Smoothy',
-//   smoothingType: false,
-//   smoothingPoints: 50
+const SpectrumSettings = () => {
+  const { getSpectrumSettings, storeSpectrumSettings, spectrumSettings: contextSpectrumSettings } = useSettingsContext();
 
-export default function SpectrumSettings() {
-  const router = useRouter();
-  const { getSpectrumSettings, storeSpectrumSettings, spectrum_Settings_Key } = useSettingsContext();
-
-  // Combined state using spectrumSettings type
-  const [spectrumSettings, setSpectrumSettings] = useState<spectrumSettings>({
+  // Initialize state with default values first
+  const [spectrumSettings, setSpectrumSettings] = useState<SpectrumSettingsType>({
     energyAxis: "Energy Axis",
-    scaleType: "Smoothy",
+    scaleType: "smoothy",
     smoothingType: false,
     smoothingPoints: 50,
   });
@@ -45,22 +38,29 @@ export default function SpectrumSettings() {
   const [displaySmoothingPoints, setDisplaySmoothingPoints] = useState(50);
   const [isSliding, setIsSliding] = useState(false);
   const smoothingPointsRef = useRef(50);
+  
+  // Set initial values from context when component mounts
+  useEffect(() => {
+    console.log('Initial context spectrum settings:', contextSpectrumSettings);
+    setSpectrumSettings(contextSpectrumSettings);
+    setDisplaySmoothingPoints(contextSpectrumSettings.smoothingPoints);
+    smoothingPointsRef.current = contextSpectrumSettings.smoothingPoints;
+  }, []);
 
-  console.log("spectrumSettings", spectrumSettings);
-
-  //write fn to setting the spectrum settings
-  const handleSave = async () => {
+  // Save settings handler
+  const handleSave = useCallback(async () => {
     try {
-      const res = await storeSpectrumSettings(spectrumSettings);
-      console.log("Settings saved successfully:", res);
-      
-      Toast.show({
-        type: 'success',
-        text1: 'Settings Saved',
-        text2: 'Your spectrum settings have been saved',
-        position: 'bottom',
-        visibilityTime: 3000
-      });
+      await storeSpectrumSettings(spectrumSettings);
+ setTimeout(() => {
+  Toast.show({
+    type: 'success',
+    text1: 'Settings Saved',
+    text2: 'Your spectrum settings have been saved',
+    position: 'bottom',
+    visibilityTime: 3000
+  });
+ }, 2000);
+    
     } catch (error) {
       console.error("Error saving settings:", error);
       
@@ -72,43 +72,44 @@ export default function SpectrumSettings() {
         visibilityTime: 3000
       });
     }
-  };
+  }, [spectrumSettings, storeSpectrumSettings]);
 
-  // Save settings on unmount
-  useEffect(() => {
-    return () => {
-      handleSave();
-    };
-  }, [spectrumSettings]);
 
-  // Load settings on mount
+  // Load settings from storage
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const settings = await getSpectrumSettings(spectrum_Settings_Key);
-        if (settings) {
-          setSpectrumSettings(settings);
-          setDisplaySmoothingPoints(settings.smoothingPoints);
-          smoothingPointsRef.current = settings.smoothingPoints;
-        }
+        // Get settings from storage
+        const settings = await getSpectrumSettings();
+        console.log('Loaded spectrum settings from storage:', settings);
+        // Update all state with the loaded settings
+        setSpectrumSettings(settings);
+        setDisplaySmoothingPoints(settings.smoothingPoints);
+        smoothingPointsRef.current = settings.smoothingPoints;
       } catch (error) {
         console.error("Error loading settings:", error);
       }
     };
-    loadSettings();
-  }, []);
+    // Load settings after a short delay to ensure context is fully initialized
+    const timer = setTimeout(() => {
+      loadSettings();
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, [getSpectrumSettings]);
 
-  useEffect(() => {
-    handleSave();
-  }, [spectrumSettings]);
+  // Auto-save when settings change
+  // useEffect(() => {
+  //   handleSave();
+  // }, [spectrumSettings, handleSave]);
 
-  // Update handlers
-  const handleEnergyAxisChange = (value: string) => {
+  // Update handlers with useCallback for better performance
+  const handleEnergyAxisChange = useCallback((value: string) => {
     setSpectrumSettings((prev) => ({
       ...prev,
       energyAxis: value,
     }));
-    
+    handleSave();
     Toast.show({
       type: 'info',
       text1: 'Energy Axis Updated',
@@ -116,14 +117,15 @@ export default function SpectrumSettings() {
       position: 'bottom',
       visibilityTime: 2000
     });
-  };
+  }, []);
 
-  const handleScaleTypeChange = (value: string) => {
+  const handleScaleTypeChange = useCallback((value: string) => {
     setSpectrumSettings((prev) => ({
       ...prev,
       scaleType: value,
     }));
-    
+    handleSave();
+
     Toast.show({
       type: 'info',
       text1: 'Scale Type Updated',
@@ -131,14 +133,15 @@ export default function SpectrumSettings() {
       position: 'bottom',
       visibilityTime: 2000
     });
-  };
+  }, []);
 
-  const handleSmoothingTypeChange = (value: boolean) => {
+  const handleSmoothingTypeChange = useCallback((value: boolean) => {
     setSpectrumSettings((prev) => ({
       ...prev,
       smoothingType: value,
     }));
-    
+    handleSave();
+
     Toast.show({
       type: 'info',
       text1: 'Smoothing Type Updated',
@@ -146,24 +149,26 @@ export default function SpectrumSettings() {
       position: 'bottom',
       visibilityTime: 2000
     });
-  };
+  }, []);
 
   const handleSmoothingPointsSliding = useCallback((value: number) => {
     smoothingPointsRef.current = value;
-    setDisplaySmoothingPoints(value);
+    setDisplaySmoothingPoints(Math.round(value)); // Round for better UX
   }, []);
 
   const handleSmoothingPointsComplete = useCallback(() => {
+    const roundedValue = Math.round(smoothingPointsRef.current);
     setSpectrumSettings((prev) => ({
       ...prev,
-      smoothingPoints: smoothingPointsRef.current,
+      smoothingPoints: roundedValue,
     }));
     setIsSliding(false);
-    
+    handleSave();
+
     Toast.show({
       type: 'info',
       text1: 'Smoothing Points Updated',
-      text2: `Set to ${smoothingPointsRef.current} points`,
+      text2: `Set to ${roundedValue} points`,
       position: 'bottom',
       visibilityTime: 2000
     });
@@ -462,3 +467,5 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
 });
+
+export default SpectrumSettings;
