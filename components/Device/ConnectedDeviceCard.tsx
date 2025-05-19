@@ -131,7 +131,7 @@ const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({
                 <Text style={styles.buttonText}>Dashboard</Text>
                 <MaterialIcons
                   name="chevron-right"
-                  size={20}
+                  size={25}
                   color={COLORS.white}
                 />
               </TouchableOpacity>
@@ -145,8 +145,8 @@ const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({
 
 const styles = StyleSheet.create({
   buttonCommon: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical:10,
+    paddingHorizontal: 0,
     borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
@@ -163,6 +163,7 @@ const styles = StyleSheet.create({
     fontFamily: "Poppins-Medium",
     fontWeight: "600",
     fontSize: 16,
+    marginTop: 2,
   },
   btnRow: {
     flexDirection: "row",
