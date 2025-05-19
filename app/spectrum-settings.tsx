@@ -16,6 +16,7 @@ import Header from "@/components/Header";
 import { useSettingsContext } from "@/Provider/SettingsContext";
 import { SpectrumSettings as SpectrumSettingsType } from "@/Provider/SettingsContext";
 import Toast from 'react-native-toast-message';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const scaleTypeData = [
   { label: "Linear", value: "linear" },
@@ -25,6 +26,7 @@ const scaleTypeData = [
 
 const SpectrumSettings = () => {
   const { getSpectrumSettings, storeSpectrumSettings, spectrumSettings: contextSpectrumSettings } = useSettingsContext();
+  const insets = useSafeAreaInsets();
 
   // Initialize state with default values first
   const [spectrumSettings, setSpectrumSettings] = useState<SpectrumSettingsType>({
@@ -177,7 +179,10 @@ const SpectrumSettings = () => {
   return (
     <View style={{ flex: 1 }}>
       <Header title="Spectrum Settings" showBackButton={true} />
-      <ScrollView style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 32 }}
+      >
         <View style={CARD_STYLE.container}>
           <Text style={[TYPOGRAPHY.headLineSmall, styles.sectionTitle]}>
             Enable Energy Axis
