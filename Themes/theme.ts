@@ -197,12 +197,14 @@ export const TYPOGRAPHY = StyleSheet.create({
     fontFamily: 'Poppins-Bold',
     fontSize: 57,
     lineHeight: 91,
+    color: COLORS.text,
     
   },
   DispalyMedium: {
     fontFamily: 'Poppins-Medium',
     fontSize: 45,
     lineHeight: 72,
+    color: COLORS.text,
   },
   headLineLarge: {
     fontFamily: 'Poppins-Bold',
@@ -215,18 +217,22 @@ export const TYPOGRAPHY = StyleSheet.create({
     fontSize: 26,
     lineHeight: 42,
     textAlign: 'left',
+    color: COLORS.text,
   },
   headLineSmall: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 22,
     lineHeight: 35,
     textAlign: 'left',
+    color: COLORS.text,
   },
   TitleLarge: {
     fontFamily: 'Poppins-SemiBold',
     fontSize: 18,
     lineHeight: 29,
     textAlign: 'left',
+    color: COLORS.text,
+
   },
   TitleMedium: {
     color: COLORS.text,
@@ -234,18 +240,21 @@ export const TYPOGRAPHY = StyleSheet.create({
     fontSize: 16,
     lineHeight: 25,
     textAlign: 'left',
+
   },
   bodyTextLarge: {
     fontFamily: 'Poppins-Medium',
     fontSize: 16,
     lineHeight: 25,
     textAlign: 'left',
+    color: COLORS.text,
   },
   bodyTextMedium: {
     fontFamily: 'Poppins-Medium',
     fontSize: 14,
     lineHeight: 22,
     textAlign: 'center',
+    color: COLORS.text,
   },
   smallText:{
     fontFamily: 'Poppins-Regular',
@@ -253,5 +262,6 @@ export const TYPOGRAPHY = StyleSheet.create({
     letterSpacing: 0.25,
     textAlign: 'center',
     lineHeight: 22,
+    color: COLORS.text,
   }
 });
