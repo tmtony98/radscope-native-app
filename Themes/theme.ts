@@ -88,7 +88,7 @@ export const BUTTON_STYLE = StyleSheet.create({
     backgroundColor: COLORS.buttonPrimary,
     paddingVertical: 12, // 18px padding top/bottom as per style guide
     paddingHorizontal: 25, // 25px padding left/right as per style guide
-    borderRadius: 12, // 12px border radius as per style guide
+    borderRadius: 10, // 12px border radius as per style guide
     // height: 50, // 49px height as per style guide
     alignItems: 'center',
     justifyContent: 'center',
@@ -189,6 +189,21 @@ export const BUTTON_STYLE = StyleSheet.create({
   },
   smallButtonIcon: {
     marginRight: 6, // 6px spacing between icon and text
+  },
+  outLinedBtn :{
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: SPACING.md,
+      borderRadius: 10,
+      borderWidth: 1,
+      fontWeight:'600',
+      borderColor: COLORS.primary,
+      borderStyle: "solid",
+      paddingVertical: 10,
+      marginHorizontal: 6,
+      minWidth: 100
+   
   }
 });
 
@@ -250,7 +265,7 @@ export const TYPOGRAPHY = StyleSheet.create({
     color: COLORS.text,
   },
   bodyTextMedium: {
-    fontFamily: 'Poppins-Medium',
+   fontWeight:600  ,
     fontSize: 14,
     lineHeight: 22,
     textAlign: 'center',
