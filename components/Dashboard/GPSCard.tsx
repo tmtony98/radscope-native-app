@@ -6,6 +6,7 @@ import { useMqttContext } from '@/Provider/MqttContext';
 
 export default function GPSCard() {
   const { gps } = useMqttContext();
+  
 
   console.log("GPS Data:", gps);
 
@@ -23,13 +24,15 @@ export default function GPSCard() {
           </TouchableOpacity>
         )}
       </View>
-      <View style={styles.row}>
-        <Text style={TYPOGRAPHY.bodyTextLarge}>Latitude</Text>
-        <Text style={TYPOGRAPHY.bodyTextMedium}>{gps?.Lat || "-"}</Text>
-      </View>
-      <View style={styles.row}>
-        <Text style={TYPOGRAPHY.bodyTextLarge}>Longitude</Text>
-        <Text style={TYPOGRAPHY.bodyTextMedium}>{gps?.Lon || "-"}</Text>
+      <View style={styles.coordinatesContainer}>
+        <View style={styles.coordinateColumn}>
+          <Text style={TYPOGRAPHY.TitleLarge}>Latitude</Text>
+          <Text style={TYPOGRAPHY.bodyTextLarge}>{gps?.Lat || "-"}</Text>
+        </View>
+        <View style={styles.coordinateColumn}>
+          <Text style={TYPOGRAPHY.TitleLarge}>Longitude</Text>
+          <Text style={TYPOGRAPHY.bodyTextLarge}>{gps?.Lon || "-"}</Text>
+        </View>
       </View>
     </View>
   );
@@ -49,5 +52,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: SPACING.sm,
+  },
+  coordinatesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.xs,
+  },
+  coordinateColumn: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
   },
 });
