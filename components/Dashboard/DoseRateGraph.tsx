@@ -37,15 +37,9 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
 
   console.log('Limited data:', limitedData);
 
-  // Dynamically calculate y-axis domain based on incoming data
-  const [yMin, yMax] = useMemo(() => {
-    if (doseRateGraphArray.length === 0) {
-      return [0, 0.12]; // Default values
-    }
-    const min = Math.min(...doseRateGraphArray.map((data) => data.doseRate));
-    const max = Math.max(...doseRateGraphArray.map((data) => data.doseRate));
-    return [Math.floor(min * 10) / 10, Math.ceil(max * 10) / 10]; // Round to 1 decimal place
-  }, [doseRateGraphArray]);
+  // Define fixed y-axis domain values
+  const yMin = 0;
+  const yMax = 0.12;
 
   const getLastTimestamp = () => {
     const timestamp = doseRateGraphArray.length > 0 ? doseRateGraphArray[doseRateGraphArray.length - 1].timestamp : 0;
@@ -93,7 +87,7 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
           labelColor: "#333333",
           formatYLabel: (value: number) => value.toFixed(3)
         }}
-        domain={{ y: [yMin, yMax] }} // Use dynamic y-axis domain
+        domain={{ y: [yMin, yMax] }}
         // transformState={transformState}
         // transformConfig={{
         //   pan: { enabled: true, dimensions: ["x"] },
@@ -161,7 +155,7 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
                 <Circle
                   cx={pressState.x.position.value}
                   cy={pressState.y.doseRate.position.value}
-                  r={6}
+                  r={10}
                   color="#1E88E5"
                 />
                 
