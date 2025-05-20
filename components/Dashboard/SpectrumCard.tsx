@@ -31,20 +31,15 @@ const SpectrumCard = ({
     scaleY: 1.0,
   });
   
-  // Process spectrum data with debouncing to prevent excessive calculations
+  // Process spectrum data with direct transformation (no downsampling)
   useEffect(() => {
     if (spectrum.length === 0) return;
     
     const processData = () => {
-      // First downsample if needed
-      let processedData;
-      if (spectrum.length > 100) {
-        processedData = downsampleData(spectrum);
-      } else {
-        processedData = spectrum.map((value, index) => ({ x: index, y: value }));
-      }
+      // Map all data points directly (no downsampling)
+      const processedData = spectrum.map((value, index) => ({ x: index, y: value }));
       
-      // Then apply transformation to y values based on selected scale type
+      // Apply transformation to y values based on selected scale type
       const scaleType = (spectrumSettings.scaleType || 'Linear').toLowerCase() as ScaleType;
       const transformedData = processedData.map(point => ({
         x: point.x,
@@ -54,13 +49,8 @@ const SpectrumCard = ({
       setChartData(transformedData);
     };
     
-    // Process immediately for small datasets, debounce for large ones
-    if (spectrum.length <= 100) {
-      processData();
-    } else {
-      const timer = setTimeout(processData, 50);
-      return () => clearTimeout(timer);
-    }
+    // Process data immediately without debouncing
+    processData();
   }, [spectrum, spectrumSettings.scaleType]);
   
   // Update Y-axis format based on scale type
@@ -131,10 +121,9 @@ const SpectrumCard = ({
                 labelColor: "#333333",
                 formatYLabel: getYAxisFormat
               }}
-              padding={{ top: 15, bottom: 10}}
               xAxis={{
                 font,
-                tickCount: 5,
+                tickCount: 4,
               }}
               // Set a reasonable y-axis range based on data
               domain={{ y: [0, Math.max(1, ...chartData.map(point => point.y * 1.1))] }}
@@ -156,7 +145,7 @@ const SpectrumCard = ({
                   <Line
                     points={points.y}
                     color="#1E88E5"
-                    strokeWidth={2}
+                    strokeWidth={1}
                     curveType="natural"
                   />
                 </>
@@ -272,99 +261,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Min-max downsampling function to preserve visual characteristics
-const downsampleData = (data: number[]): Array<{x: number, y: number}> => {
-  const result = [];
-  const targetPoints = 100; // Target number of points for visualization
-  const bucketSize = Math.ceil(data.length / targetPoints);
-  
-  // For very large datasets, use a more aggressive approach
-  if (data.length > 1000) {
-    // Use a simple approach for extremely large datasets
-    for (let i = 0; i < data.length; i += bucketSize) {
-      const bucket = data.slice(i, Math.min(i + bucketSize, data.length));
-      if (bucket.length === 0) continue;
-      
-      // Find min, max and an average point in this bucket
-      let sum = 0;
-      let minValue = bucket[0];
-      let maxValue = bucket[0];
-      let minIndex = i;
-      let maxIndex = i;
-      
-      for (let j = 0; j < bucket.length; j++) {
-        const value = bucket[j];
-        sum += value;
-        if (value < minValue) {
-          minValue = value;
-          minIndex = i + j;
-        }
-        if (value > maxValue) {
-          maxValue = value;
-          maxIndex = i + j;
-        }
-      }
-      
-      // Only add points if they're significantly different
-      const avgValue = sum / bucket.length;
-      const midIndex = i + Math.floor(bucket.length / 2);
-      
-      // Add points based on their significance
-      if (Math.abs(maxValue - minValue) > avgValue * 0.1) {
-        // If there's significant variation, add both min and max
-        if (minIndex < maxIndex) {
-          result.push({ x: minIndex, y: minValue });
-          result.push({ x: maxIndex, y: maxValue });
-        } else {
-          result.push({ x: maxIndex, y: maxValue });
-          result.push({ x: minIndex, y: minValue });
-        }
-      } else {
-        // If variation is minimal, just add one representative point
-        result.push({ x: midIndex, y: avgValue });
-      }
-    }
-  } else {
-    // Use the original approach for smaller datasets
-    for (let i = 0; i < data.length; i += bucketSize) {
-      const bucket = data.slice(i, Math.min(i + bucketSize, data.length));
-      if (bucket.length === 0) continue;
-      
-      // Find min and max in this bucket
-      let minValue = bucket[0];
-      let maxValue = bucket[0];
-      let minIndex = i;
-      let maxIndex = i;
-      
-      for (let j = 0; j < bucket.length; j++) {
-        const value = bucket[j];
-        if (value < minValue) {
-          minValue = value;
-          minIndex = i + j;
-        }
-        if (value > maxValue) {
-          maxValue = value;
-          maxIndex = i + j;
-        }
-      }
-      
-      // Add min point first (if different from max)
-      if (minIndex !== maxIndex) {
-        if (minIndex < maxIndex) {
-          result.push({ x: minIndex, y: minValue });
-          result.push({ x: maxIndex, y: maxValue });
-        } else {
-          result.push({ x: maxIndex, y: maxValue });
-          result.push({ x: minIndex, y: minValue });
-        }
-      } else {
-        // If min and max are the same point
-        result.push({ x: minIndex, y: minValue });
-      }
-    }
-  }
-  
-  return result;
-};
+// Downsampling function removed as requested
 
-export default React.memo(SpectrumCard);
+export default SpectrumCard;
