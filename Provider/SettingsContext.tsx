@@ -36,7 +36,7 @@ const DEFAULT_GENERAL_SETTINGS: GeneralSettings = {
 
 const DEFAULT_SPECTRUM_SETTINGS: SpectrumSettings = {
   energyAxis: 'Energy Axis',
-  scaleType: 'smoothy',
+  scaleType: 'Linear',
   smoothingType: false,
   smoothingPoints: 0,
 };
@@ -101,7 +101,9 @@ export const SettingsProvider = ({ children }: SettingsProviderProps) => {
     try {
       await SecureStore.setItemAsync(SPECTRUM_SETTINGS_KEY, JSON.stringify(settings));
       setSpectrumSettings(settings);
-      console.log('Spectrum settings stored successfully');
+      console.log('Spectrum settings stored successfully' , settings);
+
+      debugger
     } catch (error) {
       console.error('Failed to store spectrum settings:', error);
     }
