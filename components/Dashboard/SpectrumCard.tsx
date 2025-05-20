@@ -131,7 +131,6 @@ const SpectrumCard = ({
                 labelColor: "#333333",
                 formatYLabel: getYAxisFormat
               }}
-              padding={{ top: 15, bottom: 10}}
               xAxis={{
                 font,
                 tickCount: 5,
@@ -156,7 +155,7 @@ const SpectrumCard = ({
                   <Line
                     points={points.y}
                     color="#1E88E5"
-                    strokeWidth={2}
+                    strokeWidth={1.5}
                     curveType="natural"
                   />
                 </>
