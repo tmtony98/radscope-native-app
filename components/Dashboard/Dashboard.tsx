@@ -9,6 +9,7 @@ import {
   Alert,
   Linking,
   NativeModules,
+  BackHandler,
 } from "react-native";
 import React, {
   useState,
@@ -62,30 +63,12 @@ export default function Dashboard() {
   const snapPoints = useMemo(() => ["40%"], []);
 
   //import msg from mqtt
-  const { message, createDateBasedDirectory } = useMqttContext();
-
-  const [isExternalStorageAvailable, setIsExternalStorageAvailable] = useState(false);
+  const { message, createDateBasedDirectory , isExternalStorageAvailable } = useMqttContext();
 
 
 
-  // useEffect for checking storage permission
-  useEffect(() => {
-    const AskPermission = async () => {
-      try {
-        console.log("Checking storage permission");
-        const result =
-          await NativeModules.PermissionFile.checkAndGrantPermission();
-        console.log(
-          result ? "Permission granted" : "Permission not granted yet"
-        );
-        setIsExternalStorageAvailable(result);
-      } catch (error) {
-        console.error("Permission check failed:", error);
-        setIsExternalStorageAvailable(false);
-      }
-    };
-    AskPermission(); // This function is only executed once if the user allows the permission and this package retains that permission
-  }, []);
+
+ 
 
   // Handler for time limit slider
   const handleTimeLimitChange = useCallback((value: number) => {

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useRef, useState, useCallb
 import mqtt from 'precompiled-mqtt';
 import 'react-native-url-polyfill/auto';
 import database from '../index.native';
+import { Alert, BackHandler, NativeModules, Platform } from 'react-native';
 import Doserate from '../model/Doserate';
 import { Message, ConnectionStatus, GpsData, BatteryData, LiveData, SensorData  , DoserateData } from '../Types';
 import RNFS from 'react-native-fs';
@@ -16,19 +17,12 @@ interface SensorDataExtract {
   spectrum: number[];
 }
 
-
-
-
-
-
-
-
 // MQTT Configuration
-// const BROKER_URL = 'ws://192.168.29.39:8083'; //office bbd
+const BROKER_URL = 'ws://192.168.29.39:8083'; //office bbd
 // const BROKER_URL = 'ws://192.168.1.50:8083'; //office kv
 
 // const BROKER_URL = 'ws://192.168.1.11:8083'; //hostel
-const BROKER_URL = 'ws://192.168.74.213:8083'; //tony phone
+// const BROKER_URL = 'ws://192.168.74.213:8083'; //tony phone
 const BASE_PATH = RNFS.ExternalStorageDirectoryPath + '/Radscope';
 const DOSERATE_PATH = BASE_PATH + '/Doserate_data';
 const SESSION_PATH = BASE_PATH + '/Sessions_data';
@@ -61,7 +55,7 @@ type MqttContextType = {
   connectMqtt: (mqtt_host: string, mqtt_port: number, deviceId: any) => void;
   disconnectMqtt: () => void;
   createDateBasedDirectory: (date?: Date, type?: 'doserate' | "session") => Promise<string>;
-
+  isExternalStorageAvailable: boolean;
 };
 
 
@@ -85,6 +79,7 @@ const MqttContext = createContext<MqttContextType>({
   connectMqtt: () => {},
   disconnectMqtt: () => {},
   createDateBasedDirectory: async () => '',
+  isExternalStorageAvailable: false,
   
 });
 
@@ -110,10 +105,9 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
     batteryInfo: null as BatteryData | null,
     spectrum: [] as number[]
   });
-  
+  const [isExternalStorageAvailable, setIsExternalStorageAvailable] = useState(false);
   // Destructure sensor data for easier access in the component
   const { doseRate, cps, timestamp, gps, batteryInfo, spectrum } = sensorData;
-  
   // Keep doseRateGraphArray separate as it has a different update pattern
   const [doseRateGraphArray, setDoseRateGraphArray] = useState<{ doseRate: number; timestamp: number; cps: number }[]>([]);
   
@@ -163,7 +157,75 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+ // useEffect for checking storage permission
+  useEffect(() => {
+ if (isExternalStorageAvailable){
+  return
+ }
 
+ const AskPermission = async () => {
+      try {
+        console.log("Checking storage permission");
+        const result = await NativeModules.PermissionFile.checkAndGrantPermission();
+        console.log(result ? "Permission granted" : "Permission not granted yet");
+        
+        if (result) {
+          // Permission granted
+          setIsExternalStorageAvailable(true);
+        } else {
+          // Permission denied
+          setIsExternalStorageAvailable(false);
+          
+          // Show alert and then force close the app with a more reliable approach
+          Alert.alert(
+            "Permission Required",
+            "Storage permission is required for this app to function properly. The app will now close.",
+            [{ 
+              text: "OK", 
+              onPress: () => {
+                // Force close the app using a combination of methods for better reliability
+                BackHandler.exitApp();
+                // For Android, we can use a more forceful approach if needed
+                if (Platform.OS === 'android') {
+                  // This is a more aggressive way to exit the app
+                  NativeModules.DevSettings?.reload(); // First try to reload (which disrupts the app)
+                  setTimeout(() => {
+                    BackHandler.exitApp(); // Then try to exit again after a short delay
+                  }, 100);
+                }
+              }
+            }]
+          );
+        }
+      } catch (error) {
+        console.error("Permission check failed:", error);
+        
+        // Show error alert and then force close the app
+        Alert.alert(
+          "Permission Error",
+          "Failed to check storage permissions. The app will now close.",
+          [{ 
+            text: "OK", 
+            onPress: () => {
+              // Force close using the same reliable approach
+              BackHandler.exitApp();
+              if (Platform.OS === 'android') {
+                NativeModules.DevSettings?.reload();
+                setTimeout(() => {
+                  BackHandler.exitApp();
+                }, 100);
+              }
+            }
+          }]
+        );
+      } 
+  };
+
+
+  if (!isExternalStorageAvailable) {
+      AskPermission();
+    }
+  }, [message]);
 
 // Initialize the base directory
 const initializeDirectory = async () => {
@@ -198,7 +260,7 @@ useEffect(() => {
 
 
 
-const createDateBasedDirectory = async (date = new Date(), type:string) => {
+const createDateBasedDirectory = async (date = new Date(), type?: 'doserate' | 'session') => {
   const year = date.getFullYear().toString();
   const month = MONTHS[date.getMonth()]; // Get month name instead of number
   const day = date.getDate().toString().padStart(2, '0');
@@ -261,6 +323,10 @@ const createDateBasedDirectory = async (date = new Date(), type:string) => {
 
 
 const saveDoserateToExternal = useCallback(async (doserate: number, cps: number, createdAt: number) => {
+  
+  if (!isExternalStorageAvailable) {
+    return;
+  }
   try {
     const date = new Date(createdAt);
     const dirPath = await createDateBasedDirectory(date, 'doserate');
@@ -300,7 +366,7 @@ const saveDoserateToExternal = useCallback(async (doserate: number, cps: number,
 
   } catch (error) {
     console.error('Error in saveDoserateToExternal:', error);
-    throw error;
+    // throw error;
   }
 }, [createDateBasedDirectory]);
 
@@ -495,7 +561,8 @@ useEffect(() => {
     spectrum,
     connectMqtt,
     disconnectMqtt,
-    createDateBasedDirectory
+    createDateBasedDirectory,
+    isExternalStorageAvailable
   }), [
     message, 
     messages, 
@@ -509,7 +576,8 @@ useEffect(() => {
     spectrum, 
     connectMqtt, 
     disconnectMqtt,
-     createDateBasedDirectory
+    createDateBasedDirectory,
+    isExternalStorageAvailable
   ]);
   
   return (
