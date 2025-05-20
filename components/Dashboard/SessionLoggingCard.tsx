@@ -332,16 +332,16 @@ const styles = StyleSheet.create({
   },
   valueIndicator: {
     position: "absolute",
-    top: -20,
+    top: -40,
     backgroundColor: COLORS.primary,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 10,
     zIndex: 10,
   },
   valueIndicatorText: {
     color: COLORS.white,
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: "bold",
   },
   loggingButtons: {

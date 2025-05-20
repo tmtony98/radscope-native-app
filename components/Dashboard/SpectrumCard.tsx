@@ -31,6 +31,48 @@ const SpectrumCard = ({
     scaleY: 1.0,
   });
   
+  /**
+   * Calculate Simple Moving Average (SMA)
+   * @param data - Input array of points
+   * @param windowSize - Size of the moving window
+   * @returns Array with smoothed y values
+   */
+  const calculateSMA = (data: Array<{x: number, y: number}>, windowSize: number): Array<{x: number, y: number}> => {
+    if (!Array.isArray(data) || windowSize <= 0 || data.length < windowSize) return data;
+
+    const result = [];
+    let sum = 0;
+
+    // Keep x values the same, only smooth y values
+    // Pre-calculate the first window
+    for (let i = 0; i < windowSize; i++) {
+      sum += data[i].y;
+    }
+
+    // Add the first point with the average of the window
+    result.push({ x: data[0].x, y: sum / windowSize });
+
+    // Slide the window
+    for (let i = windowSize; i < data.length; i++) {
+      sum += data[i].y - data[i - windowSize].y;
+      result.push({ x: data[i].x, y: sum / windowSize });
+    }
+
+    // For the beginning points (where we don't have enough previous points)
+    // Use forward-looking windows to fill in the gaps
+    for (let i = 1; i < windowSize; i++) {
+      let localSum = 0;
+      for (let j = 0; j < windowSize; j++) {
+        if (i + j < data.length) {
+          localSum += data[i + j].y;
+        }
+      }
+      result[i] = { x: data[i].x, y: localSum / windowSize };
+    }
+
+    return result;
+  };
+
   // Process spectrum data with debouncing to prevent excessive calculations
   useEffect(() => {
     if (spectrum.length === 0) return;
@@ -44,9 +86,15 @@ const SpectrumCard = ({
         processedData = spectrum.map((value, index) => ({ x: index, y: value }));
       }
       
+      // Apply smoothing if enabled
+      if (spectrumSettings.smoothingType && spectrumSettings.smoothingPoints > 0) {
+        const windowSize = Math.min(spectrumSettings.smoothingPoints, processedData.length);
+        processedData = calculateSMA(processedData, windowSize);
+      }
+      
       // Then apply transformation to y values based on selected scale type
       const scaleType = (spectrumSettings.scaleType || 'Linear').toLowerCase() as ScaleType;
-      const transformedData = processedData.map(point => ({
+      const transformedData = processedData.map((point: {x: number, y: number}) => ({
         x: point.x,
         y: transformValue(point.y, scaleType)
       }));
@@ -167,6 +215,8 @@ const SpectrumCard = ({
       
       <Text style={styles.chartLabel}>
         Energy (Kev) vs Count ({spectrumSettings.scaleType || 'Linear'})
+        {spectrumSettings.smoothingType && spectrumSettings.smoothingPoints > 0 ? 
+          ` (Smoothed: ${spectrumSettings.smoothingPoints} pts)` : ''}
       </Text>
     </View>
   );

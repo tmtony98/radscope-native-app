@@ -16,6 +16,7 @@ import Header from "@/components/Header";
 import { useSettingsContext } from "@/Provider/SettingsContext";
 import Toast from 'react-native-toast-message';
 import {spectrumSettings} from "../Provider/SettingsContext";
+import { opacity } from "react-native-reanimated/lib/typescript/Colors";
 
 const scaleTypeData = [
   { label: "Linear", value: "linear" },
@@ -38,13 +39,13 @@ export default function SpectrumSettings() {
     energyAxis: "Energy Axis",
     scaleType: "Linear",
     smoothingType: false,
-    smoothingPoints: 50,
+    smoothingPoints: 30,
   });
   
   // Additional state for slider jitter prevention
-  const [displaySmoothingPoints, setDisplaySmoothingPoints] = useState(50);
+  const [displaySmoothingPoints, setDisplaySmoothingPoints] = useState(30);
   const [isSliding, setIsSliding] = useState(false);
-  const smoothingPointsRef = useRef(50);
+  const smoothingPointsRef = useRef(30);
 
   console.log("spectrumSettings", spectrumSettings);
 
@@ -261,17 +262,60 @@ export default function SpectrumSettings() {
             Y Axis smoothing type
           </Text>
           <View style={styles.settingRow}>
-            <Text style={TYPOGRAPHY.bodyTextMedium}>SMA</Text>
+            <Text style={TYPOGRAPHY.bodyTextMedium}> Simple Moving Average (SMA) </Text>
             <Switch
               value={spectrumSettings.smoothingType}
               onValueChange={handleSmoothingTypeChange}
               trackColor={{ false: COLORS.border, true: COLORS.primary }}
               thumbColor={COLORS.white}
             />
+          </View>sliderText
+
+          <View style={styles.sliderContainer}>
+          {spectrumSettings.smoothingType ?
+           <View style={styles.sliderTextContainer}>
+           <Text style={TYPOGRAPHY.bodyTextMedium}>
+              Smoothing Points: {isSliding ? displaySmoothingPoints : spectrumSettings.smoothingPoints}
+            </Text>
+           </View> : 
+           <View style={styles.sliderTextContainer}>
+           <Text style={[TYPOGRAPHY.bodyTextMedium, { opacity: 0.5 }]}>
+              Smoothing Points: {spectrumSettings.smoothingPoints}
+            </Text>
+           </View> }
+            <View style={styles.sliderWrapper}>
+              <Slider
+                style={styles.sliderControl}
+                minimumValue={0}
+                maximumValue={32}
+                step={1}
+                value={spectrumSettings.smoothingPoints}
+                onValueChange={handleSmoothingPointsSliding}
+                onSlidingStart={() => setIsSliding(true)}
+                onSlidingComplete={handleSmoothingPointsComplete}
+                minimumTrackTintColor={COLORS.primary}
+                maximumTrackTintColor={COLORS.textSecondary}
+                thumbTintColor={COLORS.primary}
+                disabled={!spectrumSettings.smoothingType}
+              />
+              {isSliding && (
+                <View
+                  style={[
+                    styles.valueIndicator,
+                    {
+                      left: `${(displaySmoothingPoints / 32) * 100}%`,
+                      transform: [{ translateX: -20 }],
+                    },
+                  ]}
+                >
+                  <Text style={styles.valueIndicatorText}>{displaySmoothingPoints}</Text>
+                </View>
+              )}
+            </View>
           </View>
         </View>
 
-        <View style={CARD_STYLE.container}>
+        {/* <View style={CARD_STYLE.container}>
           <Text style={[TYPOGRAPHY.headLineSmall, styles.sectionTitle]}>
             Smoothing Points
           </Text>
@@ -308,7 +352,7 @@ export default function SpectrumSettings() {
               )}
             </View>
           </View>
-        </View>
+        </View> */}
       </ScrollView>
     </View>
   );
@@ -366,14 +410,28 @@ const styles = StyleSheet.create({
   dropdownText: {
     color: COLORS.text,
   },
+  sliderTextContainer: {
+   display: "flex",
+   flexDirection: "row",
+   alignItems: "center",
+   justifyContent: "space-between",
+
+   
+  },
   settingRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: SPACING.md,
+    // paddingVertical: SPACING.md,
   },
   sliderContainer: {
-    padding: SPACING.md,
+    padding: SPACING.xs,
+    display: "flex",
+    flex: 1,
+    flexDirection: "column",
+    justifyContent: "flex-start",
+    paddingTop: SPACING.lg,
+
   },
   sliderWrapper: {
     width: "100%",
@@ -383,20 +441,20 @@ const styles = StyleSheet.create({
   },
   sliderControl: {
     width: "100%",
-    height: 40,
+    height: 45,
   },
   valueIndicator: {
     position: "absolute",
-    top: -20,
+    top: -40,
     backgroundColor: COLORS.primary,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 10,
     zIndex: 10,
   },
   valueIndicatorText: {
     color: COLORS.white,
-    fontSize: 14,
+    fontSize: 18,
     fontWeight: "bold",
   },
   sectionTitle: {
