@@ -155,7 +155,7 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
                 <Circle
                   cx={pressState.x.position.value}
                   cy={pressState.y.doseRate.position.value}
-                  r={10}
+                  r={5}
                   color="#1E88E5"
                 />
                 
