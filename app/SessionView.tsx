@@ -136,8 +136,8 @@ const SessionView = () => {
 
       // Open the file with the device's default app instead of reading it in-app
       await FileViewer.open(sessionFile.path, {
-        showOpenWithDialog: true, // Show the "Open with" dialog on Android
-        showAppsSuggestions: true, // Show app suggestions on iOS
+        // showOpenWithDialog: true, // Show the "Open with" dialog on Android
+        // showAppsSuggestions: true, // Show app suggestions on iOS
       });
 
       console.log("Opening file in external viewer:", sessionFile.path);
