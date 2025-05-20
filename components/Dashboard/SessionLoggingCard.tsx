@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
   },
   loggingText: {
     fontSize: 12,
-    color: "red",
+    color: COLORS.error,
     fontFamily: "Poppins-Medium",
   },
   sliderContainer: {
