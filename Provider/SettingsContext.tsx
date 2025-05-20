@@ -8,7 +8,7 @@ export type GeneralSettings = {
   serverCredentials: ServerCredentials | null;
 };
 
-export type SpectrumSettings = {
+export type spectrumSettings = {
   energyAxis: string;
   scaleType: string;
   smoothingType: boolean;
@@ -23,7 +23,7 @@ export type ServerCredentials = {
 // Storage keys
 const GENERAL_SETTINGS_KEY = 'generalSettingsKey';
 const SPECTRUM_SETTINGS_KEY = 'spectrumSettingsKey';
-
+const spectrum_Settings_Key = 'spectrumSettingsKey';
 // Default settings
 const DEFAULT_GENERAL_SETTINGS: GeneralSettings = {
   discoveryType: 'Local',
@@ -34,7 +34,7 @@ const DEFAULT_GENERAL_SETTINGS: GeneralSettings = {
   },
 };
 
-const DEFAULT_SPECTRUM_SETTINGS: SpectrumSettings = {
+const DEFAULT_SPECTRUM_SETTINGS: spectrumSettings = {
   energyAxis: 'Energy Axis',
   scaleType: 'Linear',
   smoothingType: false,
@@ -45,18 +45,20 @@ const DEFAULT_SPECTRUM_SETTINGS: SpectrumSettings = {
 type SettingsContextType = {
   generalSettingsKey: string;
   spectrumSettingsKey: string;
+  spectrum_Settings_Key: string;
   generalSettings: GeneralSettings;
-  spectrumSettings: SpectrumSettings;
+  spectrumSettings: spectrumSettings;
   storeGeneralSettings: (settings: GeneralSettings) => Promise<void>;
-  storeSpectrumSettings: (settings: SpectrumSettings) => Promise<void>;
+  storeSpectrumSettings: (settings: spectrumSettings) => Promise<void>;
   getGeneralSettings: () => Promise<GeneralSettings>;
-  getSpectrumSettings: () => Promise<SpectrumSettings>;
+  getSpectrumSettings: () => Promise<spectrumSettings>;
 };
 
 // Create the context with default values
 const SettingsContext = createContext<SettingsContextType>({
   generalSettingsKey: GENERAL_SETTINGS_KEY,
   spectrumSettingsKey: SPECTRUM_SETTINGS_KEY,
+  spectrum_Settings_Key: spectrum_Settings_Key,
   generalSettings: DEFAULT_GENERAL_SETTINGS,
   spectrumSettings: DEFAULT_SPECTRUM_SETTINGS,
   storeGeneralSettings: async () => {},
@@ -83,7 +85,7 @@ interface SettingsProviderProps {
 export const SettingsProvider = ({ children }: SettingsProviderProps) => {
   // State to store settings
   const [generalSettings, setGeneralSettings] = useState<GeneralSettings>(DEFAULT_GENERAL_SETTINGS);
-  const [spectrumSettings, setSpectrumSettings] = useState<SpectrumSettings>(DEFAULT_SPECTRUM_SETTINGS);
+  const [spectrumSettings, setSpectrumSettings] = useState<spectrumSettings>(DEFAULT_SPECTRUM_SETTINGS);
   
   // Function to store general settings in secure storage
   const storeGeneralSettings = useCallback(async (settings: GeneralSettings) => {
@@ -97,7 +99,7 @@ export const SettingsProvider = ({ children }: SettingsProviderProps) => {
   }, []);
 
   // Function to store spectrum settings in secure storage
-  const storeSpectrumSettings = useCallback(async (settings: SpectrumSettings) => {
+  const storeSpectrumSettings = useCallback(async (settings: spectrumSettings) => {
     try {
       await SecureStore.setItemAsync(SPECTRUM_SETTINGS_KEY, JSON.stringify(settings));
       setSpectrumSettings(settings);
@@ -130,7 +132,7 @@ export const SettingsProvider = ({ children }: SettingsProviderProps) => {
     try {
       const storedSettings = await SecureStore.getItemAsync(SPECTRUM_SETTINGS_KEY);
       if (storedSettings) {
-        const parsedSettings = JSON.parse(storedSettings) as SpectrumSettings;
+        const parsedSettings = JSON.parse(storedSettings) as spectrumSettings;
         setSpectrumSettings(parsedSettings);
         return parsedSettings;
       }
@@ -156,6 +158,7 @@ export const SettingsProvider = ({ children }: SettingsProviderProps) => {
   const contextValue = useMemo(() => ({
     generalSettingsKey: GENERAL_SETTINGS_KEY,
     spectrumSettingsKey: SPECTRUM_SETTINGS_KEY,
+    spectrum_Settings_Key,
     generalSettings,
     spectrumSettings,
     storeGeneralSettings,
