@@ -4,8 +4,8 @@ import * as SecureStore from 'expo-secure-store';
 // Use consistent naming conventions (camelCase)
 export type GeneralSettings = {
   discoveryType: string;
-  alarm: number;
-  serverCredentials: ServerCredentials;
+  alarm: number | null
+  serverCredentials: ServerCredentials | null;
 };
 
 export type SpectrumSettings = {
@@ -16,8 +16,8 @@ export type SpectrumSettings = {
 };
 
 export type ServerCredentials = {
-  ipAddress: string;
-  port: number;
+  ipAddress: string | null;
+  port: number | null;
 };
 
 // Storage keys
@@ -27,7 +27,7 @@ const SPECTRUM_SETTINGS_KEY = 'spectrumSettingsKey';
 // Default settings
 const DEFAULT_GENERAL_SETTINGS: GeneralSettings = {
   discoveryType: 'Local',
-  alarm: 0,
+  alarm: 10,
   serverCredentials: {
     ipAddress: '',
     port: 0,

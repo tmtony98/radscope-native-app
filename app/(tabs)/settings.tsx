@@ -7,21 +7,23 @@ import Header from '@/components/Header';
 import { useSettingsContext } from '@/Provider/SettingsContext';
 import type { GeneralSettings } from '@/Provider/SettingsContext';
 import StyledTextInput from '@/components/common/StyledTextInput';
+import StyledDecimalInput from '@/components/common/StyledDecimalInput';
 
 export default function Settings() {
   const { getGeneralSettings, storeGeneralSettings } = useSettingsContext();
 
   const [generalSettings, setGeneralSettings] = useState<GeneralSettings>({
     discoveryType: 'Local',
-    alarm: 0,
+    alarm: 10,
     serverCredentials: {
       ipAddress: '',
-      port: 0,
+      port: null,
     },
   });
 
   const [hasChanges, setHasChanges] = useState(false);
   const [initialSettings, setInitialSettings] = useState<GeneralSettings | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Function to save the general settings
   const handleSave = async () => {
@@ -77,10 +79,10 @@ export default function Settings() {
     setHasChanges(true);
   };
 
-  const handleAlarmChange = (value: string) => {
+  const handleAlarmChange = (value: number | null) => {
     setGeneralSettings((prev) => ({
       ...prev,
-      alarm: parseInt(value) || 0,
+      alarm: value,
     }));
     setHasChanges(true);
   };
@@ -89,19 +91,19 @@ export default function Settings() {
     setGeneralSettings((prev) => ({
       ...prev,
       serverCredentials: {
-        ...prev.serverCredentials,
-        ipAddress: value,
+        ...prev.serverCredentials!,
+        ipAddress: value === '' ? null : value,
       },
     }));
     setHasChanges(true);
   };
 
-  const handlePortChange = (value: string) => {
+  const handlePortChange = (value: number | null) => {
     setGeneralSettings((prev) => ({
       ...prev,
       serverCredentials: {
-        ...prev.serverCredentials,
-        port: parseInt(value) || 0,
+        ...prev.serverCredentials!,
+        port: value,
       },
     }));
     setHasChanges(true);
@@ -156,11 +158,11 @@ export default function Settings() {
         </View>
         <View style={CARD_STYLE.container}>
           <Text style={TYPOGRAPHY.headLineSmall}>Alarm</Text>
-          <StyledTextInput
+          <StyledDecimalInput
             label="Alarm Threshold"
-            value={generalSettings.alarm.toString()}
-            keyboardType="numeric"
-            onChangeText={handleAlarmChange}
+            value={generalSettings.alarm === null ? '' : generalSettings.alarm.toString()}
+            onDecimalChange={handleAlarmChange}
+            decimalPlaces={3}
             placeholder="Enter threshold Value"
           />
         </View>
@@ -168,16 +170,16 @@ export default function Settings() {
           <Text style={TYPOGRAPHY.headLineSmall}>Server Credentials</Text>
           <StyledTextInput
             label="IP Address"
-            value={generalSettings.serverCredentials.ipAddress}
+            value={generalSettings.serverCredentials?.ipAddress || ''}
             onChangeText={handleIpAddressChange}
             placeholder="Enter IP Address"
             style={{ marginBottom: SPACING.md }}
           />
-          <StyledTextInput
+          <StyledDecimalInput
             label="Port"
-            value={generalSettings.serverCredentials.port.toString()}
-            keyboardType="numeric"
-            onChangeText={handlePortChange}
+            value={generalSettings.serverCredentials?.port === null ? '' : generalSettings.serverCredentials?.port?.toString() || ''}
+            onDecimalChange={handlePortChange}
+            decimalPlaces={0}
             placeholder="Enter Port Number"
           />
         </View>
