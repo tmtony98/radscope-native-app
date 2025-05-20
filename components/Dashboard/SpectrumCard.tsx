@@ -6,6 +6,8 @@ import { useRouter } from 'expo-router';
 import { useMqttContext } from '../../Provider/MqttContext';
 import { Area, CartesianChart, Line, useChartTransformState } from "victory-native";
 import { useFont } from "@shopify/react-native-skia";
+import { transformValue, ScaleType } from '@/utils/spectrumTransforms';
+import { useSettingsContext } from '@/Provider/SettingsContext';
 
 import inter from "../../assets/fonts/Inter/static/Inter_18pt-Bold.ttf";
 type SpectrumCardProps = {
@@ -19,6 +21,7 @@ const SpectrumCard = ({
 }: SpectrumCardProps) => {
   const router = useRouter();
   const { spectrum } = useMqttContext();
+  const { spectrumSettings } = useSettingsContext();
   const font = useFont(inter, 12);
   const [chartData, setChartData] = useState<Array<{x: number, y: number}>>([]);
   
@@ -33,15 +36,22 @@ const SpectrumCard = ({
     if (spectrum.length === 0) return;
     
     const processData = () => {
-      // If spectrum has more than 100 points, downsample it
+      // First downsample if needed
+      let processedData;
       if (spectrum.length > 100) {
-        setChartData(downsampleData(spectrum));
+        processedData = downsampleData(spectrum);
       } else {
-        setChartData(spectrum.map((value, index) => ({ x: index, y: value })));
+        processedData = spectrum.map((value, index) => ({ x: index, y: value }));
       }
-
-      // setChartData(spectrum.map((value, index) => ({ x: index, y: value })));
-
+      
+      // Then apply transformation to y values based on selected scale type
+      const scaleType = (spectrumSettings.scaleType || 'Linear').toLowerCase() as ScaleType;
+      const transformedData = processedData.map(point => ({
+        x: point.x,
+        y: transformValue(point.y, scaleType)
+      }));
+      
+      setChartData(transformedData);
     };
     
     // Process immediately for small datasets, debounce for large ones
@@ -51,8 +61,29 @@ const SpectrumCard = ({
       const timer = setTimeout(processData, 50);
       return () => clearTimeout(timer);
     }
-  }, [spectrum]);
+  }, [spectrum, spectrumSettings.scaleType]);
   
+  // Update Y-axis format based on scale type
+  const getYAxisFormat = useCallback((value: number) => {
+    const scaleType = (spectrumSettings.scaleType || 'Linear').toLowerCase() as ScaleType;
+    switch (scaleType) {
+      case 'logarithmic':
+        return `10^${value.toFixed(1)}`;
+      case 'square-root':
+        return value.toFixed(1);
+      default:
+        // For linear scale, format numbers to avoid scientific notation
+        if (isNaN(value) || !isFinite(value)) {
+          return '0';
+        } else if (Math.abs(value) < 1000) {
+          return Math.round(value).toString();
+        } else {
+          // Format large numbers with commas
+          return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+        }
+    }
+  }, [spectrumSettings.scaleType]);
+
   const handleSettingsPress = useCallback(() => {
     router.push('/spectrum-settings');
   }, [router]);
@@ -98,12 +129,15 @@ const SpectrumCard = ({
                 lineWidth: 1,
                 lineColor: "#CCCCCC",
                 labelColor: "#333333",
+                formatYLabel: getYAxisFormat
               }}
               padding={{ top: 15, bottom: 10}}
               xAxis={{
                 font,
                 tickCount: 5,
               }}
+              // Set a reasonable y-axis range based on data
+              domain={{ y: [0, Math.max(1, ...chartData.map(point => point.y * 1.1))] }}
               transformState={transformState}
               transformConfig={{
                 pan: { enabled: true, dimensions: ["x"] },
@@ -132,7 +166,9 @@ const SpectrumCard = ({
         )}
       </View>
       
-      <Text style={styles.chartLabel}>Energy (Kev) vs Count</Text>
+      <Text style={styles.chartLabel}>
+        Energy (Kev) vs Count ({spectrumSettings.scaleType || 'Linear'})
+      </Text>
     </View>
   );
 }
