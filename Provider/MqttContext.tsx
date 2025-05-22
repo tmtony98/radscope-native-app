@@ -176,21 +176,20 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const AskPermission = async () : Promise <boolean> => {
     try {
-      debugger
+      
       console.log("Checking storage permission");
       const result = await NativeModules.PermissionFile.checkAndGrantPermission();
       console.log(result ? "Permission granted" : "Permission not granted yet");
       
       if (result) {
         // Permission granted
-        debugger
+        
         setIsExternalStorageAvailable(true);
         return true;
       } else {
         // Permission denied
         setIsExternalStorageAvailable(false);
-        debugger
-       
+        
         // Show alert with options to go to settings or exit app
         Alert.alert(
           "Permission Required",
