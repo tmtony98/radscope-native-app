@@ -81,6 +81,35 @@ public class PermissionFileModule extends ReactContextBaseJavaModule implements 
         }
     }
 
+    @ReactMethod
+    public void openAppSettings(Promise promise) {
+        try {
+            if (Build.VERSION.SDK_INT >= 30) {
+                try {
+                    Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                    intent.addCategory("android.intent.category.DEFAULT");
+                    intent.setData(Uri.parse(String.format("package:%s",getReactApplicationContext().getPackageName())));
+                    getCurrentActivity().startActivityForResult(intent, 2296);
+                    promise.resolve(true);
+                } catch (Exception e) {
+                    Intent intent = new Intent();
+                    intent.setAction(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
+                    getCurrentActivity().startActivityForResult(intent, 2296);
+                    promise.resolve(true);
+                }
+            } else {
+                //below android 11
+                Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                Uri uri = Uri.fromParts("package", getReactApplicationContext().getPackageName(), null);
+                intent.setData(uri);
+                getCurrentActivity().startActivity(intent);
+                promise.resolve(true);
+            }
+        } catch (Exception e) {
+            promise.reject("ERROR", e.getMessage());
+        }
+    }
+
     @Override
     public void onActivityResult(Activity activity, int requestCode, int resultCode, Intent data) {
         if (requestCode == 2296) {

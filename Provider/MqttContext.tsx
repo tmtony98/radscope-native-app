@@ -158,6 +158,22 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
 
+  const checkPermissionsAfterSettings = async () => {
+    try {
+      const result = await NativeModules.PermissionFile.checkAndGrantPermission();
+      if (result) {
+        setIsExternalStorageAvailable(true);
+        // Initialize directories after permissions are granted
+        await initializeDirectory();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error("Failed to check permissions after settings:", error);
+      return false;
+    }
+  };
+
   const AskPermission = async () : Promise <boolean> => {
     try {
       debugger
@@ -175,48 +191,98 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsExternalStorageAvailable(false);
         debugger
        
-        // Show alert and then force close the app with a more reliable approach
+        // Show alert with options to go to settings or exit app
         Alert.alert(
           "Permission Required",
-          "Storage permission is required for this app to function properly. The app will now close.",
-          [{ 
-            text: "OK", 
-            onPress: () => {
-              // Force close the app using a combination of methods for better reliability
-              BackHandler.exitApp();
-              // For Android, we can use a more forceful approach if needed
-              if (Platform.OS === 'android') {
-                // This is a more aggressive way to exit the app
-                NativeModules.DevSettings?.reload(); // First try to reload (which disrupts the app)
-                setTimeout(() => {
-                  BackHandler.exitApp(); // Then try to exit again after a short delay
-                }, 100);
+          "Storage permission is required for this app to function properly.",
+          [
+            { 
+              text: "Go to Settings", 
+              onPress: async () => {
+                try {
+                  // Use the dedicated method to open app settings directly
+                  await NativeModules.PermissionFile.openAppSettings();
+                  
+                  // Set a timeout to check permissions after user returns from settings
+                  // This gives time for the user to grant permissions and return to the app
+                  setTimeout(async () => {
+                    const granted = await checkPermissionsAfterSettings();
+                    if (granted) {
+                      console.log("Permissions granted after settings!");
+                    } else {
+                      console.log("Permissions still not granted after settings");
+                      // Could show another alert here if needed
+                    }
+                  }, 1000);
+                } catch (error) {
+                  console.error("Failed to open settings:", error);
+                }
               }
+            },
+            { 
+              text: "Exit App", 
+              onPress: () => {
+                // Force close the app using a combination of methods for better reliability
+                BackHandler.exitApp();
+                // For Android, we can use a more forceful approach if needed
+                if (Platform.OS === 'android') {
+                  // This is a more aggressive way to exit the app
+                  NativeModules.DevSettings?.reload(); // First try to reload (which disrupts the app)
+                  setTimeout(() => {
+                    BackHandler.exitApp(); // Then try to exit again after a short delay
+                  }, 100);
+                }
+              },
+              style: 'cancel'
             }
-          }]
+          ]
         );
         return false;
       }
     } catch (error) {
       console.error("Permission check failed:", error);
       
-      // Show error alert and then force close the app
+      // Show error alert with options
       Alert.alert(
         "Permission Error",
-        "Failed to check storage permissions. The app will now close.",
-        [{ 
-          text: "OK", 
-          onPress: () => {
-            // Force close using the same reliable approach
-            BackHandler.exitApp();
-            if (Platform.OS === 'android') {
-              NativeModules.DevSettings?.reload();
-              setTimeout(() => {
-                BackHandler.exitApp();
-              }, 100);
+        "Failed to check storage permissions.",
+        [
+          { 
+            text: "Go to Settings", 
+            onPress: async () => {
+              try {
+                // Try to open settings even if the check failed
+                await NativeModules.PermissionFile.openAppSettings();
+                
+                // Set a timeout to check permissions after user returns from settings
+                setTimeout(async () => {
+                  const granted = await checkPermissionsAfterSettings();
+                  if (granted) {
+                    console.log("Permissions granted after settings!");
+                  } else {
+                    console.log("Permissions still not granted after settings");
+                  }
+                }, 1000);
+              } catch (error) {
+                console.error("Failed to open settings:", error);
+              }
             }
+          },
+          { 
+            text: "Exit App", 
+            onPress: () => {
+              // Force close using the same reliable approach
+              BackHandler.exitApp();
+              if (Platform.OS === 'android') {
+                NativeModules.DevSettings?.reload();
+                setTimeout(() => {
+                  BackHandler.exitApp();
+                }, 100);
+              }
+            },
+            style: 'cancel'
           }
-        }]
+        ]
       );
       return false;
     } 
