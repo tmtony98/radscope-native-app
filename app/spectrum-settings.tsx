@@ -269,7 +269,7 @@ export default function SpectrumSettings() {
               trackColor={{ false: COLORS.border, true: COLORS.primary }}
               thumbColor={COLORS.white}
             />
-          </View>sliderText
+          </View>
 
           <View style={styles.sliderContainer}>
           {spectrumSettings.smoothingType ?

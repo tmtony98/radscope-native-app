@@ -68,57 +68,64 @@ export default function DoseHistory() {
 
   // Handle date change
   const onDateChange = (event: any, selectedDate?: Date) => {
-    const currentDate = selectedDate || new Date();
-    setSelectedDate(currentDate);
-
-    console.log("currentDate", currentDate);
     setDatePickerVisible(false);
     
-    // After date is selected, show time picker
-    setTimeout(() => {
-      showTimePicker();
-    }, 50);
+    // Only proceed if the user didn't cancel (event.type will be 'set' when user confirms)
+    if (event.type === 'set' && selectedDate) {
+      const currentDate = selectedDate;
+      setSelectedDate(currentDate);
+      console.log("currentDate", currentDate);
+      
+      // After date is selected, show time picker
+      setTimeout(() => {
+        showTimePicker();
+      }, 200);
+    }
   };
 
   // Handle time change
   const onTimeChange = (event: any, selectedTime?: Date) => {
-    const currentTime = selectedTime || new Date();
-    
-    // Combine the previously selected date with the new time
-    const updatedDateTime = new Date(selectedDate);
-    updatedDateTime.setHours(currentTime.getHours());
-    updatedDateTime.setMinutes(currentTime.getMinutes());
-    
-    setSelectedDate(updatedDateTime);
     setTimePickerVisible(false);
     
-    // Format and display the selected date and time
-    setFormattedDateTime(`${formatDate(updatedDateTime)} ${formatTime(updatedDateTime)}`);
-    
-    // Navigate to DoseHistoryView with the selected date and time
-    setTimeout(() => {
-      // This would typically use navigation, but since we're working with components
-      // you'd need to implement how to show the DoseHistoryView in your app
-      // For example, you might use a state variable to switch between views
+    // Only proceed if the user didn't cancel (event.type will be 'set' when user confirms)
+    if (event.type === 'set' && selectedTime) {
+      const currentTime = selectedTime;
       
-      // For demonstration, we can use router to navigate to a page that shows DoseHistoryView
-      // or use a callback function that was passed to this component
+      // Combine the previously selected date with the new time
+      const updatedDateTime = new Date(selectedDate);
+      updatedDateTime.setHours(currentTime.getHours());
+      updatedDateTime.setMinutes(currentTime.getMinutes());
       
-      // Assuming there's a parent component that manages state:
-      // if (onDateTimeSelected) {
-      //   onDateTimeSelected(updatedDateTime);
-      // }
+      setSelectedDate(updatedDateTime);
       
-      // Or if using navigation:
-      router.push({
-        pathname: '/dose-history-view',
-        params: {
-          date: updatedDateTime.toLocaleDateString(),
-          startTime: formatTime(updatedDateTime),
-          // endTime: formatTime(updatedDateTime)
-        }
-      });
-    }, 100);
+      // Format and display the selected date and time
+      setFormattedDateTime(`${formatDate(updatedDateTime)} ${formatTime(updatedDateTime)}`);
+      
+      // Navigate to DoseHistoryView with the selected date and time
+      setTimeout(() => {
+        // This would typically use navigation, but since we're working with components
+        // you'd need to implement how to show the DoseHistoryView in your app
+        // For example, you might use a state variable to switch between views
+        
+        // For demonstration, we can use router to navigate to a page that shows DoseHistoryView
+        // or use a callback function that was passed to this component
+        
+        // Assuming there's a parent component that manages state:
+        // if (onDateTimeSelected) {
+        //   onDateTimeSelected(updatedDateTime);
+        // }
+        
+        // Or if using navigation:
+        router.push({
+          pathname: '/dose-history-view',
+          params: {
+            date: updatedDateTime.toLocaleDateString(),
+            startTime: formatTime(updatedDateTime),
+            // endTime: formatTime(updatedDateTime)
+          }
+        });
+      }, 300);
+    }
   };
 
   return (

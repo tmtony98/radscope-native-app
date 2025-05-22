@@ -41,9 +41,9 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
   const yMin = 0;
   const yMax = 0.12;
 
-  const getLastTimestamp = () => {
+  const getLastTimestamp  = () : string =>{
     const timestamp = doseRateGraphArray.length > 0 ? doseRateGraphArray[doseRateGraphArray.length - 1].timestamp : 0;
-    return timestamp ? format(new Date(timestamp), 'yyyy-MM-dd HH:mm:ss') : 'No data';
+    return timestamp ? format(new Date(timestamp), 'HH:mm:ss yyyy-MM-dd ') : 'No data';
   };
 
 
@@ -162,7 +162,7 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
                 {/* Create a background for the tooltip */}
                 <Rect
                   x={pressState.x.position.value - 15}
-                  y={pressState.y.doseRate.position.value - 130}
+                  y={pressState.y.doseRate.position.value - 70}
                   width={100}
                   height={50}
                   color="#F5F9FC"
@@ -172,7 +172,7 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
                 {/* Display tooltip with formatted values */}
                 <SkiaText
                   x={pressState.x.position.value}
-                  y={pressState.y.doseRate.position.value - 110}
+                  y={pressState.y.doseRate.position.value - 50}
                   text={`${pressState.y.doseRate.value.value.toFixed(3)} µSv/h`}
                   font={font}
                   color="#333333"
@@ -180,7 +180,7 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
                 />
                 <SkiaText
                   x={pressState.x.position.value}
-                  y={pressState.y.doseRate.position.value - 90}
+                  y={pressState.y.doseRate.position.value - 30}
                   text={ `${format(new Date(pressState.x.value.value), 'HH:mm:ss')}`}
                   font={font}
                   color="#333333"
