@@ -157,75 +157,70 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
- // useEffect for checking storage permission
-  useEffect(() => {
- if (isExternalStorageAvailable){
-  return
- }
 
- const AskPermission = async () => {
-      try {
-        console.log("Checking storage permission");
-        const result = await NativeModules.PermissionFile.checkAndGrantPermission();
-        console.log(result ? "Permission granted" : "Permission not granted yet");
-        
-        if (result) {
-          // Permission granted
-          setIsExternalStorageAvailable(true);
-        } else {
-          // Permission denied
-          setIsExternalStorageAvailable(false);
-          
-          // Show alert and then force close the app with a more reliable approach
-          Alert.alert(
-            "Permission Required",
-            "Storage permission is required for this app to function properly. The app will now close.",
-            [{ 
-              text: "OK", 
-              onPress: () => {
-                // Force close the app using a combination of methods for better reliability
-                BackHandler.exitApp();
-                // For Android, we can use a more forceful approach if needed
-                if (Platform.OS === 'android') {
-                  // This is a more aggressive way to exit the app
-                  NativeModules.DevSettings?.reload(); // First try to reload (which disrupts the app)
-                  setTimeout(() => {
-                    BackHandler.exitApp(); // Then try to exit again after a short delay
-                  }, 100);
-                }
-              }
-            }]
-          );
-        }
-      } catch (error) {
-        console.error("Permission check failed:", error);
-        
-        // Show error alert and then force close the app
+  const AskPermission = async () : Promise <boolean> => {
+    try {
+      debugger
+      console.log("Checking storage permission");
+      const result = await NativeModules.PermissionFile.checkAndGrantPermission();
+      console.log(result ? "Permission granted" : "Permission not granted yet");
+      
+      if (result) {
+        // Permission granted
+        debugger
+        setIsExternalStorageAvailable(true);
+        return true;
+      } else {
+        // Permission denied
+        setIsExternalStorageAvailable(false);
+        debugger
+       
+        // Show alert and then force close the app with a more reliable approach
         Alert.alert(
-          "Permission Error",
-          "Failed to check storage permissions. The app will now close.",
+          "Permission Required",
+          "Storage permission is required for this app to function properly. The app will now close.",
           [{ 
             text: "OK", 
             onPress: () => {
-              // Force close using the same reliable approach
+              // Force close the app using a combination of methods for better reliability
               BackHandler.exitApp();
+              // For Android, we can use a more forceful approach if needed
               if (Platform.OS === 'android') {
-                NativeModules.DevSettings?.reload();
+                // This is a more aggressive way to exit the app
+                NativeModules.DevSettings?.reload(); // First try to reload (which disrupts the app)
                 setTimeout(() => {
-                  BackHandler.exitApp();
+                  BackHandler.exitApp(); // Then try to exit again after a short delay
                 }, 100);
               }
             }
           }]
         );
-      } 
-  };
-
-
-  if (!isExternalStorageAvailable) {
-      AskPermission();
-    }
-  }, [message]);
+        return false;
+      }
+    } catch (error) {
+      console.error("Permission check failed:", error);
+      
+      // Show error alert and then force close the app
+      Alert.alert(
+        "Permission Error",
+        "Failed to check storage permissions. The app will now close.",
+        [{ 
+          text: "OK", 
+          onPress: () => {
+            // Force close using the same reliable approach
+            BackHandler.exitApp();
+            if (Platform.OS === 'android') {
+              NativeModules.DevSettings?.reload();
+              setTimeout(() => {
+                BackHandler.exitApp();
+              }, 100);
+            }
+          }
+        }]
+      );
+      return false;
+    } 
+};
 
 // Initialize the base directory
 const initializeDirectory = async () => {
@@ -254,9 +249,22 @@ const initializeDirectory = async () => {
   }
 };
 
+ // useEffect for checking storage permission
+useEffect(() => {
+ if (isExternalStorageAvailable){
+  return
+ }
+  if (!isExternalStorageAvailable) {
+      AskPermission(); // runs on first time when message state is created
+    }
+  }, [message]);
+
+
 useEffect(() => {
   initializeDirectory();
 }, []); // Initialize directory when component mounts
+
+
 
 
 
