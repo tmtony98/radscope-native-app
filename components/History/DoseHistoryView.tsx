@@ -1,5 +1,5 @@
-import { View, StyleSheet, ScrollView, Dimensions, Image, ActivityIndicator } from "react-native";
-import React, { useEffect, useState } from "react";
+import { View, StyleSheet, ScrollView, Dimensions, Image, ActivityIndicator, Text as RNText } from "react-native";
+import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "expo-router";
 import { COLORS, SPACING, TYPOGRAPHY, CARD_STYLE } from "../../Themes/theme";
 import {
@@ -10,10 +10,11 @@ import {
   Divider,
   MD3Colors,
 } from "react-native-paper";
-import { CartesianChart, Line, Area, useChartTransformState } from "victory-native";
-import { useFont } from "@shopify/react-native-skia";
+import { CartesianChart, Line, Area, useChartTransformState, useChartPressState } from "victory-native";
+import { useFont, Circle, Text as SkiaText, Rect } from "@shopify/react-native-skia";
 import inter from "../../assets/fonts/Inter/static/Inter_18pt-Bold.ttf";
 import { getDoseRateDataByDateTime, DoseRateDataPoint } from "../../utils/DoseRateFileUtils";
+import { format } from "date-fns";
 
 type DoseHistoryViewProps = {
   date?: string;
@@ -40,8 +41,14 @@ export default function DoseHistoryView({
 
   // Create transform state for optimized rendering and pan/zoom functionality
   const { state: transformState } = useChartTransformState({
-    scaleX: 1.0,
-    scaleY: 1.0,
+    scaleX: 1., // Initial X-axis scale
+    scaleY: 1.0, // Initial Y-axis scale
+  });
+
+  // Create press state for tooltip
+  const { state: pressState, isActive: isPressActive } = useChartPressState({ 
+    x: 0, 
+    y: { doseRate: 0 } 
   });
 
   // Load the font for the chart
@@ -302,12 +309,35 @@ export default function DoseHistoryView({
   // };
 
   // Log render state for debugging
+  // Define dynamic y-axis domain values based on data
+  const calculateYDomain = useMemo((): [number, number] => {
+    // Default values if no data
+    const defaultMin = 0;
+    const defaultMax = 0.1;
+    
+    if (formattedData.length === 0) return [defaultMin, defaultMax];
+    
+    // Find the minimum and maximum dose rate values in the data
+    const minDoseRate = Math.min(...formattedData.map(point => point.doseRate));
+    const maxDoseRate = Math.max(...formattedData.map(point => point.doseRate));
+    
+    // Set minimum to 0 or slightly below the minimum value
+    const yMin = Math.max(0, minDoseRate * 0.8);
+    
+    // Set maximum to be the max value plus some padding
+    const yMax = maxDoseRate <= defaultMax ? 
+      defaultMax : (maxDoseRate + (maxDoseRate / 3));
+    
+    return [yMin, yMax];
+  }, [formattedData]);
+  
   console.log("Rendering DoseHistoryView with:", { 
     date, 
     startTime, 
     isLoading, 
     error, 
-    dataLength: formattedData.length 
+    dataLength: formattedData.length,
+    yDomain: calculateYDomain
   });
   
   return (
@@ -315,12 +345,14 @@ export default function DoseHistoryView({
       {/* Header */}
       {/* Date Selection */}
       <View style={styles.card}>
+      <Text style={TYPOGRAPHY.TitleMedium}>Select Another Date</Text>
+
         <View style={styles.dateContainer}>
-          <Text style={TYPOGRAPHY.TitleMedium}>Select Another Date</Text>
           <View style={styles.dateValue}>
             <Text style={styles.dateText}>
-              {startTime} - {date}
+              {startTime} -{endTime}
             </Text>
+            <Text style={styles.endDateText}>{date}</Text>
             <IconButton
               icon="calendar"
               size={20}
@@ -360,52 +392,124 @@ export default function DoseHistoryView({
                 lineWidth: 1,
                 lineColor: "#CCCCCC",
                 labelColor: "#333333",
-                formatYLabel: (value: number) => value.toFixed(2) // Format with 2 decimal places
+                formatYLabel: (value: number) => value.toFixed(3),
+                tickCount: 8 // Control the number of y-axis labels
               }}
-              domain={{
-                y: formattedData.length > 0 ? [
-                  Math.max(0, Math.min(...formattedData.map(d => d.doseRate)) * 0.8),
-                  Math.max(...formattedData.map(d => d.doseRate)) * 1.2
-                ] : [0, 1]
-              }}
+              domain={{ y: calculateYDomain }}
               transformState={transformState}
               transformConfig={{
                 pan: { enabled: true, dimensions: ["x"] },
-                pinch: { enabled: true, dimensions: ["x"] },
+              pinch: { enabled: true, dimensions: ["x"] },
               }}
+              chartPressState={pressState}
               xAxis={{
                 formatXLabel: (label: number) => {
                   const date = new Date(label);
+                  // 24-hour format, no AM/PM
                   return date.toLocaleTimeString('en-US', { 
                     hour: '2-digit', 
-                    minute: '2-digit', 
-                    hour12: true 
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
                   });
                 },
                 font,
                 labelRotate: 45,
-                tickCount: 5, // Limit the number of ticks for better readability
+                tickCount: 8, // Limit the number of ticks for better readability
               }}
-              // Y-axis will use default formatting
             >
               {({ points, chartBounds }) => (
                 <>
                   <Area
                     points={points.doseRate}
                     y0={chartBounds.bottom}
-                    color="rgba(30, 136, 229, 0.2)" // Light blue with transparency
+                    color="rgba(30, 136, 229, 0.2)"
                     curveType="natural"
+                    opacity={0.6}
                   />
                   <Line 
                     points={points.doseRate} 
                     color="#1E88E5" 
-                    strokeWidth={2}
-                    curveType="natural" // Smooths the line
+                    strokeWidth={2.5}
+                    curveType="natural"
                   />
+                  
+                  {/* Show tooltip when chart is pressed */}
+                  {isPressActive && pressState?.x && pressState?.y?.doseRate && (
+                    <>
+                      {/* Vertical line indicator */}
+                      <Line
+                        points={[
+                          { 
+                            x: pressState.x.position.value, 
+                            y: chartBounds.top,
+                            xValue: pressState.x.value.value,
+                            yValue: chartBounds.top
+                          },
+                          { 
+                            x: pressState.x.position.value, 
+                            y: chartBounds.bottom,
+                            xValue: pressState.x.value.value,
+                            yValue: chartBounds.bottom
+                          }
+                        ]}
+                        color="rgba(30, 136, 229, 0.7)"
+                        strokeWidth={1}
+                      />
+                      
+                      {/* Small dot at the exact data point */}
+                      <Circle
+                        cx={pressState.x.position.value}
+                        cy={pressState.y.doseRate.position.value}
+                        r={5}
+                        color="#1E88E5"
+                      />
+                      
+                      {/* Create a background for the tooltip */}
+                      <Rect
+                        x={pressState.x.position.value - 15}
+                        y={pressState.y.doseRate.position.value - 70}
+                        width={100}
+                        height={50}
+                        color="#F5F9FC"
+                      />
+                      
+                      {/* Display tooltip with formatted values */}
+                      <SkiaText
+                        x={pressState.x.position.value}
+                        y={pressState.y.doseRate.position.value - 50}
+                        text={`${pressState.y.doseRate.value.value.toFixed(3)} µSv/h`}
+                        font={font}
+                        color="#333333"
+                      />
+                      <SkiaText
+                        x={pressState.x.position.value}
+                        y={pressState.y.doseRate.position.value - 30}
+                        text={`${format(new Date(pressState.x.value.value), 'HH:mm:ss')}`}
+                        font={font}
+                        color="#333333"
+                      />
+                    </>
+                  )}
                 </>
               )}
             </CartesianChart>
           </View>
+          
+          {/* Add the label just below the graph */}
+          <RNText
+            style={{
+              textAlign: 'center',
+              marginTop: 12,
+              marginBottom: 4,
+              color: COLORS.textSecondary,
+              fontSize: 14,
+              fontWeight: '500',
+              letterSpacing: 0.2,
+            }}
+          >
+            Dose Rate (µSv/h) vs Time (HH:MM:SS)
+          </RNText>
         </View>
       ) : (
         <View style={styles.noDataContainer}>
@@ -470,13 +574,16 @@ const styles = StyleSheet.create({
   },
   card: {
     // marginHorizontal: 8,
+    ...CARD_STYLE.container,
     marginVertical: 8,
     borderRadius: 12,
+    display: 'flex',
+    flexDirection: 'column',
+
   },
   dateContainer: {
     flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    width:"100%",
     borderRadius: 8,
   },
   dateLabel: {
@@ -485,15 +592,22 @@ const styles = StyleSheet.create({
   dateValue: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between", // This spreads out the children
     borderWidth: 1,
     borderColor: "#D1D5DB",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
     backgroundColor: "#FFFFFF",
+    width: "100%"
   },
   dateText: {
     color: "#333",
+    flex: 1, // Takes up available space
+  },
+  endDateText: {
+    color: "#333",
+    marginRight: 8, // Add some space before the calendar icon
   },
   calendarIcon: {
     margin: 0,
