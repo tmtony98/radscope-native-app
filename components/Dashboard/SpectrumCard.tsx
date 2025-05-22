@@ -4,8 +4,16 @@ import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY, BUTTON_STYLE } from '../../The
 import { MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useMqttContext } from '../../Provider/MqttContext';
-import { Area, CartesianChart, Line, useChartTransformState, useChartPressState } from "victory-native";
-import { useFont, Circle, Text as SkiaText, Rect } from "@shopify/react-native-skia";
+import {
+  VictoryChart,
+  VictoryLine,
+  VictoryAxis,
+  VictoryArea,
+  VictoryZoomContainer,
+  VictoryTooltip,
+  VictoryScatter
+} from 'victory-native';
+// Ensure all Victory components are properly loaded
 import { transformValue, ScaleType } from '@/utils/spectrumTransforms';
 import { useSettingsContext } from '@/Provider/SettingsContext';
 
@@ -22,28 +30,11 @@ const SpectrumCard = ({
   const router = useRouter();
   const { spectrum } = useMqttContext();
   const { spectrumSettings } = useSettingsContext();
-  const font = useFont(inter, 12);
   const [chartData, setChartData] = useState<Array<{x: number, y: number}>>([]);
   
-  // Create transform state for optimized rendering and zoom functionality
-  const { state: transformState } = useChartTransformState({
-    scaleX: 1.0,
-    scaleY: 1.0,
-  });
-  
-  // Create press state for tooltip
-  const { state: pressState, isActive: isPressActive } = useChartPressState({ 
-    x: 0, 
-    y: { y: 0 } 
-  });
-  
-  // Function to ensure tooltip stays within chart bounds
-  const getTooltipPosition = (xPos: number, yPos: number, bounds: any, width = 100, height = 50) => {
-    // Calculate positions that ensure the tooltip stays within chart bounds
-    const xPosition = Math.min(Math.max(xPos - 15, bounds.left + 10), bounds.right - width - 10);
-    const yPosition = Math.min(Math.max(yPos - height - 10, bounds.top + 10), bounds.bottom - height - 10);
-    
-    return { x: xPosition, y: yPosition };
+  // Format tooltip content
+  const formatTooltip = ({ datum }: { datum: { x: number, y: number } }) => {
+    return `Energy: ${datum.x.toFixed(1)}\nCount: ${Math.round(datum.y)}`;
   };
   
   /**
@@ -183,122 +174,70 @@ const SpectrumCard = ({
           <Text>No data available</Text>
         ) : (
           <View style={{ height: 250, width: '100%' }}>
-            <CartesianChart
-              data={chartData}
-              xKey="x"
-              yKeys={["y"]}
-              axisOptions={{
-                font,
-                lineWidth: 1,
-                lineColor: "#CCCCCC",
-                labelColor: "#333333",
-                formatYLabel: getYAxisFormat
-              }}
-              xAxis={{
-                font,
-                tickCount: 5,
-              }}
-              // Set a reasonable y-axis range based on data
+            <VictoryChart
+              domainPadding={{ y: 10 }}
+              padding={{ top: 10, bottom: 50, left: 50, right: 10 }}
               domain={{ y: [0, Math.max(1, ...chartData.map(point => point.y * 1.1))] }}
-              transformState={transformState}
-              transformConfig={{
-                pan: { enabled: true , dimensions: ["x"] }, // Disable panning as requested
-                pinch: { enabled: true, dimensions: ["x"] }, // Enable zoom only on x-axis
-              }}
-              // Connect press state for tooltips
-              chartPressState={pressState}
-            >
-              {({ points, chartBounds }) => (
-                <>
-                  <Area
-                    points={points.y}
-                    y0={chartBounds.bottom}
-                    color="rgba(30, 136, 229, 0.2)" // Light blue with transparency
-                    curveType="natural"
-                    opacity={0.6}
-                  />
-                  <Line
-                    points={points.y}
-                    color="#1E88E5"
-                    strokeWidth={1.5}
-                    curveType="natural"
-                  />
-                  
-                  {/* Show tooltip when chart is pressed */}
-                  {isPressActive && pressState?.x && pressState?.y?.y && (() => {
-                    // Calculate tooltip position to ensure it stays within bounds
-                    const tooltipWidth = 120;
-                    const tooltipHeight = 60;
-                    const tooltipPos = getTooltipPosition(
-                      pressState.x.position.value,
-                      pressState.y.y.position.value,
-                      chartBounds,
-                      tooltipWidth,
-                      tooltipHeight
-                    );
-                    
-                    return (
-                      <>
-                        {/* Vertical line indicator */}
-                        <Line
-                          points={[
-                            { 
-                              x: pressState.x.position.value, 
-                              y: chartBounds.top,
-                              xValue: pressState.x.value.value,
-                              yValue: chartBounds.top
-                            },
-                            { 
-                              x: pressState.x.position.value, 
-                              y: chartBounds.bottom,
-                              xValue: pressState.x.value.value,
-                              yValue: chartBounds.bottom
-                            }
-                          ]}
-                          color="rgba(30, 136, 229, 0.7)"
-                          strokeWidth={1.5}
-                        />
-                        
-                        {/* Small dot at the exact data point */}
-                        <Circle
-                          cx={pressState.x.position.value}
-                          cy={pressState.y.y.position.value}
-                          r={5}
-                          color="#1E88E5"
-                        />
-                        
-                        {/* Create a background for the tooltip */}
-                        <Rect
-                          x={tooltipPos.x}
-                          y={tooltipPos.y}
-                          width={tooltipWidth}
-                          height={tooltipHeight}
-                          color="#F5F9FC"
-                          // Add a slight shadow effect
-                          opacity={0.95}
-                        />
-                        
-                        {/* Display tooltip with formatted values */}
-                        <SkiaText
-                          x={tooltipPos.x + 10}
-                          y={tooltipPos.y + 25}
-                          text={`Count: ${pressState.x.value.value.toFixed(1)}` } 
-                          font={font}
-                          color="#333333"
-                        />
-                        <SkiaText
-                          x={tooltipPos.x + 10}
-                          y={tooltipPos.y + 45}
-                          text={`Energy:${Math.round(pressState.y.y.value.value)} `}
-                          font={font}
-                          color="#333333"
-                        />
-                      </>
-                    );
-                  })()}
-                </>
+              containerComponent={(
+                <VictoryZoomContainer
+                  zoomDimension="x"
+                  minimumZoom={{ x: 1, y: 1 }}
+                  allowPan={true}
+                  allowZoom={true}
+                  zoomDomain={{ x: [0, chartData.length], y: [0, Math.max(1, ...chartData.map(point => point.y * 1.1))] }}
+                />
               )}
-            </CartesianChart>
+            >
+              <VictoryAxis
+                tickCount={5}
+                style={{
+                  axis: { stroke: "#CCCCCC" },
+                  tickLabels: { fontSize: 10, padding: 5 }
+                }}
+              />
+              <VictoryAxis
+                dependentAxis
+                tickFormat={(y) => getYAxisFormat(y)}
+                style={{
+                  axis: { stroke: "#CCCCCC" },
+                  tickLabels: { fontSize: 10, padding: 5 }
+                }}
+              />
+              <VictoryArea
+                data={chartData}
+                style={{
+                  data: { fill: "rgba(30, 136, 229, 0.2)" }
+                }}
+                interpolation="natural"
+              />
+              <VictoryLine
+                data={chartData}
+                style={{
+                  data: { stroke: "#1E88E5", strokeWidth: 1.5 }
+                }}
+                interpolation="natural"
+              />
+              <VictoryScatter
+                data={chartData}
+                size={3}
+                style={{ data: { fill: "#1E88E5" } }}
+                labels={formatTooltip}
+                labelComponent={(
+                  <VictoryTooltip
+                    style={{ fontSize: 10 }}
+                    flyoutStyle={{
+                      stroke: "#CCCCCC",
+                      fill: "#F5F9FC",
+                      strokeWidth: 1,
+                    }}
+                    flyoutPadding={{ top: 5, bottom: 5, left: 10, right: 10 }}
+                    cornerRadius={5}
+                    pointerLength={10}
+                    constrainToVisibleArea
+                  />
+                )}
+              />
+            </VictoryChart>
           </View>
         )}
       </View>

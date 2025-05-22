@@ -1131,4 +1131,6 @@ For tooltip positioning problems:
 - [React Native Gesture Handler](https://docs.swmansion.com/react-native-gesture-handler/)
 - [React Native Reanimated](https://docs.swmansion.com/react-native-reanimated/)
 
+-[zoom and pan fetaure documentation page](https://nearform.com/open-source/victory-native/docs/pan-zoom/)
+
 By following this guide, you should now have a solid understanding of how to implement interactive time-series charts for visualizing doseRate data in React Native applications using Victory Native. The techniques covered here can be adapted for various scientific and monitoring applications that require high-performance data visualization.
