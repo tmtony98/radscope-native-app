@@ -32,14 +32,39 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
   const limitedData = useMemo(() => {
     if (doseRateGraphArray.length <= 10)
        return doseRateGraphArray;
-    return doseRateGraphArray.slice(-10);
+    return doseRateGraphArray.slice(-15);
   }, [doseRateGraphArray]);
 
   console.log('Limited data:', limitedData);
 
-  // Define fixed y-axis domain values
+  // Define dynamic y-axis domain values
   const yMin = 0;
-  const yMax = 0.12;
+  
+  // Calculate dynamic yMax based on the maximum value in the data
+  const calculateYMax = useMemo(() => {
+    // Default yMax if no data or all values are below 0.1
+    const defaultYMax = 0.1;
+    
+    if (limitedData.length === 0) return defaultYMax;
+    
+    // Find the maximum dose rate value in the data
+    const maxDoseRate = Math.max(...limitedData.map(point => point.doseRate));
+    
+    // If max value is less than default, just use default
+    if (maxDoseRate <= defaultYMax) {return defaultYMax;}
+    else{
+      return (maxDoseRate + (maxDoseRate / 3 ))
+    }
+
+  }, [limitedData]);
+  
+  // Use the calculated yMax for the chart
+  const yMax = calculateYMax;
+
+  console.log('yMax:', yMax);
+  
+
+
 
   const getLastTimestamp  = () : string =>{
     const timestamp = doseRateGraphArray.length > 0 ? doseRateGraphArray[doseRateGraphArray.length - 1].timestamp : 0;
@@ -85,7 +110,8 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
           lineWidth: 1,
           lineColor: "#CCCCCC",
           labelColor: "#333333",
-          formatYLabel: (value: number) => value.toFixed(3)
+          formatYLabel: (value: number) => value.toFixed(3),
+          tickCount: 8 // Control the number of y-axis labels
         }}
         domain={{ y: [yMin, yMax] }}
         // transformState={transformState}
@@ -110,6 +136,7 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
           labelRotate: 45,
           tickCount: 5,
         }}
+
       >
         {({ points, chartBounds }) => (
           <>
