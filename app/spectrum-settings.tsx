@@ -15,7 +15,7 @@ import { CARD_STYLE, COLORS, SPACING, TYPOGRAPHY } from "../Themes/theme";
 import Header from "@/components/Header";
 import { useSettingsContext } from "@/Provider/SettingsContext";
 import Toast from 'react-native-toast-message';
-import {spectrumSettings} from "../Provider/SettingsContext";
+import { spectrumSettings } from "../Provider/SettingsContext";
 import { opacity } from "react-native-reanimated/lib/typescript/Colors";
 
 const scaleTypeData = [
@@ -23,12 +23,6 @@ const scaleTypeData = [
   { label: "Logarithmic", value: "logarithmic" },
   { label: "Square Root", value: "square-root" },
 ];
-
-// const defaultSettings = {
-//   energyAxis: 'Energy Axis',
-//   scaleType: 'Smoothy',
-//   smoothingType: false,
-//   smoothingPoints: 50
 
 export default function SpectrumSettings() {
   const router = useRouter();
@@ -41,20 +35,25 @@ export default function SpectrumSettings() {
     smoothingType: false,
     smoothingPoints: 30,
   });
-  
+
   // Additional state for slider jitter prevention
   const [displaySmoothingPoints, setDisplaySmoothingPoints] = useState(30);
   const [isSliding, setIsSliding] = useState(false);
   const smoothingPointsRef = useRef(30);
 
+  // Add state to track if settings were loaded from storage
+  const [isLoadedFromStorage, setIsLoadedFromStorage] = useState(false);
+  const isInitialMount = useRef(true);
+
   console.log("spectrumSettings", spectrumSettings);
 
-  //write fn to setting the spectrum settings
+  // Write fn to setting the spectrum settings
   const handleSave = async () => {
+    
     try {
       const res = await storeSpectrumSettings(spectrumSettings);
       console.log("Settings saved successfully:", res);
-      
+
       Toast.show({
         type: 'success',
         text1: 'Settings Saved',
@@ -64,7 +63,7 @@ export default function SpectrumSettings() {
       });
     } catch (error) {
       console.error("Error saving settings:", error);
-      
+
       Toast.show({
         type: 'error',
         text1: 'Error',
@@ -75,13 +74,6 @@ export default function SpectrumSettings() {
     }
   };
 
-  // Save settings on unmount
-  useEffect(() => {
-    return () => {
-      handleSave();
-    };
-  }, [spectrumSettings]);
-
   // Load settings on mount
   useEffect(() => {
     const loadSettings = async () => {
@@ -91,6 +83,8 @@ export default function SpectrumSettings() {
           setSpectrumSettings(settings);
           setDisplaySmoothingPoints(settings.smoothingPoints);
           smoothingPointsRef.current = settings.smoothingPoints;
+          // Mark settings as loaded from storage
+          setIsLoadedFromStorage(true);
         }
       } catch (error) {
         console.error("Error loading settings:", error);
@@ -99,9 +93,21 @@ export default function SpectrumSettings() {
     loadSettings();
   }, []);
 
+  // Modified effect to prevent save on initial load
   useEffect(() => {
+    if (!isLoadedFromStorage) {
+      debugger
+      return;
+    }
+
+    if (isInitialMount.current) {
+      debugger
+      isInitialMount.current = false;
+      return;
+    }
+debugger
     handleSave();
-  }, [spectrumSettings]);
+  }, [spectrumSettings, isLoadedFromStorage]);
 
   // Update handlers
   const handleEnergyAxisChange = (value: string) => {
@@ -109,7 +115,7 @@ export default function SpectrumSettings() {
       ...prev,
       energyAxis: value,
     }));
-    
+
     Toast.show({
       type: 'info',
       text1: 'Energy Axis Updated',
@@ -124,7 +130,7 @@ export default function SpectrumSettings() {
       ...prev,
       scaleType: value,
     }));
-    
+
     Toast.show({
       type: 'info',
       text1: 'Scale Type Updated',
@@ -139,7 +145,7 @@ export default function SpectrumSettings() {
       ...prev,
       smoothingType: value,
     }));
-    
+
     Toast.show({
       type: 'info',
       text1: 'Smoothing Type Updated',
@@ -160,7 +166,7 @@ export default function SpectrumSettings() {
       smoothingPoints: smoothingPointsRef.current,
     }));
     setIsSliding(false);
-    
+
     Toast.show({
       type: 'info',
       text1: 'Smoothing Points Updated',
@@ -183,7 +189,7 @@ export default function SpectrumSettings() {
               style={[
                 styles.segmentButton,
                 spectrumSettings.energyAxis === "Energy Axis" &&
-                  styles.activeSegmentButton,
+                styles.activeSegmentButton,
               ]}
               onPress={() => handleEnergyAxisChange("Energy Axis")}
             >
@@ -200,7 +206,7 @@ export default function SpectrumSettings() {
                   style={[
                     styles.buttonText,
                     spectrumSettings.energyAxis === "Energy Axis" &&
-                      styles.activeButtonText,
+                    styles.activeButtonText,
                   ]}
                 >
                   Energy Axis
@@ -212,7 +218,7 @@ export default function SpectrumSettings() {
               style={[
                 styles.segmentButton,
                 spectrumSettings.energyAxis === "ADC channels" &&
-                  styles.activeSegmentButton,
+                styles.activeSegmentButton,
               ]}
               onPress={() => handleEnergyAxisChange("ADC channels")}
             >
@@ -229,7 +235,7 @@ export default function SpectrumSettings() {
                   style={[
                     styles.buttonText,
                     spectrumSettings.energyAxis === "ADC channels" &&
-                      styles.activeButtonText,
+                    styles.activeButtonText,
                   ]}
                 >
                   ADC channels
@@ -272,17 +278,17 @@ export default function SpectrumSettings() {
           </View>
 
           <View style={styles.sliderContainer}>
-          {spectrumSettings.smoothingType ?
-           <View style={styles.sliderTextContainer}>
-           <Text style={TYPOGRAPHY.bodyTextMedium}>
-              Smoothing Points: {isSliding ? displaySmoothingPoints : spectrumSettings.smoothingPoints}
-            </Text>
-           </View> : 
-           <View style={styles.sliderTextContainer}>
-           <Text style={[TYPOGRAPHY.bodyTextMedium, { opacity: 0.5 }]}>
-              Smoothing Points: {spectrumSettings.smoothingPoints}
-            </Text>
-           </View> }
+            {spectrumSettings.smoothingType ?
+              <View style={styles.sliderTextContainer}>
+                <Text style={TYPOGRAPHY.bodyTextMedium}>
+                  Smoothing Points: {isSliding ? displaySmoothingPoints : spectrumSettings.smoothingPoints}
+                </Text>
+              </View> :
+              <View style={styles.sliderTextContainer}>
+                <Text style={[TYPOGRAPHY.bodyTextMedium, { opacity: 0.5 }]}>
+                  Smoothing Points: {spectrumSettings.smoothingPoints}
+                </Text>
+              </View>}
             <View style={styles.sliderWrapper}>
               <Slider
                 style={styles.sliderControl}
@@ -314,45 +320,6 @@ export default function SpectrumSettings() {
             </View>
           </View>
         </View>
-
-        {/* <View style={CARD_STYLE.container}>
-          <Text style={[TYPOGRAPHY.headLineSmall, styles.sectionTitle]}>
-            Smoothing Points
-          </Text>
-          <View style={styles.sliderContainer}>
-            <Text style={TYPOGRAPHY.bodyTextMedium}>
-              Selected Points: {isSliding ? displaySmoothingPoints : spectrumSettings.smoothingPoints}
-            </Text>
-            <View style={styles.sliderWrapper}>
-              <Slider
-                style={styles.sliderControl}
-                minimumValue={0}
-                maximumValue={100}
-                step={1}
-                value={spectrumSettings.smoothingPoints}
-                onValueChange={handleSmoothingPointsSliding}
-                onSlidingStart={() => setIsSliding(true)}
-                onSlidingComplete={handleSmoothingPointsComplete}
-                minimumTrackTintColor={COLORS.primary}
-                maximumTrackTintColor={COLORS.textSecondary}
-                thumbTintColor={COLORS.primary}
-              />
-              {isSliding && (
-                <View
-                  style={[
-                    styles.valueIndicator,
-                    {
-                      left: `${(displaySmoothingPoints / 100) * 100}%`,
-                      transform: [{ translateX: -20 }],
-                    },
-                  ]}
-                >
-                  <Text style={styles.valueIndicatorText}>{displaySmoothingPoints}</Text>
-                </View>
-              )}
-            </View>
-          </View>
-        </View> */}
       </ScrollView>
     </View>
   );
@@ -411,18 +378,15 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
   sliderTextContainer: {
-   display: "flex",
-   flexDirection: "row",
-   alignItems: "center",
-   justifyContent: "space-between",
-
-   
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   settingRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    // paddingVertical: SPACING.md,
   },
   sliderContainer: {
     padding: SPACING.xs,
@@ -431,7 +395,6 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     justifyContent: "flex-start",
     paddingTop: SPACING.lg,
-
   },
   sliderWrapper: {
     width: "100%",

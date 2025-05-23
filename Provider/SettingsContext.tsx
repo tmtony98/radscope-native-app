@@ -104,8 +104,6 @@ export const SettingsProvider = ({ children }: SettingsProviderProps) => {
       await SecureStore.setItemAsync(SPECTRUM_SETTINGS_KEY, JSON.stringify(settings));
       setSpectrumSettings(settings);
       console.log('Spectrum settings stored successfully' , settings);
-
-      debugger
     } catch (error) {
       console.error('Failed to store spectrum settings:', error);
     }
