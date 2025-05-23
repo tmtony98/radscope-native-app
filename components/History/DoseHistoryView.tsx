@@ -308,9 +308,8 @@ export default function DoseHistoryView({
   //   return `${formattedTime}`;
   // };
 
-  // Log render state for debugging
   // Define dynamic y-axis domain values based on data
-  const calculateYDomain = useMemo((): [number, number] => {
+  const calculateYDomain = (): [number, number] => {
     // Default values if no data
     const defaultMin = 0;
     const defaultMax = 0.1;
@@ -329,7 +328,7 @@ export default function DoseHistoryView({
       defaultMax : (maxDoseRate + (maxDoseRate / 3));
     
     return [yMin, yMax];
-  }, [formattedData]);
+  };
   
   console.log("Rendering DoseHistoryView with:", { 
     date, 
@@ -393,9 +392,9 @@ export default function DoseHistoryView({
                 lineColor: "#CCCCCC",
                 labelColor: "#333333",
                 formatYLabel: (value: number) => value.toFixed(3),
-                tickCount: 8 // Control the number of y-axis labels
+                tickCount: 8
               }}
-              domain={{ y: calculateYDomain }}
+              domain={{ y: calculateYDomain() }}
               transformState={transformState}
               transformConfig={{
                 pan: { enabled: true, dimensions: ["x"] },
