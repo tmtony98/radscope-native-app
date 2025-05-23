@@ -23,9 +23,9 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
   const font = useFont(inter, 12);
   
   // Create transform state for optimized rendering and pan/zoom functionality
-  const transformState = useChartTransformState({
-    scaleX: 1.5, // Initial X-axis scale
-    scaleY: 1.0, // Initial Y-axis scale
+  const { state: transformState } = useChartTransformState({
+    scaleX: 1.0,
+    scaleY: 1.0,
   });
   
   // Limit data to the last 10 points
@@ -114,11 +114,11 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
           tickCount: 8 // Control the number of y-axis labels
         }}
         domain={{ y: [yMin, yMax] }}
-        // transformState={transformState}
-        // transformConfig={{
-        //   pan: { enabled: true, dimensions: ["x"] },
-        //   pinch: { enabled: true, dimensions: ["x"] },
-        // }}
+        transformState={transformState}
+        transformConfig={{
+          pan: { enabled: true, dimensions: ["x"] },
+          pinch: { enabled: true, dimensions: ["x"] },
+        }}
         // Connect press state for tooltips
         chartPressState={pressState}
         xAxis={{
