@@ -53,7 +53,7 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
     // If max value is less than default, just use default
     if (maxDoseRate <= defaultYMax) {return defaultYMax;}
     else{
-      return (maxDoseRate + (maxDoseRate / 3 ))
+      return (maxDoseRate + (maxDoseRate / 2 ))
     }
 
   }, [limitedData]);
