@@ -95,17 +95,13 @@ export default function SpectrumSettings() {
 
   // Modified effect to prevent save on initial load
   useEffect(() => {
-    if (!isLoadedFromStorage) {
-      debugger
+    if (!isLoadedFromStorage) { 
       return;
     }
-
-    if (isInitialMount.current) {
-      debugger
+    if (isInitialMount.current) { 
       isInitialMount.current = false;
       return;
     }
-debugger
     handleSave();
   }, [spectrumSettings, isLoadedFromStorage]);
 
