@@ -54,23 +54,27 @@ export default function SpectrumSettings() {
       const res = await storeSpectrumSettings(spectrumSettings);
       console.log("Settings saved successfully:", res);
 
+    setTimeout(() => {
       Toast.show({
         type: 'success',
         text1: 'Settings Saved',
         text2: 'Your spectrum settings have been saved',
         position: 'bottom',
-        visibilityTime: 3000
+        visibilityTime: 2000
       });
+    }, 1100);
     } catch (error) {
       console.error("Error saving settings:", error);
 
+     setTimeout(() => {
       Toast.show({
         type: 'error',
         text1: 'Error',
         text2: 'Failed to save settings',
         position: 'bottom',
         visibilityTime: 3000
-      });
+      })
+     }, 1100);;
     }
   };
 
@@ -117,7 +121,7 @@ export default function SpectrumSettings() {
       text1: 'Energy Axis Updated',
       text2: `Changed to ${value}`,
       position: 'bottom',
-      visibilityTime: 2000
+      visibilityTime: 1000
     });
   };
 
@@ -132,7 +136,7 @@ export default function SpectrumSettings() {
       text1: 'Scale Type Updated',
       text2: `Changed to ${value}`,
       position: 'bottom',
-      visibilityTime: 2000
+      visibilityTime: 1000
     });
   };
 
@@ -147,7 +151,7 @@ export default function SpectrumSettings() {
       text1: 'Smoothing Type Updated',
       text2: `Changed to ${value ? 'Enabled' : 'Disabled'}`,
       position: 'bottom',
-      visibilityTime: 2000
+      visibilityTime: 1000
     });
   };
 
@@ -168,7 +172,7 @@ export default function SpectrumSettings() {
       text1: 'Smoothing Points Updated',
       text2: `Set to ${smoothingPointsRef.current} points`,
       position: 'bottom',
-      visibilityTime: 2000
+      visibilityTime: 1000
     });
   }, []);
 
