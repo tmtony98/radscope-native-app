@@ -10,6 +10,8 @@ import RNFS from 'react-native-fs';
 
 interface SensorDataExtract {
   doseRate: number;
+  spectrumStatus: 'Acquisition' | 'Stopped' | 'Delayed Pause' | null;
+  acquisition_time: number;
   cps: number;
   timestamp: string | number;
   gps: GpsData | null;
@@ -20,9 +22,10 @@ interface SensorDataExtract {
 // MQTT Configuration
 const BROKER_URL = 'ws://192.168.29.39:8083'; //office bbd
 // const BROKER_URL = 'ws://192.168.1.50:8083'; //office kv
-
 // const BROKER_URL = 'ws://192.168.1.11:8083'; //hostel
 // const BROKER_URL = 'ws://192.168.74.213:8083'; //tony phone
+
+
 const BASE_PATH = RNFS.ExternalStorageDirectoryPath + '/Radscope';
 const DOSERATE_PATH = BASE_PATH + '/Doserate_data';
 const SESSION_PATH = BASE_PATH + '/Sessions_data';
@@ -32,8 +35,6 @@ const MONTHS = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
-
-
 
  
 // const TOPIC = 'device/GS200/spectrum/GS200X1D83ADD17C168';
@@ -46,6 +47,8 @@ type MqttContextType = {
   messages: Message[];
   status: ConnectionStatus;
   doseRate: number;
+  spectrumStatus: 'Acquisition' | 'Stopped' | 'Delayed Pause' | null;
+  acquisition_time: number;
   cps: number;
   gps: GpsData | null;
   batteryInfo: BatteryData | null;
@@ -68,8 +71,10 @@ const MqttContext = createContext<MqttContextType>({
     timestamp: new Date()
   },
   messages: [],
-  status: { connected: false },
+  status: { connected: false  , error: ""},
   doseRate: 0,
+  acquisition_time: 0,
+  spectrumStatus: 'Acquisition',
   cps: 0,
   timestamp: 0,
   doseRateGraphArray: [],
@@ -99,7 +104,9 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Group related sensor data into a single state object for optimized updates
   const [sensorData, setSensorData] = useState({
     doseRate: 0,
+    spectrumStatus: 'Acquisition' as 'Acquisition' | 'Stopped' | 'Delayed Pause' | null,
     cps: 0,
+    acquisition_time: 0,
     timestamp: 0,
     gps: null as GpsData | null,
     batteryInfo: null as BatteryData | null,
@@ -107,7 +114,7 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
   const [isExternalStorageAvailable, setIsExternalStorageAvailable] = useState(false);
   // Destructure sensor data for easier access in the component
-  const { doseRate, cps, timestamp, gps, batteryInfo, spectrum } = sensorData;
+  const { doseRate, spectrumStatus, acquisition_time, cps, timestamp, gps, batteryInfo, spectrum } = sensorData;
   // Keep doseRateGraphArray separate as it has a different update pattern
   const [doseRateGraphArray, setDoseRateGraphArray] = useState<{ doseRate: number; timestamp: number; cps: number }[]>([]);
   
@@ -120,42 +127,32 @@ export const MqttProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const extractSensorData = useCallback((payload: string): SensorDataExtract => {
     try {
       if (!payload) {
-        return { doseRate: 0, cps: 0, timestamp: 0, gps: null, batteryInfo: null, spectrum: [] };
+        return { doseRate: 0, cps: 0, timestamp: 0, gps: null, batteryInfo: null, spectrum: [], spectrumStatus: null , acquisition_time: 0 };
       }
       const parsedData: LiveData = JSON.parse(payload);
-      
       // Only log in development
-      if (__DEV__) {
-        // console.log("parsedData", parsedData);
-      }
+     
       return {
         doseRate: parsedData.data.Sensor.doserate.value ?? 0,
+        spectrumStatus: (parsedData.data.Sensor.spectrum.status === 'Acquisition' || 
+                          parsedData.data.Sensor.spectrum.status === 'Stopped' || 
+                          parsedData.data.Sensor.spectrum.status === 'Delayed Pause') ? 
+                          parsedData.data.Sensor.spectrum.status : null,
         cps: parsedData.data.Sensor.doserate.cps ?? 0,
         timestamp: parsedData.timestamp ?? 0,
         gps: parsedData.data.GPS ?? null,
         batteryInfo: parsedData.data.Attributes ?? null,
-        spectrum: parsedData.data.Sensor.spectrum.bins ?? []
+        spectrum: parsedData.data.Sensor.spectrum.bins ?? [],
+        acquisition_time: parsedData.data.Sensor.spectrum.acquisition_time ?? 0
+
       };
     } catch (error) {
       console.error("Error extracting sensor data:", error);
-      return { doseRate: 0, cps: 0, timestamp: 0, gps: null, batteryInfo: null, spectrum: [] };
+      return { doseRate: 0, spectrumStatus: null, cps: 0, timestamp: 0, gps: null, batteryInfo: null, spectrum: [], acquisition_time: 0 };
     }
   }, []);
 
-  //Move database operations outside of the render cycle
-  const saveDoserate = useCallback(async (doserate: number, cps: number, createdAt: number) => {
-    try {
-      await database.write(async () => {
-        return await database.get('doserate').create(record => {
-          (record as Doserate).doserate = doserate;
-          (record as Doserate).cps = cps;
-          (record as Doserate).createdAt = createdAt;
-        });
-      });
-    } catch (error) {
-      console.error("Error saving doserate:", error);
-    }
-  }, []);
+
 
 
   const checkPermissionsAfterSettings = async () => {
@@ -474,11 +471,13 @@ useEffect(() => {
       // Batch state updates
       setSensorData({
         doseRate: data.doseRate,
+        spectrumStatus: data.spectrumStatus,
+        acquisition_time: data.acquisition_time,
         cps: data.cps,
         timestamp: newTimestamp,
         gps: data.gps,
         batteryInfo: data.batteryInfo,
-        spectrum: data.spectrum
+        spectrum: data.spectrum,
       });
       
       // Update graph array with the new values (keep only last 10)
@@ -500,7 +499,7 @@ useEffect(() => {
         processMessageQueue();
       }
     }
-  }, [extractSensorData, saveDoserate]);
+  }, [extractSensorData]);
 
   // Connect to MQTT broker
   const connectMqtt = useCallback(async (mqtt_host: string, mqtt_port: number, deviceId: any) => {
@@ -508,9 +507,8 @@ useEffect(() => {
       if (__DEV__) {
         console.log("Connecting to MQTT broker:", mqtt_host, mqtt_port, deviceId);
       }
-      
       const CLIENT_ID = `mqtt-client-${Math.random().toString(16).substr(2, 8)}`;
-      
+
       // Use the provided port or fallback to WebSocket port 8083
       const client = mqtt.connect(`ws://${mqtt_host}:8083`, {
         clientId: CLIENT_ID,
@@ -620,12 +618,20 @@ useEffect(() => {
     }
   }, []);
 
+
+  // console.log("spectrumStatus", spectrumStatus);
+  // console.log("acquisition_time", acquisition_time);
+  console.log("ssssssss", status);
+  
+  
   // Memoize context value to prevent unnecessary re-renders of consumers
   const contextValue = useMemo(() => ({
     message,
     messages,
     status,
     doseRate,
+    spectrumStatus,
+    acquisition_time,
     cps,
     doseRateGraphArray,
     gps,
@@ -641,6 +647,8 @@ useEffect(() => {
     messages, 
     status, 
     doseRate, 
+    spectrumStatus, 
+    acquisition_time,
     cps, 
     doseRateGraphArray, 
     gps, 

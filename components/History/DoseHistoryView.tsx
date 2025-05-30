@@ -344,7 +344,7 @@ export default function DoseHistoryView({
       {/* Header */}
       {/* Date Selection */}
       <View style={styles.card}>
-      <Text style={TYPOGRAPHY.TitleMedium}>Select Another Date</Text>
+      <Text style={TYPOGRAPHY.TitleLarge}>Select Another Date</Text>
 
         <View style={styles.dateContainer}>
           <View style={styles.dateValue}>
@@ -584,6 +584,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     width:"100%",
     borderRadius: 8,
+    marginTop: 8,
   },
   dateLabel: {
     color: "#333",

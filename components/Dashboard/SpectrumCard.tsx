@@ -20,7 +20,9 @@ const SpectrumCard = ({
   onFullscreen = () => {},
 }: SpectrumCardProps) => {
   const router = useRouter();
-  const { spectrum } = useMqttContext();
+  const { spectrum , spectrumStatus , acquisition_time } = useMqttContext();
+  console.log("spectrumStatus" , spectrumStatus);
+  
   const { spectrumSettings } = useSettingsContext();
   const font = useFont(inter, 12);
   const [chartData, setChartData] = useState<Array<{x: number, y: number}>>([]);
@@ -124,7 +126,7 @@ const SpectrumCard = ({
       const timer = setTimeout(processData, 50);
       return () => clearTimeout(timer);
     }
-  }, [spectrum, spectrumSettings.scaleType]);
+  }, [spectrum, spectrumStatus, spectrumSettings.scaleType]);
   
   // Update Y-axis format based on scale type
   const getYAxisFormat = useCallback((value: number) => {
@@ -156,7 +158,10 @@ const SpectrumCard = ({
       <View style={styles.headerWithActions}>
         <View style={styles.titleContainer}>
           <Text style={TYPOGRAPHY.headLineMedium}>Spectrum</Text>
-          {/* <Text style={styles.durationText}>{duration}</Text> */}
+          { spectrumStatus ==="Acquisition" ? (<Text style={styles.durationText}>{acquisition_time}</Text>  )
+             :
+            (<Text  style={styles.durationText}>{spectrumStatus}</Text>)
+          }
         </View>
         <TouchableOpacity 
           style={[BUTTON_STYLE.mediumButtonWithIconLeft, { backgroundColor: '#31435E' }]} 
@@ -336,6 +341,7 @@ const styles = StyleSheet.create({
   },
   durationText: {
     fontSize: 16,
+    fontWeight: '500',
     color: '#333',
     marginTop: 4,
   },
