@@ -13,7 +13,7 @@ export default function GPSCard() {
   return (
     <View style={CARD_STYLE.container}>
       <View style={styles.headerWithActions}>
-        <Text style={TYPOGRAPHY.headLineSmall}>GPS</Text>
+        <Text style={TYPOGRAPHY.headLineMedium}>GPS</Text>
         {gps?.Fix === 1 ? (
           <TouchableOpacity style={styles.iconButton}>
             <MaterialIcons name="gps-fixed" size={24} color={COLORS.primary} />

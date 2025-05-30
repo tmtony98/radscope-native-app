@@ -69,7 +69,7 @@ const DoseRateCard: React.FC<DoseRateCardProps> = ({ latestDoserate }) => {
   return (
     <View style={CARD_STYLE.container}>
       <View style={ styles.headingContainer}> 
-      <Text style={TYPOGRAPHY.headLineSmall}>Dose Rate</Text>
+      <Text style={TYPOGRAPHY.headLineMedium}>Dose Rate</Text>
          
          { tresholdRef.current &&
            <View style={styles.loggingIndicatorContainer}>

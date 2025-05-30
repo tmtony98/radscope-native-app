@@ -143,7 +143,7 @@ export const SessionLoggingCard = ({
   return (
     <View style={CARD_STYLE.container}>
       <View style={styles.headerContainer}>
-        <Text style={[TYPOGRAPHY.headLineSmall, { marginBottom: 16 }]}>Session Logging</Text>
+        <Text style={[TYPOGRAPHY.headLineMedium, { marginBottom: 16 }]}>Session Logging</Text>
         {isLogging && (
           <View style={styles.loggingIndicatorContainer}>
             <Animated.View 

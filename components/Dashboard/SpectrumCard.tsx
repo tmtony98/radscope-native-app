@@ -155,7 +155,7 @@ const SpectrumCard = ({
     <View style={CARD_STYLE.container}>
       <View style={styles.headerWithActions}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title}>Spectrum</Text>
+          <Text style={TYPOGRAPHY.headLineMedium}>Spectrum</Text>
           {/* <Text style={styles.durationText}>{duration}</Text> */}
         </View>
         <TouchableOpacity 

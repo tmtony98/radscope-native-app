@@ -23,7 +23,7 @@ export default function BatteryCard({
 
   return (
     <View style={[CARD_STYLE.container, isLastCard && styles.lastCard]}>
-      <Text style={TYPOGRAPHY.headLineSmall}>Battery</Text>
+      <Text style={TYPOGRAPHY.headLineMedium}>Battery</Text>
       <View style={styles.row}>
         <Text style={TYPOGRAPHY.bodyTextLarge}>Charge Remaining</Text>
         <Text style={TYPOGRAPHY.bodyTextMedium}>{batteryInfo?.SOC} %</Text>

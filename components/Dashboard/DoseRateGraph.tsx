@@ -91,7 +91,7 @@ export default function DoseRateGraph({ onGetHistory }: ChartCardProps) {
   return (
     <View style={CARD_STYLE.container}>
       <View style={styles.headerWithActions}>
-        <Text style={TYPOGRAPHY.headLineSmall}>Dose Rate</Text>
+        <Text style={TYPOGRAPHY.headLineMedium}>Dose Rate</Text>
         <View style={styles.headerActions}>
           <Text style={TYPOGRAPHY.smallText}>{getLastTimestamp()}</Text>
           {/* <TouchableOpacity style={styles.iconButton} onPress={handleFullscreen}>
