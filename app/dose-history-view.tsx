@@ -13,19 +13,7 @@ export default function DoseHistoryViewPage() {
   console.log('date type:', typeof date);
   console.log('startTime type:', typeof startTime);
   
-  // Add state to control rendering
-  const [isReady, setIsReady] = useState(false);
-  
-  // Force component to render after a delay
-  useEffect(() => {
-    // First delay to ensure navigation is complete
-    const timer = setTimeout(() => {
-      setIsReady(true);
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, []);
-  
+ 
   // Ensure params are strings
   const dateStr = typeof date === 'string' ? date : String(date);
   const startTimeStr = typeof startTime === 'string' ? startTime : String(startTime);
@@ -34,18 +22,11 @@ export default function DoseHistoryViewPage() {
     <View style={{ flex: 1 }}>
       <Header title="Dose History" showBackButton={true} />
       <View style={{ flex: 1 }}>
-        {isReady ? (
           <DoseHistoryView 
             key={`history-view-${Date.now()}`} // Force new instance on each render
             date={dateStr}
             startTime={startTimeStr}
           />
-        ) : (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
-            <Text style={{ marginTop: 10 }}>Preparing graph data...</Text>
-          </View>
-        )}
       </View>
     </View>
 
