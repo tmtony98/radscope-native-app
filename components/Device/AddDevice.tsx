@@ -90,7 +90,7 @@ const AddDevice: React.FC<AddDeviceProps> = ({ connectDevice }) => {
     >
       <Text style={[TYPOGRAPHY.headLineSmall, {textAlign: 'center', paddingVertical: SPACING.sm}]}>Connect Device</Text>
       <Text style={styles.instructions}>
-        Find the IP address of the device to be connected by heading over to settings {'>'} network {'>'} Device Ip adress
+        Find the IP address of the device to be connected by heading over to settings {'>'} network {'>'} Device Ip address
       </Text>
 
       <View style={styles.inputContainer}>

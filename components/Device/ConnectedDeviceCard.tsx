@@ -87,7 +87,7 @@ const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({
             <View style={styles.deviceInfoContainer}>
               <View style={styles.deviceIconContainer}>
                 <MaterialIcons
-                  name="devices"
+                  name="router"
                   size={24}
                   color={COLORS.primary}
                 />
@@ -98,11 +98,9 @@ const ConnectedDeviceCard: React.FC<ConnectedDeviceCardProps> = ({
                 </Text>
 
                 <Text style={styles.deviceIp}>
-                  IP Address: {connectedDevice.host}
+                  {connectedDevice.host}
                 </Text>
-                <Text style={styles.deviceIp}>
-                  Port: {connectedDevice.port}
-                </Text>
+               
               </View>
               {status.connected ? (
                 <View style={styles.connectedBadge}>
@@ -228,11 +226,13 @@ const styles = StyleSheet.create({
   deviceIconContainer: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 8,
     backgroundColor: "#F5F9FC",
+    borderWidth: 1,
+    borderColor: COLORS.border,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: SPACING.sm,
+    marginRight: SPACING.md,
   },
   deviceDetails: {
     flex: 1,
