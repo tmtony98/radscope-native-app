@@ -235,32 +235,33 @@ export const SessionLoggingCard = ({
       <View style={styles.loggingButtons}>
         <TouchableOpacity style={styles.downloadButton} onPress={onDownload}>
           <MaterialIcons name="visibility" size={24} color={COLORS.primary} />
-          <Text style={styles.downloadButtonText}>View Log Files</Text>
+          <Text style={styles.downloadButtonText}>View Session Log Files</Text>
         </TouchableOpacity>
-        
+        </View>
+        <View>
         {isLogging ? (
           <TouchableOpacity
             style={[
               BUTTON_STYLE.mediumButtonWithIconLeft,
               { backgroundColor: COLORS.error , flex: 1,
-                maxWidth: '48%', },
+                maxWidth: '100%', marginBottom: SPACING.md },
             ]}
             onPress={handleStopSession}
           >
             <MaterialIcons name="stop" size={24} color={COLORS.white} />
-            <Text style={styles.startButtonText}>Stop</Text>
+            <Text style={styles.startButtonText}>Stop Session</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
             style={[
               BUTTON_STYLE.mediumButtonWithIconLeft,
               { backgroundColor: COLORS.primary , flex: 1,
-                maxWidth: '48%', },
+                maxWidth: '100%', },
             ]}
             onPress={onStart}
           >
             <MaterialIcons name="play-arrow" size={24} color={COLORS.white} />
-            <Text style={styles.startButtonText}>Start</Text>
+            <Text style={styles.startButtonText}>Start Session</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -316,9 +317,9 @@ const styles = StyleSheet.create({
     height: 40,
   },
   thumbStyle: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: COLORS.primary,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -327,8 +328,8 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   trackStyle: {
-    height: 8,
-    borderRadius: 4,
+    height: 25,
+    borderRadius: 8,
   },
   valueIndicator: {
     position: "absolute",
@@ -345,6 +346,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   loggingButtons: {
+    flex: 1,
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: SPACING.md,
@@ -360,7 +362,8 @@ const styles = StyleSheet.create({
     borderStyle: "solid",
     paddingVertical: 10,
     flex: 1,
-    maxWidth: '50%',
+    maxWidth: '100%',
+    marginBottom: SPACING.sm,
   },
   downloadButtonText: {
     color: COLORS.primary,
